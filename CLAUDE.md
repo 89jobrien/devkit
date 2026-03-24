@@ -25,6 +25,9 @@ Pre-push hook requires `ANTHROPIC_API_KEY` — use op run:
 Never run multiple background pushes concurrently — causes "cannot lock ref" failures.
 `go install` writes to mise GOBIN, not `~/go/bin` — use `GOBIN=$HOME/go/bin go install` or prefix PATH.
 
+## tools package
+`GlobTool` shells out to `fd`; `GrepTool` shells out to `rg` — both must be installed on the host. `BashTool(maxBytes)` runs `sh -c`; output capped at maxBytes with `[truncated]` suffix, non-zero exit appended as `(exit: ...)` rather than returned as a Go error.
+
 ## council package
 `council.Config.Runners map[string]Runner` — per-role runner override; falls back to `Runner`. Nil `Runner` + missing override returns error (not panic).
 `council.ToolUseInstruction` — exported constant; strip from prompts in tool-less runners (e.g. openAIRunner).
