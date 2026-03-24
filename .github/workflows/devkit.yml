@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ["**"]
   workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base ref for council diff'
+        default: 'HEAD~1'
 
 jobs:
   review:
@@ -25,6 +29,7 @@ jobs:
         run: go install github.com/89jobrien/devkit/cmd/devkit@latest
 
       - name: Review
+        id: review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BASE_REF: ${{ github.base_ref }}
@@ -39,8 +44,7 @@ jobs:
             echo "::error::devkit review produced no output"
             exit 1
           fi
-          echo "out=$OUT" >> "$GITHUB_OUTPUT"
-        id: review
+          printf 'out=%s\n' "$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Post PR comment
         uses: actions/github-script@v7
@@ -50,9 +54,11 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
+            const runnerTemp = process.env.RUNNER_TEMP;
+            if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
             const outPath = path.resolve(process.env.OUT);
-            const runnerTemp = path.resolve(process.env.RUNNER_TEMP) + path.sep;
-            if (!outPath.startsWith(runnerTemp)) {
+            const tempBase = path.resolve(runnerTemp) + path.sep;
+            if (!outPath.startsWith(tempBase)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }
             const raw = fs.readFileSync(outPath, 'utf8').trim();
@@ -104,14 +110,19 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BASE: ${{ inputs.base }}
           OUT: ${{ runner.temp }}/council-${{ github.run_id }}-${{ github.run_attempt }}.txt
         run: |
-          devkit council --base HEAD~1 --mode core > "$OUT"
+          if [[ ! "$BASE" =~ ^[a-zA-Z0-9._/~^-]+$ ]]; then
+            echo "::error::Unexpected base input: $BASE"
+            exit 1
+          fi
+          devkit council --base "$BASE" --mode core > "$OUT"
           if [ ! -s "$OUT" ]; then
             echo "::error::devkit council produced no output"
             exit 1
           fi
-          echo "out=$OUT" >> "$GITHUB_OUTPUT"
+          printf 'out=%s\n' "$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Post council issue
         uses: actions/github-script@v7
@@ -121,9 +132,11 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
+            const runnerTemp = process.env.RUNNER_TEMP;
+            if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
             const outPath = path.resolve(process.env.OUT);
-            const runnerTemp = path.resolve(process.env.RUNNER_TEMP) + path.sep;
-            if (!outPath.startsWith(runnerTemp)) {
+            const tempBase = path.resolve(runnerTemp) + path.sep;
+            if (!outPath.startsWith(tempBase)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }
             const raw = fs.readFileSync(outPath, 'utf8').trim();
