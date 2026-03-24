@@ -58,8 +58,8 @@ func (g *giteaPlatform) FetchFailedJobLogs(ctx context.Context, runID string) ([
 			logs = append(logs, JobLog{Name: j.Name, Log: fmt.Sprintf("(log unavailable: %v)", err)})
 			continue
 		}
-		defer lr.Body.Close()
 		raw, _ := io.ReadAll(lr.Body)
+		lr.Body.Close()
 		logs = append(logs, JobLog{Name: j.Name, Log: truncateLast(string(raw), maxLogBytes)})
 	}
 	return logs, nil
@@ -112,12 +112,12 @@ func (g *giteaPlatform) FindIssueForCommit(ctx context.Context, sha string) (int
 		if err != nil {
 			return 0, false, err
 		}
-		defer resp.Body.Close()
 		var issues []struct {
 			Number int    `json:"number"`
 			Body   string `json:"body"`
 		}
 		json.NewDecoder(resp.Body).Decode(&issues)
+		resp.Body.Close()
 		if len(issues) == 0 {
 			return 0, false, nil
 		}
