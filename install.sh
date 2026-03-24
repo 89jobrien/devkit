@@ -34,17 +34,6 @@ has_review=false
 has_meta=false
 has_ci_agent=false
 has_diagnose=false
-echo "$components" | tr ',' '\n' | while IFS= read -r c; do
-  case "$c" in
-    council)   has_council=true ;;
-    review)    has_review=true ;;
-    meta)      has_meta=true ;;
-    ci_agent)  has_ci_agent=true ;;
-    diagnose)  has_diagnose=true ;;
-  esac
-done
-
-# Re-derive since subshell doesn't propagate
 if echo "$components" | grep -q "council";  then has_council=true;  fi
 if echo "$components" | grep -q "review";   then has_review=true;   fi
 if echo "$components" | grep -q "meta";     then has_meta=true;     fi

@@ -31,7 +31,10 @@ func newAgentRunner() *agentRunner {
 }
 
 func (r *agentRunner) Run(ctx context.Context, prompt string, toolNames []string) (string, error) {
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("getwd: %w", err)
+	}
 	// allTools lists every tool available to any runner. Tools are filtered by
 	// name (via t.Definition.OfTool.Name) when a caller provides toolNames — so
 	// all Tool values here must use the OfTool variant, not OfToolBash or other

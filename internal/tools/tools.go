@@ -78,35 +78,36 @@ func ReadTool(root string) Tool {
 	}
 }
 
-// GlobTool returns a Tool that matches a glob pattern relative to root.
+// GlobTool returns a Tool that matches a glob pattern relative to root using fd.
+// Supports recursive patterns (e.g. "**/*.go").
 func GlobTool(root string) Tool {
 	return Tool{
 		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
 			Name:        "Glob",
-			Description: anthropic.String("Match files against a glob pattern. Returns newline-separated paths."),
+			Description: anthropic.String("Match files against a glob pattern. Supports recursive patterns (e.g. '**/*.go'). Returns newline-separated paths."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
-					"pattern": map[string]string{"type": "string", "description": "Glob pattern"},
+					"pattern": map[string]string{"type": "string", "description": "Glob pattern (e.g. '*.go', '**/*.go')"},
 				},
 			},
 		}},
-		Handler: HandlerFunc(func(_ context.Context, input json.RawMessage) (string, error) {
+		Handler: HandlerFunc(func(ctx context.Context, input json.RawMessage) (string, error) {
 			var args struct {
 				Pattern string `json:"pattern"`
 			}
 			if err := json.Unmarshal(input, &args); err != nil {
 				return "", err
 			}
-			matches, err := filepath.Glob(filepath.Join(root, args.Pattern))
+			if args.Pattern == "" {
+				return "", fmt.Errorf("pattern is required")
+			}
+			cmd := exec.CommandContext(ctx, "fd", "--glob", args.Pattern)
+			cmd.Dir = root
+			out, err := cmd.Output()
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("fd: %w", err)
 			}
-			rel := make([]string, 0, len(matches))
-			for _, m := range matches {
-				r, _ := filepath.Rel(root, m)
-				rel = append(rel, r)
-			}
-			return strings.Join(rel, "\n"), nil
+			return strings.TrimRight(string(out), "\n"), nil
 		}),
 	}
 }

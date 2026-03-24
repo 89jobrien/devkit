@@ -361,7 +361,7 @@ func main() {
 		},
 	}
 	diagnoseCmd.Flags().StringVar(&diagnoseService, "service", "", "Service/component to focus on")
-	diagnoseCmd.Flags().StringVar(&diagnoseLogCmd, "log-cmd", "", "Shell command to fetch logs (overrides .devkit.toml)")
+	diagnoseCmd.Flags().StringVar(&diagnoseLogCmd, "log-cmd", "", fmt.Sprintf("Shell command to fetch logs (default: %s)", diagnose.DefaultLogCmd()))
 
 	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd)
 	if err := root.ExecuteContext(context.Background()); err != nil {
