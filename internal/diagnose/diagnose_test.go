@@ -3,7 +3,7 @@ package diagnose_test
 
 import (
 	"context"
-	"strings"
+	"fmt"
 	"testing"
 
 	"github.com/89jobrien/devkit/internal/diagnose"
@@ -66,8 +66,7 @@ func TestRunPromptContainsReportSections(t *testing.T) {
 	r := &stubRunner{response: "ok"}
 	_, _ = diagnose.Run(context.Background(), diagnose.Config{Runner: r})
 	for _, section := range []string{"Root cause", "Evidence", "Fix", "Confidence"} {
-		assert.True(t, strings.Contains(r.capturedPrompt, section),
-			"prompt missing section: %s", section)
+		assert.Contains(t, r.capturedPrompt, section, "prompt missing section: %s", section)
 	}
 }
 
@@ -80,4 +79,26 @@ func TestRunNoServiceSkipsTargetedGrep(t *testing.T) {
 	_, _ = diagnose.Run(context.Background(), diagnose.Config{Runner: r})
 	// When Service is empty, prompt should not contain grep -i ""
 	assert.NotContains(t, r.capturedPrompt, `grep -i ""`)
+}
+
+func TestRunErrorPropagates(t *testing.T) {
+	r := diagnose.RunnerFunc(func(_ context.Context, _ string, _ []string) (string, error) {
+		return "", fmt.Errorf("simulated failure")
+	})
+	_, err := diagnose.Run(context.Background(), diagnose.Config{Runner: r})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "simulated failure")
+}
+
+func TestRunNilRunnerReturnsError(t *testing.T) {
+	_, err := diagnose.Run(context.Background(), diagnose.Config{})
+	require.Error(t, err)
+}
+
+func TestRunRequestsAllTools(t *testing.T) {
+	r := &stubRunner{response: "ok"}
+	_, _ = diagnose.Run(context.Background(), diagnose.Config{Runner: r})
+	assert.Contains(t, r.capturedTools, "Bash")
+	assert.Contains(t, r.capturedTools, "Read")
+	assert.Contains(t, r.capturedTools, "Glob")
 }

@@ -38,6 +38,10 @@ func DefaultLogCmd() string {
 
 // Run executes a diagnosis agent and returns its report.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("diagnose: Runner is required")
+	}
+
 	logCmd := cfg.LogCmd
 	if logCmd == "" {
 		logCmd = defaultLogCmd
