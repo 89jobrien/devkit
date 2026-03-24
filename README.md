@@ -6,6 +6,7 @@ AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a
 
 - **council** — runs parallel AI roles (strict critic, creative explorer, analyst, security reviewer, performance analyst) against your branch diff and synthesizes a weighted health score. Strict critic and analyst use Anthropic; creative explorer and performance analyst use OpenAI when `OPENAI_API_KEY` is set.
 - **review** — single-pass AI diff review focused on a configurable concern area
+- **diagnose** — runs an LLM agent against local logs and system state to report root cause, evidence, fix, and confidence level
 - **meta** — designs and runs parallel agents for any freeform task against your repo context
 - **ci-agent** — standalone binary that diagnoses failed CI jobs and opens/updates issues automatically (GitHub and Gitea)
 
@@ -16,6 +17,7 @@ AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a
 - `OPENAI_API_KEY` (optional — used for two council roles and ci-agent fallback)
 - `GEMINI_API_KEY` (optional — ci-agent fallback only)
 - [gum](https://github.com/charmbracelet/gum) for the interactive installer
+- [`fd`](https://github.com/sharkdp/fd) and [`rg`](https://github.com/BurntSushi/ripgrep) — used by agent tools (GlobTool and GrepTool)
 
 ## Install
 
@@ -36,7 +38,7 @@ The installer will:
 2. Install the `devkit` and `ci-agent` binaries via `go install`
 3. Write `.devkit.toml` in your project root
 4. Copy the appropriate CI workflow file (`.github/workflows/ci.yml` or `.gitea/workflows/ci.yml`)
-5. Install git hooks — `pre-push` runs `devkit review --base main` and blocks on issues; `post-commit` prints a council reminder
+5. Install git hooks — `pre-push` runs `devkit council --base main` (non-blocking); `post-commit` prints a council reminder
 6. Write Claude Code hooks to `.claude/settings.json` so `devkit review` runs after file edits
 
 Bypass git hooks any time with `DEVKIT_SKIP_HOOKS=1 git push`.
@@ -44,12 +46,17 @@ Bypass git hooks any time with `DEVKIT_SKIP_HOOKS=1 git push`.
 ## Usage
 
 ```sh
-# AI diff review (also runs automatically as a pre-push hook and on PRs)
+# AI diff review
 devkit review --base main
 
-# Multi-role branch analysis (run on demand; takes a few minutes)
+# Multi-role branch analysis (also runs as a pre-push hook and on PRs)
 devkit council --base main --mode core
 devkit council --base main --mode extensive   # adds security + performance roles
+
+# Diagnose a local service failure from logs and system state
+devkit diagnose
+devkit diagnose --service postgres
+devkit diagnose --log-cmd "tail -n 500 /var/log/myapp.log"
 
 # Run parallel agents on any freeform task
 devkit meta "find all places where we do not validate user input"
@@ -77,12 +84,10 @@ All commands log to `~/.dev-agents/<project>/`.
                  ▼
     git push
           │
-    pre-push: devkit council --base main
+    pre-push: devkit council --base main (non-blocking)
           │
-    ┌─────┴──────┐
-  issues?        clean
-    │              │
-  abort push    push to GitHub
+          ▼
+    push to GitHub
                  │
                  ▼
           PR open/updated
@@ -143,12 +148,17 @@ council  = true
 review   = true
 meta     = true
 ci_agent = true
+diagnose = true
 
 [review]
 focus = "security, performance, correctness"
 
 [council]
 mode = "core"
+
+[diagnose]
+# log_cmd = "journalctl -n 200 --no-pager"   # uncomment and customize if needed
+# service = ""                                 # focus on a specific service
 ```
 
 ## Upgrading
@@ -159,7 +169,7 @@ bash upgrade.sh
 
 ## Architecture
 
-Hexagonal Go: each internal package (`council`, `review`, `meta`, `loop`, `tools`, `platform`, `log`) defines a `Runner` or `Platform` interface. Concrete implementations are wired at the `cmd/` layer. No package imports another's concrete type.
+Hexagonal Go: each internal package (`council`, `review`, `diagnose`, `meta`, `loop`, `tools`, `platform`, `log`) defines a `Runner` or `Platform` interface. Concrete implementations are wired at the `cmd/` layer. No package imports another's concrete type.
 
 ## License
 
