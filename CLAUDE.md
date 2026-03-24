@@ -17,7 +17,7 @@ Current version in `VERSION` file. CI bumps minor on push to main (`0.N.0`). Pat
 - `go test ./...` — 37 tests across 10 packages, no real API calls (httptest + stub runners)
 - `go build ./cmd/devkit ./cmd/ci-agent` — verify both binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
-- Pre-push hook runs `devkit review --base main`; bypass with `DEVKIT_SKIP_HOOKS=1`
+- Pre-commit hook runs `go build ./cmd/devkit ./cmd/ci-agent && go test ./...`; pre-push hook runs `devkit council --base main`; bypass both with `DEVKIT_SKIP_HOOKS=1`
 
 ## Pushing
 Pre-push hook requires `ANTHROPIC_API_KEY` — use op run:

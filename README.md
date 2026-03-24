@@ -60,12 +60,65 @@ All commands log to `~/.dev-agents/<project>/`.
 
 ## GitHub Actions
 
-Two jobs in `.github/workflows/devkit.yml`:
 
-- **review** — fires on every PR; posts findings as a PR comment (updates on re-push)
-- **council** — fires on `workflow_dispatch` from the Actions tab; posts a council issue tagged `devkit-council`
+```php
+  Developer commits
+          │
+          ▼
+    git commit
+          │
+    pre-commit: devkit review --base HEAD
+          │
+    ┌─────┴──────┐
+  issues?        clean
+    │              │
+  abort commit  commit succeeds
+                 │
+                 ▼
+    git push
+          │
+    pre-push: devkit council --base main
+          │
+    ┌─────┴──────┐
+  issues?        clean
+    │              │
+  abort push    push to GitHub
+                 │
+                 ▼
+          PR open/updated
+                │
+                ▼
+         council job (.github/workflows/devkit.yml)
+       ──────────────────────────────────────────────
+       1. checkout (full history)
+       2. go install devkit@latest
+       3. devkit council --base origin/<base> --mode core
+         → Anthropic: strict-critic, general-analyst
+         → OpenAI:    creative-explorer, performance-analyst
+         → synthesis
+       4. Post PR comment (update existing or create new)
+                │
+                ▼
+          PR comment posted
+          ─────────────────
+          ## devkit council
+            <findings>
 
-Required secrets: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (optional).
+                │
+          merge to main
+                │
+                ▼
+          bump-version job (ci/github.yml)
+          ────────────────────────────────
+          reads VERSION, bumps minor (0.N.0)
+          commits + pushes [bump version]
+```
+
+One job in `.github/workflows/devkit.yml`:
+
+- **council** — fires on every PR; runs multi-agent council review and posts findings as a PR comment (updates on re-push)
+
+Required secrets: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 
 ## CI integration
 

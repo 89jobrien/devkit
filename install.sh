@@ -140,24 +140,27 @@ EOF
 # Git hooks
 if [ -d ".git" ]; then
   if [ "$has_review" = true ]; then
+    cat > .git/hooks/pre-commit <<'HOOK'
+#!/bin/sh
+if [ "${DEVKIT_SKIP_HOOKS:-0}" = "1" ]; then
+  exit 0
+fi
+devkit review --base HEAD
+HOOK
+    chmod +x .git/hooks/pre-commit
+    echo "Installed git pre-commit hook (devkit review)"
+  fi
+
+  if [ "$has_council" = true ]; then
     cat > .git/hooks/pre-push <<'HOOK'
 #!/bin/sh
 if [ "${DEVKIT_SKIP_HOOKS:-0}" = "1" ]; then
   exit 0
 fi
-devkit review --base main
+devkit council --base main
 HOOK
     chmod +x .git/hooks/pre-push
-    echo "Installed git pre-push hook (devkit review)"
-  fi
-
-  if [ "$has_council" = true ]; then
-    cat > .git/hooks/post-commit <<'HOOK'
-#!/bin/sh
-echo "devkit: run 'devkit council' anytime to get AI council feedback on your project."
-HOOK
-    chmod +x .git/hooks/post-commit
-    echo "Installed git post-commit hook (council reminder)"
+    echo "Installed git pre-push hook (devkit council)"
   fi
 fi
 
