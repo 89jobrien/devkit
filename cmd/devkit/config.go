@@ -53,5 +53,5 @@ func LoadConfig() (*Config, error) {
 		}
 		dir = parent
 	}
-	return nil, fmt.Errorf(".devkit.toml not found (run install.sh first)")
+	return &Config{}, nil
 }

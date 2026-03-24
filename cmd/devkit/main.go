@@ -259,7 +259,7 @@ func main() {
 			}
 
 			cfg, _ := LoadConfig()
-			if cfg != nil && cfg.Project.Name != "" {
+			if cfg.Project.Name != "" {
 				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
 			}
 
