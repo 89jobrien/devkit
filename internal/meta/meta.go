@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"sync"
+
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,8 +40,7 @@ func Run(ctx context.Context, task, repoContext, sdkDocs string, runner Runner) 
 	}
 
 	outputs := make(map[string]string, len(plan))
-	mu := make(chan struct{}, 1)
-	mu <- struct{}{}
+	var mu sync.Mutex
 
 	g, gctx := errgroup.WithContext(ctx)
 	for _, spec := range plan {
@@ -49,9 +50,9 @@ func Run(ctx context.Context, task, repoContext, sdkDocs string, runner Runner) 
 			if err != nil {
 				return fmt.Errorf("agent %s: %w", spec.Name, err)
 			}
-			<-mu
+			mu.Lock()
 			outputs[spec.Name] = out
-			mu <- struct{}{}
+			mu.Unlock()
 			return nil
 		})
 	}

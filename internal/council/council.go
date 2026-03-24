@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"sync"
+
 	"golang.org/x/sync/errgroup"
 )
 
@@ -64,8 +66,7 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 	context_ := fmt.Sprintf("Branch vs %s\n\nCommits:\n%s\n\nDiff:\n```diff\n%s\n```", cfg.Base, cfg.Commits, cfg.Diff)
 
 	outputs := make(map[string]string, len(roleKeys))
-	mu := make(chan struct{}, 1)
-	mu <- struct{}{}
+	var mu sync.Mutex
 
 	g, gctx := errgroup.WithContext(ctx)
 	for _, key := range roleKeys {
@@ -77,9 +78,9 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 			if err != nil {
 				return fmt.Errorf("role %s: %w", key, err)
 			}
-			<-mu
+			mu.Lock()
 			outputs[key] = out
-			mu <- struct{}{}
+			mu.Unlock()
 			return nil
 		})
 	}
