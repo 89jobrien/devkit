@@ -58,3 +58,36 @@ func TestGrepTool(t *testing.T) {
 	assert.Contains(t, result, "main.go:2")
 	assert.Contains(t, result, "func main")
 }
+
+func TestBashToolRunsCommand(t *testing.T) {
+	tool := tools.BashTool(4096)
+	input, _ := json.Marshal(map[string]string{"command": "echo hello"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Equal(t, "hello\n", result)
+}
+
+func TestBashToolCapsOutput(t *testing.T) {
+	tool := tools.BashTool(10)
+	input, _ := json.Marshal(map[string]string{"command": "printf '%0.s1234567890' {1..100}"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(result), 10+len("[truncated]"))
+}
+
+func TestBashToolCapturesStderr(t *testing.T) {
+	tool := tools.BashTool(4096)
+	input, _ := json.Marshal(map[string]string{"command": "echo err >&2"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Contains(t, result, "err")
+}
+
+func TestBashToolNonZeroExit(t *testing.T) {
+	tool := tools.BashTool(4096)
+	input, _ := json.Marshal(map[string]string{"command": "exit 1"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	// Non-zero exit surfaces in output, not as a Go error
+	require.NoError(t, err)
+	assert.Contains(t, result, "exit status 1")
+}

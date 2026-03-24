@@ -2,10 +2,12 @@
 package tools
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -155,6 +157,53 @@ func GrepTool(root string) Tool {
 				}
 			}
 			return strings.Join(results, "\n"), nil
+		}),
+	}
+}
+
+// BashTool returns a Tool that executes a shell command via "sh -c" and returns
+// combined stdout+stderr. Output is capped at maxBytes; a "[truncated]" suffix
+// is appended when the cap is reached. Non-zero exit codes are reported in the
+// output (not as a Go error) so the agent sees the failure and can react.
+// Note: the cap is applied to raw output before appending the exit suffix,
+// so the final string may exceed maxBytes by the length of "(exit: ...)".
+// This is intentional — the exit status is always visible.
+func BashTool(maxBytes int) Tool {
+	return Tool{
+		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
+			Name:        "Bash",
+			Description: anthropic.String("Execute a shell command and return combined stdout+stderr."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"command": map[string]string{
+						"type":        "string",
+						"description": "Shell command to execute",
+					},
+				},
+			},
+		}},
+		Handler: HandlerFunc(func(ctx context.Context, input json.RawMessage) (string, error) {
+			var args struct {
+				Command string `json:"command"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return "", err
+			}
+			cmd := exec.CommandContext(ctx, "sh", "-c", args.Command)
+			var buf bytes.Buffer
+			cmd.Stdout = &buf
+			cmd.Stderr = &buf
+			runErr := cmd.Run()
+			out := buf.String()
+			if len(out) > maxBytes {
+				out = out[:maxBytes] + "[truncated]"
+			}
+			if runErr != nil && buf.Len() == 0 {
+				out = runErr.Error()
+			} else if runErr != nil {
+				out = fmt.Sprintf("%s\n(exit: %s)", out, runErr.Error())
+			}
+			return out, nil
 		}),
 	}
 }
