@@ -30,8 +30,8 @@ func askWithFallback(prompt string, baseURLOverride ...string) (text, provider s
 		key  string
 		fn   providerFn
 	}{
-		{"anthropic/claude-sonnet-4-6", os.Getenv("ANTHROPIC_API_KEY"), func(p, _ string) (string, error) {
-			return askAnthropic(p, anthropicBase)
+		{"anthropic/claude-sonnet-4-6", os.Getenv("ANTHROPIC_API_KEY"), func(p, key string) (string, error) {
+			return askAnthropic(p, key, anthropicBase)
 		}},
 		{"openai/gpt-4.1", os.Getenv("OPENAI_API_KEY"), askOpenAI},
 		{"google/gemini-2.5-flash", os.Getenv("GEMINI_API_KEY"), askGemini},
@@ -76,8 +76,7 @@ func postJSON(url string, headers map[string]string, body any) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func askAnthropic(prompt, baseURL string) (string, error) {
-	key := os.Getenv("ANTHROPIC_API_KEY")
+func askAnthropic(prompt, key, baseURL string) (string, error) {
 	raw, err := postJSON(baseURL+"/v1/messages",
 		map[string]string{"x-api-key": key, "anthropic-version": "2023-06-01"},
 		map[string]any{
