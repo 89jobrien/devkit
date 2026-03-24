@@ -50,8 +50,9 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const outPath = process.env.OUT;
-            if (!outPath.startsWith(process.env.RUNNER_TEMP)) {
+            const outPath = path.resolve(process.env.OUT);
+            const runnerTemp = path.resolve(process.env.RUNNER_TEMP) + path.sep;
+            if (!outPath.startsWith(runnerTemp)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }
             const raw = fs.readFileSync(outPath, 'utf8').trim();
@@ -81,6 +82,7 @@ jobs:
 
   council:
     if: github.event_name == 'workflow_dispatch'
+    environment: council
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -119,8 +121,9 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const outPath = process.env.OUT;
-            if (!outPath.startsWith(process.env.RUNNER_TEMP)) {
+            const outPath = path.resolve(process.env.OUT);
+            const runnerTemp = path.resolve(process.env.RUNNER_TEMP) + path.sep;
+            if (!outPath.startsWith(runnerTemp)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }
             const raw = fs.readFileSync(outPath, 'utf8').trim();

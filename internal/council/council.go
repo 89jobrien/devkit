@@ -56,6 +56,10 @@ var roles = map[string]struct{ label, persona string }{
 		"You are the PERFORMANCE ANALYST. Focus on allocations, blocking calls, algorithmic complexity. Include: **Health Score**, **Summary**, **Bottlenecks**, **Optimization Opportunities**, **Recommendations**."},
 }
 
+// ToolUseInstruction is appended to role prompts when tool use is available.
+// Runners that do not support tool calls should strip it from prompts.
+const ToolUseInstruction = " Read relevant source files to support your findings."
+
 var coreRoles = []string{"strict-critic", "creative-explorer", "general-analyst"}
 var extensiveRoles = append(append([]string{}, coreRoles...), "security-reviewer", "performance-analyst")
 
@@ -76,7 +80,7 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 		key := key
 		role := roles[key]
 		g.Go(func() error {
-			prompt := fmt.Sprintf("%s\n\nAnalyse this branch. Read relevant source files to support your findings.\n\n%s", role.persona, context_)
+			prompt := fmt.Sprintf("%s\n\nAnalyse this branch.%s\n\n%s", role.persona, ToolUseInstruction, context_)
 			r := cfg.Runner
 			if cfg.Runners != nil {
 				if override, ok := cfg.Runners[key]; ok {

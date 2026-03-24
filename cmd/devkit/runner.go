@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/89jobrien/devkit/internal/council"
 	"github.com/89jobrien/devkit/internal/loop"
 	"github.com/89jobrien/devkit/internal/tools"
 	"github.com/anthropics/anthropic-sdk-go"
@@ -75,12 +76,9 @@ func newOpenAIRunner() (*openAIRunner, bool) {
 	}, true
 }
 
-// openAIRunner does not support tool use. Strip the tool-use instruction from
-// council prompts so the model is not misled into trying to read files it cannot access.
-const toolUseInstruction = " Read relevant source files to support your findings."
-
 func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (string, error) {
-	prompt = strings.ReplaceAll(prompt, toolUseInstruction, "")
+	// Strip the tool-use instruction; openAIRunner has no tool support.
+	prompt = strings.ReplaceAll(prompt, council.ToolUseInstruction, "")
 	body, err := json.Marshal(map[string]any{
 		"model":      r.model,
 		"max_tokens": 4096,
@@ -102,12 +100,19 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 		return "", err
 	}
 	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 	if err != nil {
 		return "", fmt.Errorf("openai: read response: %w", err)
 	}
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
+		return "", fmt.Errorf("openai HTTP %d: authentication error", resp.StatusCode)
+	}
 	if resp.StatusCode >= 400 {
-		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, raw)
+		snippet := raw
+		if len(snippet) > 512 {
+			snippet = snippet[:512]
+		}
+		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, snippet)
 	}
 
 	var result struct {
