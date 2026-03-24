@@ -53,8 +53,7 @@ jobs:
           old=$(cat VERSION)
           major=$(echo "$old" | cut -d. -f1)
           minor=$(echo "$old" | cut -d. -f2)
-          patch=$(echo "$old" | cut -d. -f3)
-          new="$major.$minor.$((patch + 1))"
+          new="$major.$((minor + 1)).0"
           echo "$new" > VERSION
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
