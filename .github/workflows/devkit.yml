@@ -35,6 +35,10 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           OUT: ${{ runner.temp }}/review-${{ github.run_id }}-${{ github.run_attempt }}.txt
         run: |
+          if [[ -z "$BASE_REF" ]]; then
+            echo "::error::BASE_REF is empty (expected a pull_request event)"
+            exit 1
+          fi
           if [[ ! "$BASE_REF" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
             echo "::error::Unexpected BASE_REF: $BASE_REF"
             exit 1
@@ -56,8 +60,8 @@ jobs:
             const path = require('path');
             const runnerTemp = process.env.RUNNER_TEMP;
             if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
-            const outPath = path.resolve(process.env.OUT);
-            const tempBase = path.resolve(runnerTemp) + path.sep;
+            const outPath = fs.realpathSync(process.env.OUT);
+            const tempBase = fs.realpathSync(runnerTemp) + path.sep;
             if (!outPath.startsWith(tempBase)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }
@@ -134,8 +138,8 @@ jobs:
             const path = require('path');
             const runnerTemp = process.env.RUNNER_TEMP;
             if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
-            const outPath = path.resolve(process.env.OUT);
-            const tempBase = path.resolve(runnerTemp) + path.sep;
+            const outPath = fs.realpathSync(process.env.OUT);
+            const tempBase = fs.realpathSync(runnerTemp) + path.sep;
             if (!outPath.startsWith(tempBase)) {
               core.setFailed('OUT path is outside RUNNER_TEMP'); return;
             }

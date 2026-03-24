@@ -117,10 +117,10 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 	if err != nil {
 		return "", fmt.Errorf("openai: read response: %w", err)
 	}
-	if resp.StatusCode == 401 || resp.StatusCode == 403 {
-		return "", fmt.Errorf("openai HTTP %d: authentication error", resp.StatusCode)
-	}
 	if resp.StatusCode >= 400 {
+		if resp.StatusCode == 401 || resp.StatusCode == 403 {
+			return "", fmt.Errorf("openai HTTP %d: authentication error — check OPENAI_API_KEY", resp.StatusCode)
+		}
 		s := strings.ToValidUTF8(string(raw), "")
 		if len(s) > 512 {
 			s = s[:512]
