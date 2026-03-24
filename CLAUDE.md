@@ -14,7 +14,7 @@ Current version in `VERSION` file. CI bumps minor on push to main (`0.N.0`). Pat
 `.github/workflows/devkit.yml` runs `devkit council` on PRs (posts as comment); requires `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` secrets in repo settings.
 
 ## Development
-- `go test ./...` — 21 tests across 9 packages, no real API calls (httptest + stub runners)
+- `go test ./...` — 37 tests across 10 packages, no real API calls (httptest + stub runners)
 - `go build ./cmd/devkit ./cmd/ci-agent` — verify both binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
 - Pre-push hook runs `devkit review --base main`; bypass with `DEVKIT_SKIP_HOOKS=1`
