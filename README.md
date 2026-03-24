@@ -98,3 +98,4 @@ Hexagonal Go: each internal package (`council`, `review`, `meta`, `loop`, `tools
 ## License
 
 MIT
+
