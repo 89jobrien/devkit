@@ -25,11 +25,16 @@ type Config struct {
 		Focus string `toml:"focus"`
 	} `toml:"review"`
 	Components struct {
-		Council bool `toml:"council"`
-		Review  bool `toml:"review"`
-		Meta    bool `toml:"meta"`
-		CIAgent bool `toml:"ci_agent"`
+		Council  bool `toml:"council"`
+		Review   bool `toml:"review"`
+		Meta     bool `toml:"meta"`
+		CIAgent  bool `toml:"ci_agent"`
+		Diagnose bool `toml:"diagnose"`
 	} `toml:"components"`
+	Diagnose struct {
+		LogCmd  string `toml:"log_cmd"`
+		Service string `toml:"service"`
+	} `toml:"diagnose"`
 }
 
 // LoadConfig finds and parses the nearest .devkit.toml walking up from cwd.

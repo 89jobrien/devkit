@@ -32,6 +32,9 @@ type Config struct {
 	Diff    string
 	Commits string
 	Runner  Runner
+	// Runners overrides Runner for specific role keys (e.g. "creative-explorer").
+	// Roles not present here fall back to Runner.
+	Runners map[string]Runner
 }
 
 // Result holds all role outputs and the synthesis.
@@ -53,15 +56,29 @@ var roles = map[string]struct{ label, persona string }{
 		"You are the PERFORMANCE ANALYST. Focus on allocations, blocking calls, algorithmic complexity. Include: **Health Score**, **Summary**, **Bottlenecks**, **Optimization Opportunities**, **Recommendations**."},
 }
 
+// ToolUseInstruction is appended to role prompts when tool use is available.
+// Runners that do not support tool calls should strip it from prompts.
+const ToolUseInstruction = " Read relevant source files to support your findings."
+
 var coreRoles = []string{"strict-critic", "creative-explorer", "general-analyst"}
-var extensiveRoles = append(append([]string{}, coreRoles...), "security-reviewer", "performance-analyst")
+var extensiveRoles = []string{
+	"strict-critic", "creative-explorer", "general-analyst",
+	"security-reviewer", "performance-analyst",
+}
+
+func roleKeysForMode(mode string) []string {
+	src := coreRoles
+	if mode == "extensive" {
+		src = extensiveRoles
+	}
+	out := make([]string, len(src))
+	copy(out, src)
+	return out
+}
 
 // Run executes all council roles concurrently and returns their outputs.
 func Run(ctx context.Context, cfg Config) (*Result, error) {
-	roleKeys := coreRoles
-	if cfg.Mode == "extensive" {
-		roleKeys = extensiveRoles
-	}
+	roleKeys := roleKeysForMode(cfg.Mode)
 
 	context_ := fmt.Sprintf("Branch vs %s\n\nCommits:\n%s\n\nDiff:\n```diff\n%s\n```", cfg.Base, cfg.Commits, cfg.Diff)
 
@@ -73,8 +90,17 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 		key := key
 		role := roles[key]
 		g.Go(func() error {
-			prompt := fmt.Sprintf("%s\n\nAnalyse this branch. Read relevant source files to support your findings.\n\n%s", role.persona, context_)
-			out, err := cfg.Runner.Run(gctx, prompt, []string{"Read", "Glob", "Grep"})
+			prompt := fmt.Sprintf("%s\n\nAnalyse this branch.%s\n\n%s", role.persona, ToolUseInstruction, context_)
+			r := cfg.Runner
+			if cfg.Runners != nil {
+				if override, ok := cfg.Runners[key]; ok {
+					r = override
+				}
+			}
+			if r == nil {
+				return fmt.Errorf("role %s: no runner configured", key)
+			}
+			out, err := r.Run(gctx, prompt, []string{"Read", "Glob", "Grep"})
 			if err != nil {
 				return fmt.Errorf("role %s: %w", key, err)
 			}

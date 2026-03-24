@@ -4,7 +4,7 @@ AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a
 
 ## What it does
 
-- **council** — runs parallel AI roles (strict critic, creative explorer, analyst, security reviewer, performance analyst) against your branch diff and synthesizes a weighted health score
+- **council** — runs parallel AI roles (strict critic, creative explorer, analyst, security reviewer, performance analyst) against your branch diff and synthesizes a weighted health score. Strict critic and analyst use Anthropic; creative explorer and performance analyst use OpenAI when `OPENAI_API_KEY` is set.
 - **review** — single-pass AI diff review focused on a configurable concern area
 - **meta** — designs and runs parallel agents for any freeform task against your repo context
 - **ci-agent** — standalone binary that diagnoses failed CI jobs and opens/updates issues automatically (GitHub and Gitea)
@@ -12,7 +12,9 @@ AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a
 ## Requirements
 
 - Go 1.23+
-- An `ANTHROPIC_API_KEY` (council, review, meta); optionally `OPENAI_API_KEY` and `GEMINI_API_KEY` for ci-agent fallback
+- `ANTHROPIC_API_KEY` (all commands)
+- `OPENAI_API_KEY` (optional — used for two council roles and ci-agent fallback)
+- `GEMINI_API_KEY` (optional — ci-agent fallback only)
 - [gum](https://github.com/charmbracelet/gum) for the interactive installer
 
 ## Install
@@ -34,25 +36,96 @@ The installer will:
 2. Install the `devkit` and `ci-agent` binaries via `go install`
 3. Write `.devkit.toml` in your project root
 4. Copy the appropriate CI workflow file (`.github/workflows/ci.yml` or `.gitea/workflows/ci.yml`)
-5. Install git hooks (`pre-push` runs `devkit review`, `post-commit` reminds you about `devkit council`)
+5. Install git hooks — `pre-push` runs `devkit review --base main` and blocks on issues; `post-commit` prints a council reminder
 6. Write Claude Code hooks to `.claude/settings.json` so `devkit review` runs after file edits
+
+Bypass git hooks any time with `DEVKIT_SKIP_HOOKS=1 git push`.
 
 ## Usage
 
 ```sh
-# Multi-role branch analysis
+# AI diff review (also runs automatically as a pre-push hook and on PRs)
+devkit review --base main
+
+# Multi-role branch analysis (run on demand; takes a few minutes)
 devkit council --base main --mode core
 devkit council --base main --mode extensive   # adds security + performance roles
 
-# AI diff review
-devkit review --base main
-
-# Run parallel agents on any task
+# Run parallel agents on any freeform task
 devkit meta "find all places where we do not validate user input"
 echo "audit the auth layer" | devkit meta
 ```
 
 All commands log to `~/.dev-agents/<project>/`.
+
+## GitHub Actions
+
+
+```php
+  Developer commits
+          │
+          ▼
+    git commit
+          │
+    pre-commit: devkit review --base HEAD
+          │
+    ┌─────┴──────┐
+  issues?        clean
+    │              │
+  abort commit  commit succeeds
+                 │
+                 ▼
+    git push
+          │
+    pre-push: devkit council --base main
+          │
+    ┌─────┴──────┐
+  issues?        clean
+    │              │
+  abort push    push to GitHub
+                 │
+                 ▼
+          PR open/updated
+                │
+                ▼
+         council job (.github/workflows/devkit.yml)
+       ──────────────────────────────────────────────
+       1. checkout (full history)
+       2. go install devkit@latest
+       3. devkit council --base origin/<base> --mode core
+         → Anthropic: strict-critic, general-analyst
+         → OpenAI:    creative-explorer, performance-analyst
+         → synthesis
+       4. Post PR comment (update existing or create new)
+                │
+                ▼
+          PR comment posted
+          ─────────────────
+          ## devkit council
+            <findings>
+
+                │
+          merge to main
+                │
+                ▼
+          bump-version job (ci/github.yml)
+          ────────────────────────────────
+          reads VERSION, bumps minor (0.N.0)
+          commits + pushes [bump version]
+```
+
+One job in `.github/workflows/devkit.yml`:
+
+- **council** — fires on every PR; runs multi-agent council review and posts findings as a PR comment (updates on re-push)
+
+Required secrets: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
+
+## CI integration
+
+The CI templates in `ci/` include:
+
+- A `diagnose` job that runs `ci-agent` automatically on any CI failure, opening a GitHub/Gitea issue with an AI diagnosis
+- A `bump-version` job (GitHub only) that increments the minor version (`0.N.0`) on every successful push to main
 
 ## Configuration
 
@@ -78,13 +151,6 @@ focus = "security, performance, correctness"
 mode = "core"
 ```
 
-## CI integration
-
-The CI templates in `ci/` include:
-
-- A `diagnose` job that runs `ci-agent` automatically on any CI failure, opening a GitHub/Gitea issue with an AI diagnosis
-- A `bump-version` job (GitHub only) that increments the patch version in `VERSION` on every successful push to main
-
 ## Upgrading
 
 ```sh
@@ -98,4 +164,3 @@ Hexagonal Go: each internal package (`council`, `review`, `meta`, `loop`, `tools
 ## License
 
 MIT
-

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+DEVKIT_VERSION="${DEVKIT_VERSION:-v0.0.1}"
+
 # devkit installer
 
 if ! command -v go >/dev/null 2>&1; then
@@ -21,7 +23,7 @@ ci_platforms="$(gum choose --no-limit github gitea none)"
 
 # Component selection
 echo "Select components to enable:"
-components="$(gum choose --no-limit --selected council,review,meta,ci_agent council review meta ci_agent)"
+components="$(gum choose --no-limit --selected council,review,meta,ci_agent,diagnose council review meta ci_agent diagnose)"
 
 # Review focus
 review_focus="$(gum input --placeholder "security, performance, correctness" --prompt "Review focus: ")"
@@ -31,12 +33,14 @@ has_council=false
 has_review=false
 has_meta=false
 has_ci_agent=false
+has_diagnose=false
 echo "$components" | tr ',' '\n' | while IFS= read -r c; do
   case "$c" in
     council)   has_council=true ;;
     review)    has_review=true ;;
     meta)      has_meta=true ;;
     ci_agent)  has_ci_agent=true ;;
+    diagnose)  has_diagnose=true ;;
   esac
 done
 
@@ -45,14 +49,15 @@ if echo "$components" | grep -q "council";  then has_council=true;  fi
 if echo "$components" | grep -q "review";   then has_review=true;   fi
 if echo "$components" | grep -q "meta";     then has_meta=true;     fi
 if echo "$components" | grep -q "ci_agent"; then has_ci_agent=true; fi
+if echo "$components" | grep -q "diagnose"; then has_diagnose=true; fi
 
 # Install binaries
 gum spin --spinner dot --title "Installing devkit..." -- \
-  go install github.com/89jobrien/devkit/cmd/devkit@v0.0.1
+  go install github.com/89jobrien/devkit/cmd/devkit@${DEVKIT_VERSION}
 
 if [ "$has_ci_agent" = true ]; then
   gum spin --spinner dot --title "Installing ci-agent..." -- \
-    go install github.com/89jobrien/devkit/cmd/ci-agent@v0.0.1
+    go install github.com/89jobrien/devkit/cmd/ci-agent@${DEVKIT_VERSION}
 fi
 
 # Build ci_platforms TOML array
@@ -87,12 +92,17 @@ council  = $has_council
 review   = $has_review
 meta     = $has_meta
 ci_agent = $has_ci_agent
+diagnose = $has_diagnose
 
 [review]
 focus = "$review_focus"
 
 [council]
 mode = "core"
+
+[diagnose]
+# log_cmd = "journalctl -n 200 --no-pager"   # uncomment and customize if needed
+# service = ""                                 # focus on a specific service
 TOML
 
 echo "Wrote .devkit.toml"
@@ -110,7 +120,7 @@ copy_ci_file() {
     cp "ci/${platform}.yml" "$dest_dir/ci.yml"
     echo "Copied ci/${platform}.yml -> $dest_dir/ci.yml"
   else
-    url="https://raw.githubusercontent.com/89jobrien/devkit/v0.0.1/ci/${platform}.yml"
+    url="https://raw.githubusercontent.com/89jobrien/devkit/${DEVKIT_VERSION}/ci/${platform}.yml"
     if command -v curl >/dev/null 2>&1; then
       curl -fsSL "$url" -o "$dest_dir/ci.yml"
     else
@@ -130,24 +140,27 @@ EOF
 # Git hooks
 if [ -d ".git" ]; then
   if [ "$has_review" = true ]; then
+    cat > .git/hooks/pre-commit <<'HOOK'
+#!/bin/sh
+if [ "${DEVKIT_SKIP_HOOKS:-0}" = "1" ]; then
+  exit 0
+fi
+devkit review --base HEAD
+HOOK
+    chmod +x .git/hooks/pre-commit
+    echo "Installed git pre-commit hook (devkit review)"
+  fi
+
+  if [ "$has_council" = true ]; then
     cat > .git/hooks/pre-push <<'HOOK'
 #!/bin/sh
 if [ "${DEVKIT_SKIP_HOOKS:-0}" = "1" ]; then
   exit 0
 fi
-devkit review --base main
+devkit council --base main
 HOOK
     chmod +x .git/hooks/pre-push
-    echo "Installed git pre-push hook (devkit review)"
-  fi
-
-  if [ "$has_council" = true ]; then
-    cat > .git/hooks/post-commit <<'HOOK'
-#!/bin/sh
-echo "devkit: run 'devkit council' anytime to get AI council feedback on your project."
-HOOK
-    chmod +x .git/hooks/post-commit
-    echo "Installed git post-commit hook (council reminder)"
+    echo "Installed git pre-push hook (devkit council)"
   fi
 fi
 
