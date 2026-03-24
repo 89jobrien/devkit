@@ -69,7 +69,7 @@ func TestBashToolRunsCommand(t *testing.T) {
 
 func TestBashToolCapsOutput(t *testing.T) {
 	tool := tools.BashTool(10)
-	input, _ := json.Marshal(map[string]string{"command": "printf '%0.s1234567890' {1..100}"})
+	input, _ := json.Marshal(map[string]string{"command": "head -c 1000 /dev/zero | tr '\\0' 'x'"})
 	result, err := tool.Handler.Handle(context.Background(), input)
 	require.NoError(t, err)
 	assert.LessOrEqual(t, len(result), 10+len("[truncated]"))
@@ -90,4 +90,11 @@ func TestBashToolNonZeroExit(t *testing.T) {
 	// Non-zero exit surfaces in output, not as a Go error
 	require.NoError(t, err)
 	assert.Contains(t, result, "exit status 1")
+}
+
+func TestBashToolRejectsEmptyCommand(t *testing.T) {
+	tool := tools.BashTool(4096)
+	input, _ := json.Marshal(map[string]string{"command": ""})
+	_, err := tool.Handler.Handle(context.Background(), input)
+	assert.Error(t, err)
 }

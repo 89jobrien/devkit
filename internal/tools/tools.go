@@ -189,10 +189,16 @@ func BashTool(maxBytes int) Tool {
 			if err := json.Unmarshal(input, &args); err != nil {
 				return "", err
 			}
+			if args.Command == "" {
+				return "", fmt.Errorf("command is required")
+			}
 			cmd := exec.CommandContext(ctx, "sh", "-c", args.Command)
 			var buf bytes.Buffer
 			cmd.Stdout = &buf
 			cmd.Stderr = &buf
+			// Note: exec.CommandContext sends SIGKILL to the sh process on cancellation
+			// but not to its process group. Subprocesses spawned by the command (e.g.
+			// pipeline children) may outlive context cancellation.
 			runErr := cmd.Run()
 			out := buf.String()
 			if len(out) > maxBytes {
