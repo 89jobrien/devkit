@@ -26,7 +26,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install devkit
-        run: go install github.com/89jobrien/devkit/cmd/devkit@latest
+        run: go install github.com/89jobrien/devkit/cmd/devkit@v$(cat VERSION)
 
       - name: Review
         id: review
@@ -111,7 +111,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install devkit
-        run: go install github.com/89jobrien/devkit/cmd/devkit@latest
+        run: go install github.com/89jobrien/devkit/cmd/devkit@v$(cat VERSION)
 
       - name: Council
         id: council

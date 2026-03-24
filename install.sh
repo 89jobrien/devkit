@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+DEVKIT_VERSION="${DEVKIT_VERSION:-v0.0.1}"
+
 # devkit installer
 
 if ! command -v go >/dev/null 2>&1; then
@@ -48,11 +50,11 @@ if echo "$components" | grep -q "ci_agent"; then has_ci_agent=true; fi
 
 # Install binaries
 gum spin --spinner dot --title "Installing devkit..." -- \
-  go install github.com/89jobrien/devkit/cmd/devkit@v0.0.1
+  go install github.com/89jobrien/devkit/cmd/devkit@${DEVKIT_VERSION}
 
 if [ "$has_ci_agent" = true ]; then
   gum spin --spinner dot --title "Installing ci-agent..." -- \
-    go install github.com/89jobrien/devkit/cmd/ci-agent@v0.0.1
+    go install github.com/89jobrien/devkit/cmd/ci-agent@${DEVKIT_VERSION}
 fi
 
 # Build ci_platforms TOML array
@@ -110,7 +112,7 @@ copy_ci_file() {
     cp "ci/${platform}.yml" "$dest_dir/ci.yml"
     echo "Copied ci/${platform}.yml -> $dest_dir/ci.yml"
   else
-    url="https://raw.githubusercontent.com/89jobrien/devkit/v0.0.1/ci/${platform}.yml"
+    url="https://raw.githubusercontent.com/89jobrien/devkit/${DEVKIT_VERSION}/ci/${platform}.yml"
     if command -v curl >/dev/null 2>&1; then
       curl -fsSL "$url" -o "$dest_dir/ci.yml"
     else
