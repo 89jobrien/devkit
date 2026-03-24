@@ -85,7 +85,7 @@ func newOpenAIRunner() (*openAIRunner, bool) {
 		model: "gpt-4.1",
 		client: &http.Client{
 			Timeout:   120 * time.Second,
-			Transport: &bearerTransport{key: key, base: http.DefaultTransport},
+			Transport: &bearerTransport{key: key, base: http.DefaultTransport.(*http.Transport).Clone()},
 		},
 	}, true
 }
@@ -134,7 +134,7 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(raw, &result); err != nil {
-		return "", err
+		return "", fmt.Errorf("openai: decode response: %w", err)
 	}
 	if len(result.Choices) == 0 {
 		return "", errors.New("openai: no choices in response")

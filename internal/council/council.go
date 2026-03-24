@@ -61,7 +61,10 @@ var roles = map[string]struct{ label, persona string }{
 const ToolUseInstruction = " Read relevant source files to support your findings."
 
 var coreRoles = []string{"strict-critic", "creative-explorer", "general-analyst"}
-var extensiveRoles = append(append([]string{}, coreRoles...), "security-reviewer", "performance-analyst")
+var extensiveRoles = []string{
+	"strict-critic", "creative-explorer", "general-analyst",
+	"security-reviewer", "performance-analyst",
+}
 
 func roleKeysForMode(mode string) []string {
 	src := coreRoles

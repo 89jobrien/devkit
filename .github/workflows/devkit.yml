@@ -60,6 +60,10 @@ jobs:
             const path = require('path');
             const runnerTemp = process.env.RUNNER_TEMP;
             if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
+            const expectedName = `review-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}.txt`;
+            if (path.basename(process.env.OUT) !== expectedName) {
+              core.setFailed('OUT filename does not match expected pattern'); return;
+            }
             const outPath = fs.realpathSync(process.env.OUT);
             const tempBase = fs.realpathSync(runnerTemp) + path.sep;
             if (!outPath.startsWith(tempBase)) {
@@ -138,6 +142,10 @@ jobs:
             const path = require('path');
             const runnerTemp = process.env.RUNNER_TEMP;
             if (!runnerTemp) { core.setFailed('RUNNER_TEMP is not set'); return; }
+            const expectedName = `council-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}.txt`;
+            if (path.basename(process.env.OUT) !== expectedName) {
+              core.setFailed('OUT filename does not match expected pattern'); return;
+            }
             const outPath = fs.realpathSync(process.env.OUT);
             const tempBase = fs.realpathSync(runnerTemp) + path.sep;
             if (!outPath.startsWith(tempBase)) {
