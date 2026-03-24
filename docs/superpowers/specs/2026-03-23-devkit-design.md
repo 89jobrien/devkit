@@ -2,12 +2,17 @@
 
 **Date:** 2026-03-23
 **Status:** Approved
+**Module:** `github.com/89jobrien/devkit`
 
 ---
 
 ## Overview
 
-`devkit` is a standalone toolkit (`~/dev/devkit/`) that extracts minibox's self-correcting CI/agent workflow into a reusable scaffold. It ships a CI failure diagnosis agent, a multi-role branch review council, a meta-agent (parallel agent designer), and a diff review script — all wired into Gitea and/or GitHub Actions. A single `install.sh` copies a fully self-contained `scripts/` directory into any target project.
+`devkit` is a Go CLI toolkit that extracts minibox's self-correcting CI/agent workflow into a reusable scaffold. It ships as a compiled binary (`devkit`) providing council analysis, diff review, and a parallel meta-agent, plus a standalone CI failure diagnosis agent invocable via `go run` in any CI pipeline. A single `install.sh` generates a `.devkit.toml` config and CI workflow files in any target project.
+
+**Go SDK:** `github.com/anthropics/anthropic-sdk-go` (requires Go 1.23+).
+
+No agent-loop framework exists for Go; the SDK provides raw API access. `devkit` implements its own tool-use execution loop with `Read`, `Glob`, and `Grep` tools backed by Go filesystem functions.
 
 ---
 
@@ -15,69 +20,74 @@
 
 ```
 devkit/
-├── VERSION                     # semver string, e.g. "1.0.0"
+├── go.mod                         # module github.com/89jobrien/devkit
+├── go.sum
+├── VERSION                        # semver string, e.g. "1.0.0"
 ├── install.sh
 ├── upgrade.sh
 ├── Justfile
 │
-├── lib/
-│   └── agent_log.py
+├── cmd/
+│   ├── devkit/
+│   │   └── main.go                # CLI binary: install, council, review, meta, upgrade
+│   └── ci-agent/
+│       └── main.go                # Standalone CI diagnosis agent (go run in CI)
 │
-├── agents/
-│   ├── council.py
-│   ├── meta_agent.py
-│   ├── ai_review.py
-│   └── ci_agent/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── providers.py
-│       └── issues.py
+├── internal/
+│   ├── log/
+│   │   └── log.go                 # Structured JSONL + per-commit markdown logging
+│   ├── tools/
+│   │   └── tools.go               # Read, Glob, Grep as Anthropic tool definitions + handlers
+│   ├── loop/
+│   │   └── loop.go                # Tool-use execution loop
+│   ├── council/
+│   │   └── council.go             # Multi-role branch analysis
+│   ├── review/
+│   │   └── review.go              # Diff review
+│   ├── meta/
+│   │   └── meta.go                # Design → parallel agents → synthesize
+│   └── platform/
+│       ├── platform.go            # Platform interface
+│       ├── gitea.go               # Gitea Actions API client
+│       └── github.go              # GitHub Actions API client
 │
 └── ci/
-    ├── gitea.yml
-    └── github.yml
+    ├── gitea.yml                  # Gitea Actions workflow template
+    └── github.yml                 # GitHub Actions workflow template
 ```
 
 ---
 
-## PROJECT CONFIG Blocks
+## Configuration: `.devkit.toml`
 
-Scripts with project-specific content use sentinel comments:
+Lives in the project root. Written by `install.sh`, edited by the user, never overwritten by `upgrade.sh`.
 
-```python
-# --- PROJECT CONFIG START ---
-PROJECT_DESCRIPTION = "A Linux container runtime written in Rust."
-# --- PROJECT CONFIG END ---
+```toml
+[project]
+name        = "myproject"
+description = "One-line description sent to the CI diagnosis agent."
+version     = "1.0.0"       # devkit version used at install time
+install_date = "2026-03-23"
+ci_platforms = ["gitea", "github"]
+
+[context]
+files = ["CLAUDE.md", "AGENTS.md", "README.md"]
+
+[review]
+focus = """
+- Security: injection, auth bypasses, dependency risks
+- Correctness: error handling, breaking API changes
+- Unsafe patterns: language-specific concerns appended by install.sh
+"""
+
+[components]
+council   = true
+review    = true
+meta      = true
+ci_agent  = true
 ```
 
-Only `ci_agent/__main__.py` and `ai_review.py` contain PROJECT CONFIG blocks. All other files are fully devkit-owned.
-
-### upgrade.sh merge algorithm
-
-For files containing PROJECT CONFIG blocks:
-1. Read the currently-installed file → extract content between sentinels (the "old config")
-2. Read the new file from devkit source → locate the same sentinel pair
-3. Replace the content between sentinels in the new file with the old config verbatim
-4. Write the result to the installed path
-
-The sentinels themselves are always taken from the new devkit version. If a new devkit version adds a second PROJECT CONFIG block, the block is installed with its default content and a notice is printed: `"New PROJECT CONFIG block added to <file> — review and customize."`
-
----
-
-## `.devkit.json` Receipt Schema
-
-```json
-{
-  "version": "1.0.0",
-  "install_date": "2026-03-23",
-  "project_name": "myproject",
-  "project_description": "One-line description baked into CI agent prompt.",
-  "ci_platforms": ["gitea", "github"],
-  "components": ["council", "meta-agent", "ai-review", "ci-agent"]
-}
-```
-
-`upgrade.sh` only upgrades components listed in `"components"`. It prints a notice for any new components available in the devkit version being upgraded to, but does not install them automatically. On apparent downgrade (new `VERSION` < receipt `version`), upgrade.sh prints a warning and prompts for confirmation before proceeding.
+`review.focus` is the only field whose default is language-specific (appended by install.sh). All other fields are project-invariant.
 
 ---
 
@@ -85,49 +95,35 @@ The sentinels themselves are always taken from the new devkit version. If a new 
 
 ### Run-twice behavior
 
-If `scripts/.devkit.json` already exists, `install.sh` aborts:
+If `.devkit.toml` already exists, aborts:
 
 ```
-Error: devkit already installed (scripts/.devkit.json found).
-Run ~/dev/devkit/upgrade.sh to update.
+Error: devkit already installed (.devkit.toml found).
+Run ~/dev/devkit/upgrade.sh to update CI templates.
 ```
 
 ### Prompts
 
 1. **Project name** — default: current directory name
-2. **One-line description** — burned into `PROJECT_DESCRIPTION`
+2. **One-line description** — written to `project.description`
 3. **CI platform** — `gitea`, `github`, or `both`
-4. **Components** — multi-select, default all: `council`, `meta-agent`, `ai-review`, `ci-agent`
+4. **Components** — multi-select, default all: `council`, `review`, `meta`, `ci-agent`
 
 ### What it generates
 
 ```
-scripts/
-├── .devkit.json
-├── lib/
-│   └── agent_log.py
-├── council.py              (if selected)
-├── meta_agent.py           (if selected)
-├── ai_review.py            (if selected)
-└── ci_agent/               (if selected)
-    ├── __init__.py
-    ├── __main__.py         (PROJECT_DESCRIPTION baked in)
-    ├── providers.py
-    └── issues.py
-
-.gitea/workflows/ci.yml     (if gitea or both — skipped with warning if exists)
-.github/workflows/ci.yml    (if github or both — skipped with warning if exists)
+.devkit.toml                       # project config receipt
+.gitea/workflows/ci.yml            # if gitea or both (skipped with warning if exists)
+.github/workflows/ci.yml           # if github or both (skipped with warning if exists)
 ```
 
 Prints Justfile snippet to stdout. No automated Justfile modification.
 
 ### Language detection
 
-Checks for manifest files in the project root only (top-level). Monorepos with manifests only in subdirectories fall back to `YOUR_TEST_COMMAND` — this is a known limitation.
+Checks for manifest files in the project root only (top-level; monorepos fall back to `YOUR_TEST_COMMAND`).
 
-Applies to: CI template `YOUR_TEST_COMMAND` substitution, and `REVIEW_FOCUS` additions in `ai_review.py`.
-
-| Detected file | Test command | `ai_review.py` focus additions |
+| Detected file | Test command | `review.focus` additions |
 |---|---|---|
 | `Cargo.toml` | `cargo test --workspace` | path traversal, unsafe block soundness |
 | `pyproject.toml` / `setup.py` | `uv run pytest` | injection, deserialization safety |
@@ -137,145 +133,174 @@ Applies to: CI template `YOUR_TEST_COMMAND` substitution, and `REVIEW_FOCUS` add
 
 ---
 
-## Agent Scripts
+## Binary Distribution
 
-All use `#!/usr/bin/env -S uv run` + PEP 723 inline deps. Each imports `agent_log` with:
-
-```python
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib"))
-import agent_log
+```bash
+go install github.com/89jobrien/devkit/cmd/devkit@latest
 ```
 
-This resolves to `scripts/lib/agent_log.py` regardless of working directory.
+The binary reads `.devkit.toml` from the current working directory (or nearest parent containing it). `DEVKIT_PROJECT` env var can override the project name for log namespacing.
 
-### `agent_log.py`
+---
 
-Reads `DEVKIT_PROJECT` env var for log namespace. Falls back to `git rev-parse --show-toplevel` basename.
+## Internal: Tool-Use Loop (`internal/loop`)
 
-Writes to:
-- `~/.dev-agents/<project>/agent-runs.jsonl` — JSONL telemetry
-- `~/.dev-agents/<project>/ai-logs/<sha>-<script>.md` — per-commit markdown archives
+Since the Go SDK provides raw API access (no agent framework), `devkit` implements its own tool-use loop:
 
-API:
+```
+RunAgent(ctx, client, prompt, tools) → (string, error)
 
-```python
-def log_start(script: str, args: dict) -> str:
-    """Write 'running' entry to JSONL. Returns run_id (ISO timestamp)."""
-
-def log_complete(run_id: str, script: str, args: dict, output: str, duration_s: float) -> None:
-    """Write 'complete' entry to JSONL."""
-
-def save_commit_log(sha: str, script: str, content: str, meta: dict) -> Path:
-    """Write ~/.dev-agents/<project>/ai-logs/<sha>-<script>.md with YAML-style header + content."""
-
-def git_short_sha() -> str:
-    """Return output of git rev-parse --short HEAD."""
+1. Build messages = [UserMessage(prompt)]
+2. Call client.Messages.New(ctx, params{model, maxTokens, messages, tools})
+3. Append response to messages
+4. If StopReason == "end_turn": extract and return text content
+5. For each ToolUseBlock in response: execute tool, collect ToolResultBlock
+6. Append NewUserMessage(toolResults...) to messages
+7. Goto 2
 ```
 
-### `council.py`
+Parallel execution (for council roles and meta-agent workers) uses `golang.org/x/sync/errgroup`.
 
-**Core mode** (`--mode core`, default): 3 roles. **Extensive mode** (`--mode extensive`): 5 roles. Synthesis is a sequential step after all roles complete; it is not a role.
+---
+
+## Internal: Tools (`internal/tools`)
+
+Three tools exposed as `anthropic.ToolUnionParam`:
+
+**`Read`** — reads a file at a given path, returns content as string. Errors on paths outside the working directory tree.
+
+**`Glob`** — matches files against a glob pattern, returns newline-separated list of paths.
+
+**`Grep`** — searches file content for a regex pattern, returns matching lines with file:line context.
+
+All three validate that paths stay within the working directory (no `..` traversal).
+
+---
+
+## `devkit council`
+
+Reads `.devkit.toml` for project name, then runs multi-role branch analysis.
+
+**Core mode** (default, `--mode core`): 3 roles run concurrently via `errgroup`. **Extensive mode** (`--mode extensive`): 5 roles. Synthesis is a sequential step after all roles complete.
 
 Roles:
-- **Strict Critic** — conservative, demands evidence
+- **Strict Critic** — conservative, demands evidence, health score 0–1
 - **Creative Explorer** — optimistic, surfaces opportunities
 - **General Analyst** — balanced, evidence-based
 - *(extensive only)* **Security Reviewer** — attack surface, injection, traversal, auth, dependencies
 - *(extensive only)* **Performance Analyst** — allocations, blocking calls, algorithmic complexity
 
-Each role returns a health score 0.0–1.0 and structured findings.
+Synthesis: weighted meta-score (Strict Critic 1.5×, others 1.0×), consensus, tensions, ranked recommendations, verdict.
 
-**Synthesis**: weighted meta-score where Strict Critic has weight 1.5×, all other roles have weight 1.0×. Outputs: consensus points, dialectic tensions, ranked recommendations, final verdict (Good / Needs work / Significant issues).
+`--no-synthesis`: role outputs printed in sequence, no synthesis step.
 
-**`--no-synthesis`**: role outputs are printed in sequence with separator lines; no synthesis step runs.
-
-CLI: `council.py [--base main] [--mode core|extensive] [--no-synthesis]`
-
-Diff: `git diff {base}...HEAD`; falls back to `git diff HEAD` if no commits ahead of base.
-
-### `meta_agent.py`
-
-Fetches and caches the Claude Agent SDK docs (24h TTL) at `~/.dev-agents/cache/sdk-docs.md`. Source URLs:
-- `https://docs.anthropic.com/en/docs/claude-code/sdk`
-- `https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-python`
-
-HTML is stripped to plain text before caching. Cache is keyed to the file's mtime; `--refresh-docs` forces re-fetch.
-
-Discovers repo context from any of `CLAUDE.md`, `AGENTS.md`, `README.md` that exist, plus `git log --oneline -20`, `git status --short`, and top-150 file paths (excluding build artifacts).
-
-Flow:
-1. **Designer agent** — receives task + repo context + SDK docs, outputs a JSON array of 2–5 agent specs (`name`, `role`, `prompt`, `tools`)
-2. **Worker agents** — run concurrently via `asyncio.gather`, each receives its self-contained prompt
-3. **Synthesis agent** — combines all outputs into Summary, Key Findings, Recommended Actions, Open Questions
-
-CLI: `meta_agent.py "task"` or `echo "task" | meta_agent.py`
-Flags: `--no-synthesis`, `--refresh-docs`
-
-### `ai_review.py`
-
-Contains a `# --- PROJECT CONFIG START/END ---` block:
-
-```python
-# --- PROJECT CONFIG START ---
-REVIEW_FOCUS = """
-- Security: ...
-- Correctness: ...
-- Breaking changes: ...
-- Error handling: ...
-"""
-# --- PROJECT CONFIG END ---
-```
-
-`install.sh` appends language-specific lines to this block.
+CLI: `devkit council [--base main] [--mode core|extensive] [--no-synthesis]`
 
 Diff: `git diff {base}...HEAD`; falls back to `git diff HEAD`.
 
-CLI: `ai_review.py [--base main]`
+---
 
-### `ci_agent/__main__.py`
+## `devkit review`
 
-Contains two `# --- PROJECT CONFIG START/END ---` blocks:
+Reads `review.focus` from `.devkit.toml`. Runs a single-agent diff review with `Read`, `Glob`, `Grep` tools.
 
-```python
-# --- PROJECT CONFIG START ---
-PROJECT_DESCRIPTION = "A Python web service."
-PROJECT_CONTEXT_FILES = ["CLAUDE.md", "AGENTS.md", "README.md"]
-# --- PROJECT CONFIG END ---
+CLI: `devkit review [--base main]`
+
+Diff: `git diff {base}...HEAD`; falls back to `git diff HEAD`.
+
+---
+
+## `devkit meta`
+
+Caches Claude Agent SDK docs (24h TTL) at `~/.dev-agents/cache/sdk-docs.md`. Source URLs:
+- `https://docs.anthropic.com/en/docs/claude-code/sdk`
+- `https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-python`
+
+Discovers repo context from any of `CLAUDE.md`, `AGENTS.md`, `README.md` that exist, plus `git log --oneline -20`, `git status --short`, and top-150 file paths.
+
+Flow:
+1. **Designer agent** — receives task + repo context + SDK docs, outputs a JSON array of 2–5 agent specs (`name`, `role`, `prompt`, `tools`)
+2. **Worker agents** — run concurrently via `errgroup`, each receives its self-contained prompt
+3. **Synthesis agent** — combines all outputs into Summary, Key Findings, Recommended Actions, Open Questions
+
+CLI: `devkit meta "task description"`
+Flags: `--no-synthesis`, `--refresh-docs`
+
+---
+
+## `devkit upgrade`
+
+1. Runs `go install github.com/89jobrien/devkit/cmd/devkit@latest`
+2. Reads current devkit `VERSION`
+3. If `.devkit.toml` not found: aborts (not a devkit project)
+4. If new VERSION < `.devkit.toml` version: warns and prompts confirmation
+5. Regenerates CI workflow files (`ci/gitea.yml`, `ci/github.yml`) from current templates — prompts before overwriting if they exist
+6. Updates `project.version` and `project.install_date` in `.devkit.toml`
+7. Prints notice of any new components available that are set to `false` in `[components]`
+
+**Known limitation:** Justfile snippet is not auto-updated on upgrade.
+
+---
+
+## Logging (`internal/log`)
+
+Reads `DEVKIT_PROJECT` env var; falls back to `.devkit.toml` project name; falls back to `git rev-parse --show-toplevel` basename.
+
+Writes to:
+- `~/.dev-agents/<project>/agent-runs.jsonl` — JSONL telemetry (start + completion)
+- `~/.dev-agents/<project>/ai-logs/<sha>-<command>.md` — per-commit markdown archives
+
+```go
+func Start(command string, args map[string]string) RunID
+func Complete(id RunID, command string, args map[string]string, output string, duration time.Duration)
+func SaveCommitLog(sha, command, content string, meta map[string]string) (string, error)
+func GitShortSHA() string
 ```
 
-**Flow:**
+---
 
-1. Read required env vars: `CI_PLATFORM`, `REPO`, `RUN_ID`, `COMMIT_SHA` + platform token
-2. Fetch jobs for the run via platform API; filter to `conclusion == "failure"`
-3. Fetch log text for each failed job (truncate to last 30 000 bytes if larger)
-4. Read any `PROJECT_CONTEXT_FILES` that exist in the checkout
-5. Build prompt: project description + context file contents + log sections
-6. Call `providers.ask_with_fallback(prompt)` → `(diagnosis, provider_name)`
-7. Post commit status `pending` (`ci/agent-diagnosis` context)
-8. Run LLM; update commit status to `failure` (or `error` if all providers failed)
-9. Call `issues.find_issue_for_commit`; if found, append comment; if not, create issue
+## `cmd/ci-agent` — Standalone CI Diagnosis Agent
+
+Invoked in CI via:
+```yaml
+run: go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0
+```
+
+No binary installation required on CI runners. The version tag in the CI YAML pins the agent to the devkit version installed at `install.sh` time; `devkit upgrade` updates this tag when regenerating CI files.
+
+### Flow
+
+1. Read env: `CI_PLATFORM`, `REPO`, `RUN_ID`, `COMMIT_SHA` + platform token
+2. Fetch jobs for the run → filter `conclusion == "failure"`
+3. Fetch log text per failed job (truncate to last 30,000 bytes if larger)
+4. Read `project.description` and `context.files` from `.devkit.toml` in the checkout
+5. Read any context files that exist
+6. Build prompt: description + context + log sections
+7. Call LLM provider fallback chain → `(diagnosis, providerName)`
+8. Post commit status `pending` → `failure`/`error`
+9. `FindIssueForCommit` → append comment or create issue
+
+### LLM Provider Fallback
+
+Raw HTTP calls (no SDK dependency in the standalone agent, to keep `go run` fast):
+Anthropic (`claude-sonnet-4-6`) → OpenAI (`gpt-4.1`) → Gemini (`gemini-2.5-flash`)
+
+Skips provider if API key env var absent. Returns `ErrDiagnosisUnavailable` if all fail.
+
+### Platform API (`platform.go` interface)
+
+Selected via `CI_PLATFORM` env var (`"gitea"` or `"github"`).
+
+Both implement:
+- `SetCommitStatus(state, description string)` — context: `ci/agent-diagnosis`
+- `EnsureLabelExists()` — creates `ci-failure` label (color `#e11d48`); idempotent
+- `FindIssueForCommit(sha string) (int, bool)` — paginates open `ci-failure` issues, searches body for `<!-- sha: {sha} -->`, returns first match
+- `CreateIssue(sha, diagnosis, provider string, failedJobs []string, runID string) (int, error)`
+- `AddComment(issueNumber int, diagnosis, provider string) error`
 
 **Job log fetching:**
-
-- **Gitea**: `GET {GITEA_URL}/api/v1/repos/{REPO}/actions/runs/{RUN_ID}/jobs?limit=50` → job list; then `GET {GITEA_URL}/api/v1/repos/{REPO}/actions/jobs/{job_id}/logs` → raw log bytes. Auth: `Authorization: token {CI_AGENT_TOKEN}`.
-- **GitHub**: `GET https://api.github.com/repos/{REPO}/actions/runs/{RUN_ID}/jobs` → job list; then `GET https://api.github.com/repos/{REPO}/actions/jobs/{job_id}/logs` → redirects to log download URL. Auth: `Authorization: Bearer {GITHUB_TOKEN}`.
-
-### `ci_agent/providers.py`
-
-Fallback chain: Anthropic (`claude-sonnet-4-6`) → OpenAI (`gpt-4.1`) → Gemini (`gemini-2.5-flash`). stdlib `urllib` only. Skips provider if its API key env var is absent. Raises `DiagnosisUnavailable` if all providers fail.
-
-Returns `(diagnosis_text: str, provider_name: str)`.
-
-### `ci_agent/issues.py`
-
-Platform selected via `CI_PLATFORM` env var (`"gitea"` or `"github"`). Both implement:
-
-- `set_commit_status(state, description)` — posts to `ci/agent-diagnosis` context
-- `ensure_label_exists()` — creates `ci-failure` label (color `#e11d48`) if absent; idempotent
-- `find_issue_for_commit(sha) -> int | None` — paginates open `ci-failure` issues searching body for `<!-- sha: {sha} -->` marker; returns first matching issue number, or `None` if not found
-- `create_issue(sha, diagnosis, provider, failed_jobs, run_id) -> int` — creates issue with title `"CI failure: {sha[:8]} — {jobs}"`, body includes diagnosis + run URL + `<!-- sha: {sha} -->` marker
-- `add_comment(issue_number, diagnosis, provider)` — appends re-run diagnosis as comment
+- **Gitea**: `GET {GITEA_URL}/api/v1/repos/{REPO}/actions/runs/{RUN_ID}/jobs` → `GET /jobs/{id}/logs`. Auth: `Authorization: token {CI_AGENT_TOKEN}`.
+- **GitHub**: `GET https://api.github.com/repos/{REPO}/actions/runs/{RUN_ID}/jobs` → `GET /jobs/{id}/logs` (follows redirect). Auth: `Authorization: Bearer {GITHUB_TOKEN}`.
 
 ---
 
@@ -308,10 +333,13 @@ jobs:
     if: failure()
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
       - name: run diagnosis agent
         env:
           CI_PLATFORM: gitea
-          GITEA_URL: http://YOUR_GITEA_HOST:3000   # full base URL, no /api/v1
+          GITEA_URL: http://YOUR_GITEA_HOST:3000    # full base URL, no /api/v1
           CI_AGENT_TOKEN: ${{ secrets.CI_AGENT_TOKEN }}
           REPO: ${{ gitea.repository }}
           RUN_ID: ${{ gitea.run_id }}
@@ -319,7 +347,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python3 -m scripts.ci_agent
+        run: go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0
 ```
 
 ### GitHub (`.github/workflows/ci.yml`)
@@ -349,6 +377,9 @@ jobs:
     if: failure()
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
       - name: run diagnosis agent
         env:
           CI_PLATFORM: github
@@ -359,7 +390,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python3 -m scripts.ci_agent
+        run: go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0
 ```
 
 ### Required secrets
@@ -369,21 +400,8 @@ jobs:
 | `ANTHROPIC_API_KEY` | Recommended | Primary LLM provider |
 | `OPENAI_API_KEY` | Optional | Fallback |
 | `GEMINI_API_KEY` | Optional | Fallback |
-| `CI_AGENT_TOKEN` | Gitea only | PAT with repo read + issue write permissions |
+| `CI_AGENT_TOKEN` | Gitea only | PAT with repo read + issue write |
 | `GITHUB_TOKEN` | GitHub only | Auto-provided by GitHub Actions |
-
----
-
-## upgrade.sh
-
-1. Abort if `scripts/.devkit.json` not found
-2. Read `VERSION` from `~/dev/devkit/VERSION`
-3. If new version < receipt version: print warning, prompt for confirmation
-4. For each component in receipt: re-copy devkit-owned files; apply PROJECT CONFIG merge algorithm for `__main__.py` and `ai_review.py`; print notice for any new PROJECT CONFIG blocks
-5. Print notice of new components available in current devkit version that are absent from receipt
-6. Update `version` and `install_date` in `scripts/.devkit.json`
-
-**Known limitation:** Justfile snippet is not auto-updated on upgrade. Users compare and apply changes manually.
 
 ---
 
@@ -392,13 +410,13 @@ jobs:
 ```makefile
 # devkit recipes — add to your Justfile
 council base="main" mode="core":
-    uv run scripts/council.py --base {{base}} --mode {{mode}}
+    devkit council --base {{base}} --mode {{mode}}
 
-ai-review base="main":
-    uv run scripts/ai_review.py --base {{base}}
+review base="main":
+    devkit review --base {{base}}
 
-meta-agent task:
-    uv run scripts/meta_agent.py "{{task}}"
+meta task:
+    devkit meta "{{task}}"
 ```
 
 ---
@@ -406,8 +424,7 @@ meta-agent task:
 ## Non-Goals
 
 - No dashboard
-- No `diagnose.py` (runtime-specific — each project adds its own if needed)
-- No Python package / PyPI distribution
+- No `diagnose` command (runtime-specific — each project writes its own if needed)
 - No GitLab support
 - No automated Justfile modification
 - No monorepo language detection (top-level manifests only)
