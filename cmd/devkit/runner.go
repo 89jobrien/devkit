@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/89jobrien/devkit/internal/loop"
@@ -74,12 +75,20 @@ func newOpenAIRunner() (*openAIRunner, bool) {
 	}, true
 }
 
+// openAIRunner does not support tool use. Strip the tool-use instruction from
+// council prompts so the model is not misled into trying to read files it cannot access.
+const toolUseInstruction = " Read relevant source files to support your findings."
+
 func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (string, error) {
-	body, _ := json.Marshal(map[string]any{
+	prompt = strings.ReplaceAll(prompt, toolUseInstruction, "")
+	body, err := json.Marshal(map[string]any{
 		"model":      r.model,
 		"max_tokens": 4096,
 		"messages":   []map[string]string{{"role": "user", "content": prompt}},
 	})
+	if err != nil {
+		return "", fmt.Errorf("openai: marshal request: %w", err)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		"https://api.openai.com/v1/chat/completions", bytes.NewReader(body))
 	if err != nil {
@@ -93,7 +102,10 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 		return "", err
 	}
 	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("openai: read response: %w", err)
+	}
 	if resp.StatusCode >= 400 {
 		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, raw)
 	}
