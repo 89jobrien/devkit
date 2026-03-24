@@ -113,7 +113,7 @@ jobs:
           BASE: ${{ inputs.base }}
           OUT: ${{ runner.temp }}/council-${{ github.run_id }}-${{ github.run_attempt }}.txt
         run: |
-          if [[ ! "$BASE" =~ ^[a-zA-Z0-9._/~^-]+$ ]]; then
+          if [[ ! "$BASE" =~ ^[-a-zA-Z0-9._/~^]+$ ]]; then
             echo "::error::Unexpected base input: $BASE"
             exit 1
           fi

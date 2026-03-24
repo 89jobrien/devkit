@@ -94,6 +94,9 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 					r = override
 				}
 			}
+			if r == nil {
+				return fmt.Errorf("role %s: no runner configured", key)
+			}
 			out, err := r.Run(gctx, prompt, []string{"Read", "Glob", "Grep"})
 			if err != nil {
 				return fmt.Errorf("role %s: %w", key, err)
