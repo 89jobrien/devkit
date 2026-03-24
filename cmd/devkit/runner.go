@@ -32,10 +32,15 @@ func newAgentRunner() *agentRunner {
 
 func (r *agentRunner) Run(ctx context.Context, prompt string, toolNames []string) (string, error) {
 	wd, _ := os.Getwd()
+	// allTools lists every tool available to any runner. Tools are filtered by
+	// name (via t.Definition.OfTool.Name) when a caller provides toolNames — so
+	// all Tool values here must use the OfTool variant, not OfToolBash or other
+	// ToolUnionParam alternatives, or they will silently not match.
 	allTools := []tools.Tool{
 		tools.ReadTool(wd),
 		tools.GlobTool(wd),
 		tools.GrepTool(wd),
+		tools.BashTool(30_000),
 	}
 
 	var selected []tools.Tool

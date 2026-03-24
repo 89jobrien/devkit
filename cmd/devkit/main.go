@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/89jobrien/devkit/internal/council"
+	"github.com/89jobrien/devkit/internal/diagnose"
 	devlog "github.com/89jobrien/devkit/internal/log"
 	"github.com/89jobrien/devkit/internal/meta"
 	"github.com/89jobrien/devkit/internal/review"
@@ -312,7 +313,57 @@ func main() {
 	metaCmd.Flags().BoolVar(&metaNoSynth, "no-synthesis", false, "Skip synthesis")
 	metaCmd.Flags().BoolVar(&metaRefreshDocs, "refresh-docs", false, "Force re-fetch SDK docs")
 
-	root.AddCommand(councilCmd, reviewCmd, metaCmd)
+	// diagnose subcommand
+	var diagnoseService, diagnoseLogCmd string
+	diagnoseCmd := &cobra.Command{
+		Use:   "diagnose",
+		Short: "Diagnose a service failure from logs and system state",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := LoadConfig()
+			if err != nil {
+				return err
+			}
+			if cfg.Project.Name != "" {
+				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+			}
+
+			// Flags override config; config overrides defaults.
+			service := diagnoseService
+			if service == "" {
+				service = cfg.Diagnose.Service
+			}
+			logCmd := diagnoseLogCmd
+			if logCmd == "" {
+				logCmd = cfg.Diagnose.LogCmd
+			}
+
+			runner := newAgentRunner()
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("diagnose", map[string]string{"service": service})
+			start := time.Now()
+
+			result, err := diagnose.Run(cmd.Context(), diagnose.Config{
+				Service: service,
+				LogCmd:  logCmd,
+				Runner: diagnose.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return runner.Run(ctx, prompt, ts)
+				}),
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result)
+			devlog.Complete(id, "diagnose", map[string]string{"service": service}, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "diagnose", result, map[string]string{"service": service})
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	diagnoseCmd.Flags().StringVar(&diagnoseService, "service", "", "Service/component to focus on")
+	diagnoseCmd.Flags().StringVar(&diagnoseLogCmd, "log-cmd", "", "Shell command to fetch logs (overrides .devkit.toml)")
+
+	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
