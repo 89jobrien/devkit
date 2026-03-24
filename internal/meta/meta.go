@@ -17,6 +17,13 @@ type Runner interface {
 	Run(ctx context.Context, prompt string, tools []string) (string, error)
 }
 
+// RunnerFunc is a function adapter for Runner.
+type RunnerFunc func(ctx context.Context, prompt string, tools []string) (string, error)
+
+func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (string, error) {
+	return f(ctx, prompt, tools)
+}
+
 // AgentSpec is output from the designer agent.
 type AgentSpec struct {
 	Name   string   `json:"name"`
