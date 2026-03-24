@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -112,20 +111,21 @@ func GlobTool(root string) Tool {
 	}
 }
 
-// GrepTool returns a Tool that searches file content for a regex pattern.
+// GrepTool returns a Tool that searches file content for a regex pattern using rg (ripgrep).
+// Glob patterns support recursion (e.g. "**/*.go"). Returns file:line matches.
 func GrepTool(root string) Tool {
 	return Tool{
 		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
 			Name:        "Grep",
-			Description: anthropic.String("Search file content for a regex pattern. Returns file:line matches."),
+			Description: anthropic.String("Search file content for a regex pattern. Supports recursive glob patterns (e.g. '**/*.go'). Returns file:line matches."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"pattern": map[string]string{"type": "string", "description": "Regular expression pattern"},
-					"glob":    map[string]string{"type": "string", "description": "Glob pattern to filter files (e.g. '*.go')"},
+					"glob":    map[string]string{"type": "string", "description": "Glob pattern to filter files (e.g. '*.go', '**/*.go')"},
 				},
 			},
 		}},
-		Handler: HandlerFunc(func(_ context.Context, input json.RawMessage) (string, error) {
+		Handler: HandlerFunc(func(ctx context.Context, input json.RawMessage) (string, error) {
 			var args struct {
 				Pattern string `json:"pattern"`
 				Glob    string `json:"glob"`
@@ -133,30 +133,23 @@ func GrepTool(root string) Tool {
 			if err := json.Unmarshal(input, &args); err != nil {
 				return "", err
 			}
-			re, err := regexp.Compile(args.Pattern)
+			if args.Pattern == "" {
+				return "", fmt.Errorf("pattern is required")
+			}
+			argv := []string{"--with-filename", "--line-number", "--no-heading", args.Pattern}
+			if args.Glob != "" {
+				argv = append(argv, "--glob", args.Glob)
+			}
+			cmd := exec.CommandContext(ctx, "rg", argv...)
+			cmd.Dir = root
+			out, err := cmd.Output()
 			if err != nil {
-				return "", fmt.Errorf("invalid pattern: %w", err)
-			}
-			glob := args.Glob
-			if glob == "" {
-				glob = "*"
-			}
-			matches, _ := filepath.Glob(filepath.Join(root, glob))
-
-			var results []string
-			for _, path := range matches {
-				data, err := os.ReadFile(path)
-				if err != nil {
-					continue
+				if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+					return "", nil // no matches
 				}
-				rel, _ := filepath.Rel(root, path)
-				for i, line := range strings.Split(string(data), "\n") {
-					if re.MatchString(line) {
-						results = append(results, fmt.Sprintf("%s:%d: %s", rel, i+1, line))
-					}
-				}
+				return "", fmt.Errorf("rg: %w", err)
 			}
-			return strings.Join(results, "\n"), nil
+			return strings.TrimRight(string(out), "\n"), nil
 		}),
 	}
 }
