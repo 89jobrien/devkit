@@ -139,7 +139,7 @@ func main() {
 			id := devlog.Start("council", map[string]string{"base": councilBase, "mode": councilMode})
 			start := time.Now()
 
-			result, err := council.Run(cmd.Context(), council.Config{
+			councilCfg := council.Config{
 				Base:    councilBase,
 				Mode:    councilMode,
 				Diff:    diff,
@@ -147,7 +147,15 @@ func main() {
 				Runner: council.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
 					return runner.Run(ctx, prompt, ts)
 				}),
-			})
+			}
+			if oai, ok := newOpenAIRunner(); ok {
+				councilCfg.Runners = map[string]council.Runner{
+					"creative-explorer":   council.RunnerFunc(oai.Run),
+					"performance-analyst": council.RunnerFunc(oai.Run),
+				}
+			}
+
+			result, err := council.Run(cmd.Context(), councilCfg)
 			if err != nil {
 				return err
 			}

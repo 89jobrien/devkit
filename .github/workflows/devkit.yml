@@ -29,14 +29,29 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BASE_REF: ${{ github.base_ref }}
-        run: devkit review --base "origin/$BASE_REF" > /tmp/review-output.txt
+          OUT: ${{ runner.temp }}/review-${{ github.run_id }}-${{ github.run_attempt }}.txt
+        run: |
+          if [[ ! "$BASE_REF" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+            echo "::error::Unexpected BASE_REF: $BASE_REF"
+            exit 1
+          fi
+          devkit review --base "origin/$BASE_REF" > "$OUT"
+          if [ ! -s "$OUT" ]; then
+            echo "::error::devkit review produced no output"
+            exit 1
+          fi
+          echo "out=$OUT" >> "$GITHUB_OUTPUT"
+        id: review
 
       - name: Post PR comment
         uses: actions/github-script@v7
+        env:
+          OUT: ${{ steps.review.outputs.out }}
         with:
           script: |
             const fs = require('fs');
-            const output = fs.readFileSync('/tmp/review-output.txt', 'utf8');
+            const raw = fs.readFileSync(process.env.OUT, 'utf8').trim();
+            const output = raw.slice(0, 60000);
             const body = `## devkit review\n\n${output}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -79,16 +94,28 @@ jobs:
         run: go install github.com/89jobrien/devkit/cmd/devkit@latest
 
       - name: Council
+        id: council
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: devkit council --base HEAD~1 --mode core > /tmp/council-output.txt
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OUT: ${{ runner.temp }}/council-${{ github.run_id }}-${{ github.run_attempt }}.txt
+        run: |
+          devkit council --base HEAD~1 --mode core > "$OUT"
+          if [ ! -s "$OUT" ]; then
+            echo "::error::devkit council produced no output"
+            exit 1
+          fi
+          echo "out=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Post council issue
         uses: actions/github-script@v7
+        env:
+          OUT: ${{ steps.council.outputs.out }}
         with:
           script: |
             const fs = require('fs');
-            const output = fs.readFileSync('/tmp/council-output.txt', 'utf8');
+            const raw = fs.readFileSync(process.env.OUT, 'utf8').trim();
+            const output = raw.slice(0, 60000);
             const sha = context.sha.slice(0, 8);
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = `## devkit council — ${sha}\n\n${output}\n\n[Run](${runUrl})`;

@@ -32,6 +32,9 @@ type Config struct {
 	Diff    string
 	Commits string
 	Runner  Runner
+	// Runners overrides Runner for specific role keys (e.g. "creative-explorer").
+	// Roles not present here fall back to Runner.
+	Runners map[string]Runner
 }
 
 // Result holds all role outputs and the synthesis.
@@ -74,7 +77,13 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 		role := roles[key]
 		g.Go(func() error {
 			prompt := fmt.Sprintf("%s\n\nAnalyse this branch. Read relevant source files to support your findings.\n\n%s", role.persona, context_)
-			out, err := cfg.Runner.Run(gctx, prompt, []string{"Read", "Glob", "Grep"})
+			r := cfg.Runner
+			if cfg.Runners != nil {
+				if override, ok := cfg.Runners[key]; ok {
+					r = override
+				}
+			}
+			out, err := r.Run(gctx, prompt, []string{"Read", "Glob", "Grep"})
 			if err != nil {
 				return fmt.Errorf("role %s: %w", key, err)
 			}
