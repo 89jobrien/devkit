@@ -63,12 +63,19 @@ const ToolUseInstruction = " Read relevant source files to support your findings
 var coreRoles = []string{"strict-critic", "creative-explorer", "general-analyst"}
 var extensiveRoles = append(append([]string{}, coreRoles...), "security-reviewer", "performance-analyst")
 
+func roleKeysForMode(mode string) []string {
+	src := coreRoles
+	if mode == "extensive" {
+		src = extensiveRoles
+	}
+	out := make([]string, len(src))
+	copy(out, src)
+	return out
+}
+
 // Run executes all council roles concurrently and returns their outputs.
 func Run(ctx context.Context, cfg Config) (*Result, error) {
-	roleKeys := coreRoles
-	if cfg.Mode == "extensive" {
-		roleKeys = extensiveRoles
-	}
+	roleKeys := roleKeysForMode(cfg.Mode)
 
 	context_ := fmt.Sprintf("Branch vs %s\n\nCommits:\n%s\n\nDiff:\n```diff\n%s\n```", cfg.Base, cfg.Commits, cfg.Diff)
 

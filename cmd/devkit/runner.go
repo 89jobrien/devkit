@@ -56,10 +56,22 @@ func (r *agentRunner) Run(ctx context.Context, prompt string, toolNames []string
 	return loop.RunAgent(ctx, r.client, prompt, selected)
 }
 
+// bearerTransport injects the Authorization header via RoundTripper so the key
+// never appears on the *http.Request visible to error handlers or loggers.
+type bearerTransport struct {
+	key  string
+	base http.RoundTripper
+}
+
+func (t *bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r2 := r.Clone(r.Context())
+	r2.Header.Set("Authorization", "Bearer "+t.key)
+	return t.base.RoundTrip(r2)
+}
+
 // openAIRunner calls the OpenAI chat completions API without tool use.
-// It reads OPENAI_API_KEY from env; returns an error if the key is absent.
+// It reads OPENAI_API_KEY from env; returns false if the key is absent.
 type openAIRunner struct {
-	key    string
 	model  string
 	client *http.Client
 }
@@ -70,9 +82,11 @@ func newOpenAIRunner() (*openAIRunner, bool) {
 		return nil, false
 	}
 	return &openAIRunner{
-		key:    key,
-		model:  "gpt-4.1",
-		client: &http.Client{Timeout: 120 * time.Second},
+		model: "gpt-4.1",
+		client: &http.Client{
+			Timeout:   120 * time.Second,
+			Transport: &bearerTransport{key: key, base: http.DefaultTransport},
+		},
 	}, true
 }
 
@@ -92,7 +106,6 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Authorization", "Bearer "+r.key)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := r.client.Do(req)
@@ -108,11 +121,11 @@ func (r *openAIRunner) Run(ctx context.Context, prompt string, _ []string) (stri
 		return "", fmt.Errorf("openai HTTP %d: authentication error", resp.StatusCode)
 	}
 	if resp.StatusCode >= 400 {
-		snippet := raw
-		if len(snippet) > 512 {
-			snippet = snippet[:512]
+		s := strings.ToValidUTF8(string(raw), "")
+		if len(s) > 512 {
+			s = s[:512]
 		}
-		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, snippet)
+		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, s)
 	}
 
 	var result struct {
