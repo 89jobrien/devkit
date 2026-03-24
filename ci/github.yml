@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+  diagnose:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: failure()
+    steps:
+      - name: Run ci-agent
+        run: go run github.com/89jobrien/devkit/cmd/ci-agent@v0.0.1
+        env:
+          CI_PLATFORM: github
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  bump-version:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !contains(github.event.head_commit.message, '[bump version]')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Bump patch version
+        run: |
+          old=$(cat VERSION)
+          major=$(echo "$old" | cut -d. -f1)
+          minor=$(echo "$old" | cut -d. -f2)
+          patch=$(echo "$old" | cut -d. -f3)
+          new="$major.$minor.$((patch + 1))"
+          echo "$new" > VERSION
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "chore: bump version $old -> $new [bump version]"
+          git push
