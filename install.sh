@@ -23,7 +23,7 @@ ci_platforms="$(gum choose --no-limit github gitea none)"
 
 # Component selection
 echo "Select components to enable:"
-components="$(gum choose --no-limit --selected council,review,meta,ci_agent council review meta ci_agent)"
+components="$(gum choose --no-limit --selected council,review,meta,ci_agent,diagnose council review meta ci_agent diagnose)"
 
 # Review focus
 review_focus="$(gum input --placeholder "security, performance, correctness" --prompt "Review focus: ")"
@@ -33,12 +33,14 @@ has_council=false
 has_review=false
 has_meta=false
 has_ci_agent=false
+has_diagnose=false
 echo "$components" | tr ',' '\n' | while IFS= read -r c; do
   case "$c" in
     council)   has_council=true ;;
     review)    has_review=true ;;
     meta)      has_meta=true ;;
     ci_agent)  has_ci_agent=true ;;
+    diagnose)  has_diagnose=true ;;
   esac
 done
 
@@ -47,6 +49,7 @@ if echo "$components" | grep -q "council";  then has_council=true;  fi
 if echo "$components" | grep -q "review";   then has_review=true;   fi
 if echo "$components" | grep -q "meta";     then has_meta=true;     fi
 if echo "$components" | grep -q "ci_agent"; then has_ci_agent=true; fi
+if echo "$components" | grep -q "diagnose"; then has_diagnose=true; fi
 
 # Install binaries
 gum spin --spinner dot --title "Installing devkit..." -- \
@@ -89,12 +92,17 @@ council  = $has_council
 review   = $has_review
 meta     = $has_meta
 ci_agent = $has_ci_agent
+diagnose = $has_diagnose
 
 [review]
 focus = "$review_focus"
 
 [council]
 mode = "core"
+
+[diagnose]
+# log_cmd = "journalctl -n 200 --no-pager"   # uncomment and customize if needed
+# service = ""                                 # focus on a specific service
 TOML
 
 echo "Wrote .devkit.toml"
