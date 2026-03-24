@@ -361,7 +361,7 @@ Report exactly these sections:
 cd ~/dev/devkit && go test ./internal/diagnose/ -v
 ```
 
-Expected: all 6 tests PASS.
+Expected: all 8 tests PASS.
 
 - [ ] **Step 2.5: Commit**
 
@@ -535,7 +535,7 @@ Flags:
 cd ~/dev/devkit && go test ./...
 ```
 
-Expected: all tests PASS (count should increase from 21 to 27 with new diagnose + BashTool tests).
+Expected: all tests PASS (count should increase from 21 to 33 with 4 new BashTool tests + 8 new diagnose tests).
 
 - [ ] **Step 3c.4: Build both binaries**
 
