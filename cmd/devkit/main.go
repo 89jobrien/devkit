@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -315,6 +316,7 @@ func main() {
 
 	// diagnose subcommand
 	var diagnoseService, diagnoseLogCmd string
+	var diagnoseConfirm bool
 	diagnoseCmd := &cobra.Command{
 		Use:   "diagnose",
 		Short: "Diagnose a service failure from logs and system state",
@@ -337,7 +339,26 @@ func main() {
 				logCmd = cfg.Diagnose.LogCmd
 			}
 
+			// Data-sharing notice: diagnose sends shell command output to the
+			// Anthropic API. Print once before the agent starts.
+			effectiveLogCmd := logCmd
+			if effectiveLogCmd == "" {
+				effectiveLogCmd = diagnose.DefaultLogCmd()
+			}
+			fmt.Fprintf(os.Stderr, "Note: diagnose executes shell commands (e.g. %q) and sends their\n", effectiveLogCmd)
+			fmt.Fprintf(os.Stderr, "output to the Anthropic API for analysis. Use --log-cmd to restrict scope.\n")
+
 			runner := newAgentRunner()
+			if diagnoseConfirm {
+				scanner := bufio.NewScanner(os.Stdin)
+				runner.confirmFn = func(c string) bool {
+					fmt.Fprintf(os.Stderr, "\nBashTool wants to run: %s\nAllow? [y/N] ", c)
+					if !scanner.Scan() {
+						return false
+					}
+					return strings.TrimSpace(strings.ToLower(scanner.Text())) == "y"
+				}
+			}
 			sha := devlog.GitShortSHA()
 			id := devlog.Start("diagnose", map[string]string{"service": service})
 			start := time.Now()
@@ -362,6 +383,7 @@ func main() {
 	}
 	diagnoseCmd.Flags().StringVar(&diagnoseService, "service", "", "Service/component to focus on")
 	diagnoseCmd.Flags().StringVar(&diagnoseLogCmd, "log-cmd", "", fmt.Sprintf("Shell command to fetch logs (default: %s)", diagnose.DefaultLogCmd()))
+	diagnoseCmd.Flags().BoolVar(&diagnoseConfirm, "confirm", false, "Prompt before each shell command the agent wants to run")
 
 	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd)
 	if err := root.ExecuteContext(context.Background()); err != nil {

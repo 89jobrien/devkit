@@ -60,7 +60,7 @@ func TestGrepTool(t *testing.T) {
 }
 
 func TestBashToolRunsCommand(t *testing.T) {
-	tool := tools.BashTool(4096)
+	tool := tools.BashTool(4096, nil)
 	input, _ := json.Marshal(map[string]string{"command": "echo hello"})
 	result, err := tool.Handler.Handle(context.Background(), input)
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestBashToolRunsCommand(t *testing.T) {
 }
 
 func TestBashToolCapsOutput(t *testing.T) {
-	tool := tools.BashTool(10)
+	tool := tools.BashTool(10, nil)
 	input, _ := json.Marshal(map[string]string{"command": "head -c 1000 /dev/zero | tr '\\0' 'x'"})
 	result, err := tool.Handler.Handle(context.Background(), input)
 	require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestBashToolCapsOutput(t *testing.T) {
 }
 
 func TestBashToolCapturesStderr(t *testing.T) {
-	tool := tools.BashTool(4096)
+	tool := tools.BashTool(4096, nil)
 	input, _ := json.Marshal(map[string]string{"command": "echo err >&2"})
 	result, err := tool.Handler.Handle(context.Background(), input)
 	require.NoError(t, err)
@@ -84,7 +84,7 @@ func TestBashToolCapturesStderr(t *testing.T) {
 }
 
 func TestBashToolNonZeroExit(t *testing.T) {
-	tool := tools.BashTool(4096)
+	tool := tools.BashTool(4096, nil)
 	input, _ := json.Marshal(map[string]string{"command": "exit 1"})
 	result, err := tool.Handler.Handle(context.Background(), input)
 	// Non-zero exit surfaces in output, not as a Go error
@@ -93,8 +93,54 @@ func TestBashToolNonZeroExit(t *testing.T) {
 }
 
 func TestBashToolRejectsEmptyCommand(t *testing.T) {
-	tool := tools.BashTool(4096)
+	tool := tools.BashTool(4096, nil)
 	input, _ := json.Marshal(map[string]string{"command": ""})
 	_, err := tool.Handler.Handle(context.Background(), input)
 	assert.Error(t, err)
+}
+
+func TestBashToolConfirmDeny(t *testing.T) {
+	tool := tools.BashTool(4096, func(cmd string) bool { return false })
+	input, _ := json.Marshal(map[string]string{"command": "echo hello"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Equal(t, "command denied by user", result)
+}
+
+func TestBashToolConfirmAllow(t *testing.T) {
+	var seen string
+	tool := tools.BashTool(4096, func(cmd string) bool { seen = cmd; return true })
+	input, _ := json.Marshal(map[string]string{"command": "echo yes"})
+	result, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Equal(t, "echo yes", seen)
+	assert.Equal(t, "yes\n", result)
+}
+
+func TestGlobToolCachesResults(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "x.go"), []byte(""), 0o644))
+
+	tool := tools.GlobTool(dir)
+	input, _ := json.Marshal(map[string]string{"pattern": "*.go"})
+
+	r1, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	r2, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Equal(t, r1, r2)
+}
+
+func TestGrepToolCachesResults(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "a.go"), []byte("hello world\n"), 0o644))
+
+	tool := tools.GrepTool(dir)
+	input, _ := json.Marshal(map[string]string{"pattern": "hello"})
+
+	r1, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	r2, err := tool.Handler.Handle(context.Background(), input)
+	require.NoError(t, err)
+	assert.Equal(t, r1, r2)
 }

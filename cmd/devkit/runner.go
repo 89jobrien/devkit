@@ -21,7 +21,8 @@ import (
 
 // agentRunner adapts loop.RunAgent (Anthropic) to the Runner interface.
 type agentRunner struct {
-	client anthropic.Client
+	client    anthropic.Client
+	confirmFn func(cmd string) bool // optional — passed to BashTool; nil = allow all
 }
 
 func newAgentRunner() *agentRunner {
@@ -43,7 +44,7 @@ func (r *agentRunner) Run(ctx context.Context, prompt string, toolNames []string
 		tools.ReadTool(wd),
 		tools.GlobTool(wd),
 		tools.GrepTool(wd),
-		tools.BashTool(30_000),
+		tools.BashTool(30_000, r.confirmFn),
 	}
 
 	var selected []tools.Tool

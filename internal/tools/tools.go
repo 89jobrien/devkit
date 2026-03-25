@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -80,8 +81,10 @@ func ReadTool(root string) Tool {
 }
 
 // GlobTool returns a Tool that matches a glob pattern relative to root using fd.
-// Supports recursive patterns (e.g. "**/*.go").
+// Supports recursive patterns (e.g. "**/*.go"). Results are cached per tool
+// instance so repeated calls with the same pattern within a session are free.
 func GlobTool(root string) Tool {
+	var cache sync.Map
 	return Tool{
 		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
 			Name:        "Glob",
@@ -102,6 +105,9 @@ func GlobTool(root string) Tool {
 			if args.Pattern == "" {
 				return "", fmt.Errorf("pattern is required")
 			}
+			if v, ok := cache.Load(args.Pattern); ok {
+				return v.(string), nil
+			}
 			if _, err := exec.LookPath("fd"); err != nil {
 				return "", fmt.Errorf("GlobTool requires 'fd' (https://github.com/sharkdp/fd): not found in PATH")
 			}
@@ -111,14 +117,18 @@ func GlobTool(root string) Tool {
 			if err != nil {
 				return "", fmt.Errorf("fd: %w", err)
 			}
-			return strings.TrimRight(string(out), "\n"), nil
+			result := strings.TrimRight(string(out), "\n")
+			cache.Store(args.Pattern, result)
+			return result, nil
 		}),
 	}
 }
 
 // GrepTool returns a Tool that searches file content for a regex pattern using rg (ripgrep).
 // Glob patterns support recursion (e.g. "**/*.go"). Returns file:line matches.
+// Results are cached per tool instance so repeated calls with identical args are free.
 func GrepTool(root string) Tool {
+	var cache sync.Map
 	return Tool{
 		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
 			Name:        "Grep",
@@ -141,6 +151,10 @@ func GrepTool(root string) Tool {
 			if args.Pattern == "" {
 				return "", fmt.Errorf("pattern is required")
 			}
+			cacheKey := args.Pattern + "\x00" + args.Glob
+			if v, ok := cache.Load(cacheKey); ok {
+				return v.(string), nil
+			}
 			if _, err := exec.LookPath("rg"); err != nil {
 				return "", fmt.Errorf("GrepTool requires 'rg' (https://github.com/BurntSushi/ripgrep): not found in PATH")
 			}
@@ -153,11 +167,14 @@ func GrepTool(root string) Tool {
 			out, err := cmd.Output()
 			if err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+					cache.Store(cacheKey, "")
 					return "", nil // no matches
 				}
 				return "", fmt.Errorf("rg: %w", err)
 			}
-			return strings.TrimRight(string(out), "\n"), nil
+			result := strings.TrimRight(string(out), "\n")
+			cache.Store(cacheKey, result)
+			return result, nil
 		}),
 	}
 }
@@ -169,7 +186,11 @@ func GrepTool(root string) Tool {
 // Note: the cap is applied to raw output before appending the exit suffix,
 // so the final string may exceed maxBytes by the length of "(exit: ...)".
 // This is intentional — the exit status is always visible.
-func BashTool(maxBytes int) Tool {
+//
+// confirm is an optional callback called before each command execution. If it
+// returns false the command is skipped and "command denied by user" is returned
+// to the agent. Pass nil to allow all commands without prompting.
+func BashTool(maxBytes int, confirm func(cmd string) bool) Tool {
 	return Tool{
 		Definition: anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
 			Name:        "Bash",
@@ -192,6 +213,9 @@ func BashTool(maxBytes int) Tool {
 			}
 			if args.Command == "" {
 				return "", fmt.Errorf("command is required")
+			}
+			if confirm != nil && !confirm(args.Command) {
+				return "command denied by user", nil
 			}
 			cmd := exec.Command("sh", "-c", args.Command)
 			// Place the command in its own process group so that context
