@@ -4,6 +4,7 @@ package diagnose
 import (
 	"context"
 	"fmt"
+	"runtime"
 )
 
 // Runner is the port for executing LLM calls.
@@ -29,11 +30,15 @@ type Config struct {
 	Runner Runner
 }
 
-const defaultLogCmd = "journalctl -n 200 --no-pager"
-
 // DefaultLogCmd returns the log command used when Config.LogCmd is empty.
+// The command is chosen based on the current OS.
 func DefaultLogCmd() string {
-	return defaultLogCmd
+	switch runtime.GOOS {
+	case "darwin":
+		return "log show --last 5m --style syslog"
+	default:
+		return "journalctl -n 200 --no-pager"
+	}
 }
 
 // Run executes a diagnosis agent and returns its report.
@@ -44,7 +49,7 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 
 	logCmd := cfg.LogCmd
 	if logCmd == "" {
-		logCmd = defaultLogCmd
+		logCmd = DefaultLogCmd()
 	}
 
 	focus := "Focus on the most recent failure."

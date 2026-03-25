@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/anthropics/anthropic-sdk-go"
 )
@@ -101,7 +102,10 @@ func GlobTool(root string) Tool {
 			if args.Pattern == "" {
 				return "", fmt.Errorf("pattern is required")
 			}
-			cmd := exec.CommandContext(ctx, "fd", "--glob", args.Pattern)
+			if _, err := exec.LookPath("fd"); err != nil {
+				return "", fmt.Errorf("GlobTool requires 'fd' (https://github.com/sharkdp/fd): not found in PATH")
+			}
+			cmd := exec.CommandContext(ctx, "fd", "--glob", "--hidden", "--no-ignore", args.Pattern)
 			cmd.Dir = root
 			out, err := cmd.Output()
 			if err != nil {
@@ -137,7 +141,10 @@ func GrepTool(root string) Tool {
 			if args.Pattern == "" {
 				return "", fmt.Errorf("pattern is required")
 			}
-			argv := []string{"--with-filename", "--line-number", "--no-heading", args.Pattern}
+			if _, err := exec.LookPath("rg"); err != nil {
+				return "", fmt.Errorf("GrepTool requires 'rg' (https://github.com/BurntSushi/ripgrep): not found in PATH")
+			}
+			argv := []string{"--with-filename", "--line-number", "--no-heading", "--hidden", "--no-ignore", args.Pattern}
 			if args.Glob != "" {
 				argv = append(argv, "--glob", args.Glob)
 			}
@@ -186,14 +193,29 @@ func BashTool(maxBytes int) Tool {
 			if args.Command == "" {
 				return "", fmt.Errorf("command is required")
 			}
-			cmd := exec.CommandContext(ctx, "sh", "-c", args.Command)
+			cmd := exec.Command("sh", "-c", args.Command)
+			// Place the command in its own process group so that context
+			// cancellation can kill the entire group (sh + its children).
+			cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 			var buf bytes.Buffer
 			cmd.Stdout = &buf
 			cmd.Stderr = &buf
-			// Note: exec.CommandContext sends SIGKILL to the sh process on cancellation
-			// but not to its process group. Subprocesses spawned by the command (e.g.
-			// pipeline children) may outlive context cancellation.
-			runErr := cmd.Run()
+			if err := cmd.Start(); err != nil {
+				return err.Error(), nil
+			}
+			done := make(chan struct{})
+			go func() {
+				select {
+				case <-ctx.Done():
+					// Kill the entire process group.
+					if cmd.Process != nil {
+						_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+					}
+				case <-done:
+				}
+			}()
+			runErr := cmd.Wait()
+			close(done)
 			out := buf.String()
 			if len(out) > maxBytes {
 				out = out[:maxBytes] + "[truncated]"

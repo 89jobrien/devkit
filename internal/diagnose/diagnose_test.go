@@ -59,7 +59,7 @@ func TestRunIncludesLogCmdInPrompt(t *testing.T) {
 func TestRunDefaultLogCmdInPrompt(t *testing.T) {
 	r := &stubRunner{response: "ok"}
 	_, _ = diagnose.Run(context.Background(), diagnose.Config{Runner: r})
-	assert.Contains(t, r.capturedPrompt, "journalctl")
+	assert.Contains(t, r.capturedPrompt, diagnose.DefaultLogCmd())
 }
 
 func TestRunPromptContainsReportSections(t *testing.T) {
@@ -71,7 +71,7 @@ func TestRunPromptContainsReportSections(t *testing.T) {
 }
 
 func TestDefaultLogCmd(t *testing.T) {
-	assert.Contains(t, diagnose.DefaultLogCmd(), "journalctl")
+	assert.NotEmpty(t, diagnose.DefaultLogCmd())
 }
 
 func TestRunNoServiceSkipsTargetedGrep(t *testing.T) {
