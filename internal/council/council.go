@@ -30,6 +30,7 @@ type Config struct {
 	Base    string
 	Mode    string // "core" or "extensive"
 	Diff    string
+	Stat    string // output of git diff --stat
 	Commits string
 	Runner  Runner
 	// Runners overrides Runner for specific role keys (e.g. "creative-explorer").
@@ -159,7 +160,7 @@ func roleKeysForMode(mode string) []string {
 func Run(ctx context.Context, cfg Config) (*Result, error) {
 	roleKeys := roleKeysForMode(cfg.Mode)
 
-	context_ := fmt.Sprintf("Branch vs %s\n\nCommits:\n%s\n\nDiff:\n```diff\n%s\n```", cfg.Base, cfg.Commits, cfg.Diff)
+	context_ := fmt.Sprintf("Branch vs %s\n\nCommits:\n%s\n\nChanged files:\n%s\nDiff:\n```diff\n%s\n```", cfg.Base, cfg.Commits, cfg.Stat, cfg.Diff)
 
 	outputs := make(map[string]string, len(roleKeys))
 	var mu sync.Mutex

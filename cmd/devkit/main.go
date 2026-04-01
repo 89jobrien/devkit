@@ -36,6 +36,11 @@ func gitLog(base string) string {
 	return string(out)
 }
 
+func gitStat(base string) string {
+	out, _ := exec.Command("git", "diff", base+"...HEAD", "--stat").Output()
+	return string(out)
+}
+
 func gatherRepoContext() string {
 	run := func(args ...string) string {
 		out, _ := exec.Command(args[0], args[1:]...).Output()
@@ -137,6 +142,7 @@ func main() {
 
 			diff := gitDiff(councilBase)
 			commits := gitLog(councilBase)
+			stat := gitStat(councilBase)
 
 			router, err := newRouterFromConfig(cfg)
 			if err != nil {
@@ -155,6 +161,7 @@ func main() {
 				Mode:    councilMode,
 				Diff:    diff,
 				Commits: commits,
+				Stat:    stat,
 				Runner:  router.For(providers.TierBalanced), // default for unrecognized roles
 				Runners: roleRunners,
 			}
