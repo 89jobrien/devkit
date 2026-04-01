@@ -17,7 +17,9 @@ import (
 	"github.com/89jobrien/devkit/internal/diagnose"
 	devlog "github.com/89jobrien/devkit/internal/log"
 	"github.com/89jobrien/devkit/internal/meta"
+	"github.com/89jobrien/devkit/internal/providers"
 	"github.com/89jobrien/devkit/internal/review"
+	"github.com/89jobrien/devkit/internal/tools"
 	"github.com/spf13/cobra"
 )
 
@@ -135,27 +137,31 @@ func main() {
 
 			diff := gitDiff(councilBase)
 			commits := gitLog(councilBase)
-			runner := newAgentRunner()
-			sha := devlog.GitShortSHA()
 
-			id := devlog.Start("council", map[string]string{"base": councilBase, "mode": councilMode})
-			start := time.Now()
+			router, err := newRouterFromConfig(cfg)
+			if err != nil {
+				return err
+			}
+
+			// Build per-role runners based on semantic tier routing.
+			roleRunners := make(map[string]council.Runner)
+			for _, role := range []string{"creative-explorer", "performance-analyst", "general-analyst", "security-reviewer", "strict-critic"} {
+				tier := providers.TierForRole(role)
+				roleRunners[role] = router.For(tier)
+			}
 
 			councilCfg := council.Config{
 				Base:    councilBase,
 				Mode:    councilMode,
 				Diff:    diff,
 				Commits: commits,
-				Runner: council.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return runner.Run(ctx, prompt, ts)
-				}),
+				Runner:  router.For(providers.TierBalanced), // default for unrecognized roles
+				Runners: roleRunners,
 			}
-			if oai, ok := newOpenAIRunner(); ok {
-				councilCfg.Runners = map[string]council.Runner{
-					"creative-explorer":   council.RunnerFunc(oai.Run),
-					"performance-analyst": council.RunnerFunc(oai.Run),
-				}
-			}
+
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("council", map[string]string{"base": councilBase, "mode": councilMode})
+			start := time.Now()
 
 			result, err := council.Run(cmd.Context(), councilCfg)
 			if err != nil {
@@ -171,9 +177,7 @@ func main() {
 			if !councilNoSynth {
 				synthesis, err := council.Synthesize(cmd.Context(), result.RoleOutputs, council.Config{
 					Base: councilBase, Diff: diff, Commits: commits,
-				}, council.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return runner.Run(ctx, prompt, ts)
-				}))
+				}, router.For(providers.TierBalanced))
 				if err != nil {
 					return err
 				}
@@ -213,7 +217,11 @@ func main() {
 				return nil
 			}
 
-			runner := newAgentRunner()
+			router, err := newRouterFromConfig(cfg)
+			if err != nil {
+				return err
+			}
+
 			sha := devlog.GitShortSHA()
 			id := devlog.Start("review", map[string]string{"base": reviewBase})
 			start := time.Now()
@@ -223,7 +231,13 @@ func main() {
 				Diff:  diff,
 				Focus: cfg.Review.Focus,
 				Runner: review.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return runner.Run(ctx, prompt, ts)
+					wd, _ := os.Getwd()
+					agentTools := []tools.Tool{
+						tools.ReadTool(wd),
+						tools.GlobTool(wd),
+						tools.GrepTool(wd),
+					}
+					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 				}),
 			})
 			if err != nil {
@@ -275,7 +289,12 @@ func main() {
 
 			repoContext := gatherRepoContext()
 			sdkDocs := fetchSDKDocs(metaRefreshDocs)
-			runner := newAgentRunner()
+
+			router, err := newRouterFromConfig(cfg)
+			if err != nil {
+				return err
+			}
+
 			sha := devlog.GitShortSHA()
 
 			taskPreview := task
@@ -288,7 +307,14 @@ func main() {
 
 			result, err := meta.Run(cmd.Context(), task, repoContext, sdkDocs,
 				meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return runner.Run(ctx, prompt, ts)
+					wd, _ := os.Getwd()
+					agentTools := []tools.Tool{
+						tools.ReadTool(wd),
+						tools.GlobTool(wd),
+						tools.GrepTool(wd),
+						tools.BashTool(30_000, nil),
+					}
+					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 				}))
 			if err != nil {
 				return err
@@ -348,10 +374,14 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Note: diagnose executes shell commands (e.g. %q) and sends their\n", effectiveLogCmd)
 			fmt.Fprintf(os.Stderr, "output to the Anthropic API for analysis. Use --log-cmd to restrict scope.\n")
 
-			runner := newAgentRunner()
+			router, err := newRouterFromConfig(cfg)
+			if err != nil {
+				return err
+			}
+			var confirmFn func(string) bool
 			if diagnoseConfirm {
 				scanner := bufio.NewScanner(os.Stdin)
-				runner.confirmFn = func(c string) bool {
+				confirmFn = func(c string) bool {
 					fmt.Fprintf(os.Stderr, "\nBashTool wants to run: %s\nAllow? [y/N] ", c)
 					if !scanner.Scan() {
 						return false
@@ -359,6 +389,7 @@ func main() {
 					return strings.TrimSpace(strings.ToLower(scanner.Text())) == "y"
 				}
 			}
+
 			sha := devlog.GitShortSHA()
 			id := devlog.Start("diagnose", map[string]string{"service": service})
 			start := time.Now()
@@ -367,7 +398,14 @@ func main() {
 				Service: service,
 				LogCmd:  logCmd,
 				Runner: diagnose.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return runner.Run(ctx, prompt, ts)
+					wd, _ := os.Getwd()
+					agentTools := []tools.Tool{
+						tools.ReadTool(wd),
+						tools.GlobTool(wd),
+						tools.GrepTool(wd),
+						tools.BashTool(30_000, confirmFn),
+					}
+					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 				}),
 			})
 			if err != nil {
