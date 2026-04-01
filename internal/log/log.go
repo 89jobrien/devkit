@@ -95,7 +95,8 @@ func SaveCommitLog(sha, command, content string, meta map[string]string) (string
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
-	path := filepath.Join(dir, fmt.Sprintf("%s-%s.md", sha, command))
+	ts := time.Now().Format("20060102-150405")
+	path := filepath.Join(dir, fmt.Sprintf("%s-%s-%s-%s.md", ProjectName(), ts, sha, command))
 
 	var header strings.Builder
 	header.WriteString(fmt.Sprintf("# %s · %s\n\n", command, sha))
