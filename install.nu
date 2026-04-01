@@ -246,24 +246,38 @@ if $has_review {
   }
 }'
     if ($claude_settings | path exists) {
-        let existing = (open $claude_settings)
-        let new_entry = ($hook_json | from json | get hooks.PostToolUse | first)
-        let existing_cmds = (
-            $existing
-            | get -i hooks.PostToolUse
-            | default []
-            | each { |e| $e | get -i hooks | default [] | each { |h| $h | get -i command | default "" } }
-            | flatten
-        )
-        let new_cmd = ($new_entry | get hooks | first | get command)
-        let merged = if ($existing_cmds | any { |c| $c == $new_cmd }) {
-            $existing
-        } else {
-            let ptu = ($existing | get -i hooks.PostToolUse | default [] | append $new_entry)
-            $existing | upsert hooks.PostToolUse $ptu
+        let existing = try {
+            open $claude_settings
+        } catch {
+            print $"warning: ($claude_settings) could not be parsed as JSON — skipping merge"
+            print "  Add the following manually:"
+            print $hook_json
+            null
         }
-        $merged | to json --indent 2 | save -f $claude_settings
-        print $"Merged Claude Code hooks into ($claude_settings)"
+        if $existing != null {
+            let new_entries = ($hook_json | from json | get -i hooks.PostToolUse | default [])
+            let existing_cmds = (
+                $existing
+                | get -i hooks.PostToolUse
+                | default []
+                | each { |e| $e | get -i hooks | default [] | each { |h| $h | get -i command | default "" } }
+                | flatten
+            )
+            let to_add = ($new_entries | where { |entry|
+                let cmds = ($entry | get -i hooks | default [] | each { |h| $h | get -i command | default "" })
+                $cmds | any { |c| not ($existing_cmds | any { |ec| $ec == $c }) }
+            })
+            if ($to_add | is-empty) {
+                print $"Claude Code hooks already present in ($claude_settings) — skipping"
+            } else {
+                let ptu = ($existing | get -i hooks.PostToolUse | default [] | append $to_add)
+                let merged = ($existing | upsert hooks.PostToolUse $ptu)
+                let tmp = $"($claude_settings).tmp"
+                $merged | to json --indent 2 | save -f $tmp
+                mv -f $tmp $claude_settings
+                print $"Merged Claude Code hooks into ($claude_settings)"
+            }
+        }
     } else {
         $hook_json | save -f $claude_settings
         print $"Wrote Claude Code hooks to ($claude_settings)"
