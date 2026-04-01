@@ -31,6 +31,31 @@ func TestGeminiChat(t *testing.T) {
 	assert.Equal(t, "hello from gemini", result)
 }
 
+func TestGeminiChat_HTTPError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, `{"error":{"message":"quota exceeded"}}`, http.StatusTooManyRequests)
+	}))
+	defer srv.Close()
+
+	p := providers.NewGeminiProvider("test-key", providers.ModelGeminiFast, srv.URL)
+	_, err := p.Chat(context.Background(), "hello")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "429")
+}
+
+func TestGeminiChat_EmptyCandidates(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"candidates": []any{}})
+	}))
+	defer srv.Close()
+
+	p := providers.NewGeminiProvider("test-key", providers.ModelGeminiFast, srv.URL)
+	_, err := p.Chat(context.Background(), "hello")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no candidates")
+}
+
 func TestGeminiSatisfiesChatProvider(t *testing.T) {
 	p := providers.NewGeminiProvider("key", providers.ModelGeminiFast, "")
 	var _ providers.ChatProvider = p

@@ -196,7 +196,7 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 	return &Result{RoleOutputs: outputs}, nil
 }
 
-var healthScoreRe = regexp.MustCompile(`(?i)\*\*Health Score\*\*[:\s]*([\d.]+)`)
+var healthScoreRe = regexp.MustCompile(`(?i)\*\*Health Score:?\*\*[:\s]*([\d.]+)`)
 
 // ParseHealthScore extracts the first health score from role output text.
 func ParseHealthScore(text string) float64 {

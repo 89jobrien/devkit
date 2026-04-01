@@ -3,6 +3,7 @@ package providers_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -62,6 +63,57 @@ func TestAnthropicRunAgent_EndTurn(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "done", result)
 	assert.Equal(t, 1, calls)
+}
+
+func TestAnthropicChat_HTTPError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		fmt.Fprintln(w, `{"type":"error","error":{"type":"rate_limit_error","message":"rate limited"}}`)
+	}))
+	defer srv.Close()
+
+	p := providers.NewAnthropicProvider("test-key", providers.ModelAnthropicBalanced, srv.URL)
+	_, err := p.Chat(context.Background(), "hello")
+	require.Error(t, err)
+}
+
+func TestAnthropicRunAgent_UnknownToolNoLoop(t *testing.T) {
+	// Model returns tool_use for an unregistered tool, then end_turn.
+	// Verifies the guard against infinite looping when no tool results are produced.
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		if calls == 1 {
+			json.NewEncoder(w).Encode(map[string]any{
+				"id": "msg_01", "type": "message", "role": "assistant",
+				"stop_reason": "tool_use",
+				"content": []map[string]any{{
+					"type": "tool_use", "id": "toolu_01",
+					"name":  "unknown_tool",
+					"input": map[string]any{},
+				}},
+				"model": "claude-sonnet-4-6",
+				"usage": map[string]int{"input_tokens": 10, "output_tokens": 5},
+			})
+		} else {
+			json.NewEncoder(w).Encode(map[string]any{
+				"id": "msg_02", "type": "message", "role": "assistant",
+				"stop_reason": "end_turn",
+				"content":     []map[string]any{{"type": "text", "text": "done"}},
+				"model":       "claude-sonnet-4-6",
+				"usage":       map[string]int{"input_tokens": 20, "output_tokens": 5},
+			})
+		}
+	}))
+	defer srv.Close()
+
+	p := providers.NewAnthropicProvider("test-key", providers.ModelAnthropicCoding, srv.URL)
+	result, err := p.RunAgent(context.Background(), "use unknown tool", []tools.Tool{})
+	require.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.LessOrEqual(t, calls, 3, "should not spin indefinitely on unknown tool")
 }
 
 func TestAnthropicRunAgent_ToolCall(t *testing.T) {

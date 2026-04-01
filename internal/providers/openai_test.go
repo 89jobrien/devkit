@@ -38,6 +38,62 @@ func TestOpenAIChat(t *testing.T) {
 	assert.Equal(t, "hello from openai", result)
 }
 
+func TestOpenAIChat_HTTPError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, `{"error":{"message":"rate limited"}}`, http.StatusTooManyRequests)
+	}))
+	defer srv.Close()
+
+	p := providers.NewOpenAIProvider("test-key", providers.ModelOpenAIBalanced, srv.URL)
+	_, err := p.Chat(context.Background(), "hello")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "429")
+}
+
+func TestOpenAIRunAgent_EmptyChoices(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"choices": []any{}})
+	}))
+	defer srv.Close()
+
+	p := providers.NewOpenAIProvider("test-key", providers.ModelOpenAIBalanced, srv.URL)
+	_, err := p.Chat(context.Background(), "hello")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no choices")
+}
+
+func TestOpenAIRunAgent_UnknownTool(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		if calls == 1 {
+			json.NewEncoder(w).Encode(map[string]any{
+				"choices": []map[string]any{{
+					"finish_reason": "tool_calls",
+					"message": map[string]any{
+						"role": "assistant", "content": nil,
+						"tool_calls": []map[string]any{{
+							"id": "call_01", "type": "function",
+							"function": map[string]any{"name": "nonexistent", "arguments": `{}`},
+						}},
+					},
+				}},
+			})
+		} else {
+			json.NewEncoder(w).Encode(openAIResponse("handled unknown tool"))
+		}
+	}))
+	defer srv.Close()
+
+	p := providers.NewOpenAIProvider("test-key", providers.ModelOpenAICoding, srv.URL)
+	result, err := p.RunAgent(context.Background(), "use tool", []tools.Tool{})
+	require.NoError(t, err)
+	assert.Equal(t, "handled unknown tool", result)
+	assert.Equal(t, 2, calls, "unknown tool result should be sent back to model")
+}
+
 func TestOpenAIRunAgent_ToolCall(t *testing.T) {
 	calls := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

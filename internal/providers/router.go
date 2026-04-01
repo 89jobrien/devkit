@@ -26,6 +26,10 @@ type RouterConfig struct {
 	OpenAIKey    string
 	GeminiKey    string
 	Overrides    TierOverrides
+	// URL overrides for testing — empty means use production endpoints.
+	AnthropicURL string
+	OpenAIURL    string
+	GeminiURL    string
 }
 
 // Router selects and chains providers for a given Tier.
@@ -118,21 +122,21 @@ func (r *Router) chainFor(tier Tier) []providerEntry {
 	if r.cfg.AnthropicKey != "" {
 		chain = append(chain, providerEntry{
 			name:     "anthropic/" + antModel,
-			provider: NewAnthropicProvider(r.cfg.AnthropicKey, antModel, ""),
+			provider: NewAnthropicProvider(r.cfg.AnthropicKey, antModel, r.cfg.AnthropicURL),
 		})
 	}
 	// OpenAI second (supports tool use).
 	if r.cfg.OpenAIKey != "" && oaiModel != "" {
 		chain = append(chain, providerEntry{
 			name:     "openai/" + oaiModel,
-			provider: NewOpenAIProvider(r.cfg.OpenAIKey, oaiModel, ""),
+			provider: NewOpenAIProvider(r.cfg.OpenAIKey, oaiModel, r.cfg.OpenAIURL),
 		})
 	}
 	// Gemini last (large context / fast; no tool use).
 	if r.cfg.GeminiKey != "" && gemModel != "" {
 		chain = append(chain, providerEntry{
 			name:     "gemini/" + gemModel,
-			provider: NewGeminiProvider(r.cfg.GeminiKey, gemModel, ""),
+			provider: NewGeminiProvider(r.cfg.GeminiKey, gemModel, r.cfg.GeminiURL),
 		})
 	}
 
