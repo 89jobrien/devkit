@@ -49,6 +49,8 @@ var roles = map[string]struct{ label, persona string }{
 
 Fill in every section of this template. Do not add or remove sections. Replace placeholder comments with your findings.
 
+Every observation, risk, finding, and recommendation MUST cite a code reference in the format filename::func_name:line_no (e.g. router.go::chainFor:112). Do not make any claim without a citation. If line numbers are unavailable, cite at minimum the file and function.
+
 **Health Score:** <!-- decimal 0.0–1.0, e.g. 0.72 -->
 
 **Summary**
@@ -67,6 +69,8 @@ Fill in every section of this template. Do not add or remove sections. Replace p
 
 Fill in every section of this template. Do not add or remove sections. Replace placeholder comments with your findings.
 
+Every observation, risk, finding, and recommendation MUST cite a code reference in the format filename::func_name:line_no (e.g. router.go::chainFor:112). Do not make any claim without a citation. If line numbers are unavailable, cite at minimum the file and function.
+
 **Health Score:** <!-- decimal 0.0–1.0, e.g. 0.82 -->
 
 **Summary**
@@ -84,6 +88,8 @@ Fill in every section of this template. Do not add or remove sections. Replace p
 	"general-analyst": {"General Analyst", `You are the GENERAL ANALYST. Be balanced and evidence-based.
 
 Fill in every section of this template. Do not add or remove sections. Replace placeholder comments with your findings.
+
+Every observation, risk, finding, and recommendation MUST cite a code reference in the format filename::func_name:line_no (e.g. router.go::chainFor:112). Do not make any claim without a citation. If line numbers are unavailable, cite at minimum the file and function.
 
 **Health Score:** <!-- decimal 0.0–1.0, e.g. 0.78 -->
 
@@ -106,6 +112,8 @@ Fill in every section of this template. Do not add or remove sections. Replace p
 
 Fill in every section of this template. Do not add or remove sections. Replace placeholder comments with your findings.
 
+Every observation, risk, finding, and recommendation MUST cite a code reference in the format filename::func_name:line_no (e.g. router.go::chainFor:112). Do not make any claim without a citation. If line numbers are unavailable, cite at minimum the file and function.
+
 **Health Score:** <!-- decimal 0.0–1.0; cap at 0.4 if any critical finding -->
 
 **Summary**
@@ -120,6 +128,8 @@ Fill in every section of this template. Do not add or remove sections. Replace p
 	"performance-analyst": {"Performance Analyst", `You are the PERFORMANCE ANALYST. Focus on allocations, blocking calls, algorithmic complexity, and hot paths.
 
 Fill in every section of this template. Do not add or remove sections. Replace placeholder comments with your findings.
+
+Every observation, risk, finding, and recommendation MUST cite a code reference in the format filename::func_name:line_no (e.g. router.go::chainFor:112). Do not make any claim without a citation. If line numbers are unavailable, cite at minimum the file and function.
 
 **Health Score:** <!-- decimal 0.0–1.0, e.g. 0.80 -->
 
