@@ -124,13 +124,11 @@ func runParallel(ctx context.Context, cfg Config) (string, error) {
 
 // gatherRepoContext collects git log, diff stat, and JSONL entries for a repo.
 func gatherRepoContext(repoPath string, since time.Duration) (*repoContext, error) {
-	// Validate it's a git repo.
-	if _, err := os.Stat(filepath.Join(repoPath, ".git")); err != nil {
-		// Check for git worktrees (no .git dir but .git file)
-		gitFile := filepath.Join(repoPath, ".git")
-		if _, err2 := os.Stat(gitFile); err2 != nil {
-			return nil, fmt.Errorf("%s is not a git repository", repoPath)
-		}
+	// Validate it's a git repo (handles normal repos and worktrees).
+	revParse := exec.Command("git", "rev-parse", "--git-dir")
+	revParse.Dir = repoPath
+	if err := revParse.Run(); err != nil {
+		return nil, fmt.Errorf("%s is not a git repository", repoPath)
 	}
 
 	run := func(args ...string) string {
