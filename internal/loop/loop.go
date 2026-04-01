@@ -79,3 +79,11 @@ func RunAgent(ctx context.Context, client anthropic.Client, prompt string, ts []
 		}
 	}
 }
+
+// RunAgentLoop runs a tool-use agent loop using any AgentProvider.
+// This is the provider-agnostic counterpart to RunAgent (Anthropic-SDK-specific).
+func RunAgentLoop(ctx context.Context, p interface {
+	RunAgent(ctx context.Context, prompt string, ts []tools.Tool) (string, error)
+}, prompt string, ts []tools.Tool) (string, error) {
+	return p.RunAgent(ctx, prompt, ts)
+}
