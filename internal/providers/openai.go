@@ -134,9 +134,9 @@ func (p *OpenAIProvider) RunAgent(ctx context.Context, prompt string, ts []tools
 
 	for {
 		reqBody := map[string]any{
-			"model":      p.model,
-			"max_tokens": 8096,
-			"messages":   messages,
+			"model":                  p.model,
+			"max_completion_tokens": 8096,
+			"messages":              messages,
 		}
 		if len(ts) > 0 {
 			reqBody["tools"] = toolsToOpenAI(ts)
