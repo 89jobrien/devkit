@@ -92,6 +92,13 @@ mode = "core"
 [diagnose]
 # log_cmd = "journalctl -n 200 --no-pager"   # uncomment and customize if needed
 # service = ""                                 # focus on a specific service
+
+[providers]
+# primary            = "anthropic"   # anthropic | openai | gemini
+# fast_model         = ""            # override per-tier model
+# balanced_model     = ""
+# large_context_model = ""
+# coding_model       = ""
 TOML
 
 echo "Wrote .devkit.toml"
