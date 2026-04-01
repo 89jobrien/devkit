@@ -41,31 +41,6 @@ func gitStat(base string) string {
 	return string(out)
 }
 
-func gatherRepoContext() string {
-	run := func(args ...string) string {
-		out, _ := exec.Command(args[0], args[1:]...).Output()
-		return string(out)
-	}
-	var sb strings.Builder
-	for _, f := range []string{"CLAUDE.md", "AGENTS.md", "README.md"} {
-		if data, err := os.ReadFile(f); err == nil {
-			preview := data
-			if len(preview) > 2000 {
-				preview = preview[:2000]
-			}
-			sb.WriteString(fmt.Sprintf("### %s\n%s\n\n", f, string(preview)))
-		}
-	}
-	sb.WriteString("## Recent commits\n" + run("git", "log", "--oneline", "-20"))
-	sb.WriteString("\n## Working tree\n" + run("git", "status", "--short"))
-	allFiles := run("git", "ls-files")
-	lines := strings.Split(strings.TrimSpace(allFiles), "\n")
-	if len(lines) > 150 {
-		lines = lines[:150]
-	}
-	sb.WriteString("\n## Structure (first 150 paths)\n" + strings.Join(lines, "\n"))
-	return sb.String()
-}
 
 var sdkDocURLs = []string{
 	"https://docs.anthropic.com/en/docs/claude-code/sdk",
@@ -294,7 +269,7 @@ func main() {
 				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
 			}
 
-			repoContext := gatherRepoContext()
+			repoContext := devlog.GatherRepoContext()
 			sdkDocs := fetchSDKDocs(metaRefreshDocs)
 
 			router, err := newRouterFromConfig(cfg)

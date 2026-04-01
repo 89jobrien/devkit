@@ -65,6 +65,34 @@ func appendJSONL(record map[string]any) {
 	_, _ = f.Write(append(b, '\n'))
 }
 
+// GatherRepoContext returns a markdown snapshot of the current repo state:
+// CLAUDE.md/AGENTS.md/README.md previews, recent commits, working tree, and file structure.
+func GatherRepoContext() string {
+	run := func(args ...string) string {
+		out, _ := exec.Command(args[0], args[1:]...).Output()
+		return string(out)
+	}
+	var sb strings.Builder
+	for _, f := range []string{"CLAUDE.md", "AGENTS.md", "README.md"} {
+		if data, err := os.ReadFile(f); err == nil {
+			preview := data
+			if len(preview) > 2000 {
+				preview = preview[:2000]
+			}
+			sb.WriteString(fmt.Sprintf("### %s\n%s\n\n", f, string(preview)))
+		}
+	}
+	sb.WriteString("## Recent commits\n" + run("git", "log", "--oneline", "-20"))
+	sb.WriteString("\n## Working tree\n" + run("git", "status", "--short"))
+	allFiles := run("git", "ls-files")
+	lines := strings.Split(strings.TrimSpace(allFiles), "\n")
+	if len(lines) > 150 {
+		lines = lines[:150]
+	}
+	sb.WriteString("\n## Structure (first 150 paths)\n" + strings.Join(lines, "\n"))
+	return sb.String()
+}
+
 // Start records a run-start entry and returns a RunID.
 func Start(command string, args map[string]string) RunID {
 	id := RunID(time.Now().UTC().Format(time.RFC3339Nano))
