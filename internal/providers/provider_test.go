@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/89jobrien/devkit/internal/providers"
 	"github.com/89jobrien/devkit/internal/tools"
 )
@@ -22,4 +24,18 @@ func (s stubAgent) RunAgent(_ context.Context, _ string, _ []tools.Tool) (string
 func TestInterfacesCompile(t *testing.T) {
 	var _ providers.ChatProvider = stubChat{}
 	var _ providers.AgentProvider = stubAgent{}
+}
+
+func TestModelConstants(t *testing.T) {
+	// Verify non-empty strings only — exact values checked by inspection.
+	assert.NotEmpty(t, providers.ModelAnthropicFast)
+	assert.NotEmpty(t, providers.ModelAnthropicBalanced)
+	assert.NotEmpty(t, providers.ModelAnthropicLargeContext)
+	assert.NotEmpty(t, providers.ModelAnthropicCoding)
+	assert.NotEmpty(t, providers.ModelOpenAIFast)
+	assert.NotEmpty(t, providers.ModelOpenAIBalanced)
+	assert.NotEmpty(t, providers.ModelOpenAICoding)
+	assert.NotEmpty(t, providers.ModelGeminiFast)
+	assert.NotEmpty(t, providers.ModelGeminiBalanced)
+	assert.NotEmpty(t, providers.ModelGeminiLargeContext)
 }
