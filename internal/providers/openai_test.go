@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _ providers.AgentProvider = (*providers.OpenAIProvider)(nil)
+
 func openAIResponse(content string) map[string]any {
 	return map[string]any{
 		"id":      "chatcmpl-01",

@@ -78,12 +78,17 @@ func toolsToOpenAI(ts []tools.Tool) []openAITool {
 		var ot openAITool
 		ot.Type = "function"
 		ot.Function.Name = def.Name
-		// Description is param.Opt[string]; access via fmt.Sprintf to avoid
-		// SDK version-specific accessor methods.
-		ot.Function.Description = fmt.Sprintf("%v", def.Description)
+		if def.Description.Valid() {
+			ot.Function.Description = def.Description.Value
+		}
+		required := def.InputSchema.Required
+		if required == nil {
+			required = []string{}
+		}
 		ot.Function.Parameters = map[string]any{
 			"type":       "object",
 			"properties": def.InputSchema.Properties,
+			"required":   required,
 		}
 		out = append(out, ot)
 	}

@@ -1,4 +1,3 @@
-// Package providers defines abstractions for LLM backends and task routing.
 package providers
 
 import (

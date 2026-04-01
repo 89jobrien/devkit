@@ -90,8 +90,16 @@ func (p *AnthropicProvider) RunAgent(ctx context.Context, prompt string, ts []to
 				toolResults = append(toolResults, anthropic.NewToolResultBlock(tu.ID, result, false))
 			}
 		}
-		if len(toolResults) > 0 {
-			messages = append(messages, anthropic.NewUserMessage(toolResults...))
+		if len(toolResults) == 0 {
+			// Non-end_turn stop with no tool calls — return whatever text is present.
+			var sb strings.Builder
+			for _, block := range resp.Content {
+				if tb, ok := block.AsAny().(anthropic.TextBlock); ok {
+					sb.WriteString(tb.Text)
+				}
+			}
+			return sb.String(), nil
 		}
+		messages = append(messages, anthropic.NewUserMessage(toolResults...))
 	}
 }
