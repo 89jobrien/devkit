@@ -45,12 +45,13 @@ type repoContext struct {
 }
 
 // runEntry is a single JSONL entry from agent-runs.jsonl.
+// RunID is an RFC3339Nano timestamp string (written by internal/log.Start).
 type runEntry struct {
+	RunID      string            `json:"run_id"` // RFC3339Nano timestamp
 	Command    string            `json:"command"`
 	Status     string            `json:"status"`
 	DurationMs int64             `json:"duration_ms"`
 	Args       map[string]string `json:"args"`
-	Timestamp  string            `json:"run_id"`
 }
 
 // Run is the public entry point.
@@ -180,7 +181,7 @@ func gatherJSONLRuns(project string, since time.Duration) []runEntry {
 		if e.Status != "complete" {
 			continue
 		}
-		t, err := time.Parse(time.RFC3339Nano, e.Timestamp)
+		t, err := time.Parse(time.RFC3339Nano, e.RunID)
 		if err != nil {
 			continue
 		}
