@@ -20,6 +20,7 @@ import (
 	"github.com/89jobrien/devkit/internal/meta"
 	"github.com/89jobrien/devkit/internal/providers"
 	"github.com/89jobrien/devkit/internal/review"
+	"github.com/89jobrien/devkit/internal/standup"
 	"github.com/89jobrien/devkit/internal/tools"
 	"github.com/spf13/cobra"
 )
@@ -410,7 +411,72 @@ func main() {
 	diagnoseCmd.Flags().StringVar(&diagnoseLogCmd, "log-cmd", "", fmt.Sprintf("Shell command to fetch logs (default: %s)", diagnose.DefaultLogCmd()))
 	diagnoseCmd.Flags().BoolVar(&diagnoseConfirm, "confirm", false, "Prompt before each shell command the agent wants to run")
 
-	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd)
+	// standup subcommand
+	var standupSince string
+	var standupRepos []string
+	var standupParallel bool
+	standupCmd := &cobra.Command{
+		Use:   "standup",
+		Short: "Summarize recent work as a standup update",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := LoadConfig()
+			if err != nil {
+				return err
+			}
+			if cfg.Project.Name != "" {
+				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+			}
+
+			since, err := time.ParseDuration(standupSince)
+			if err != nil {
+				return fmt.Errorf("invalid --since %q: %w", standupSince, err)
+			}
+
+			repos := standupRepos
+			if len(repos) == 0 {
+				wd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+				repos = []string{wd}
+			}
+
+			router, err := newRouterFromConfig(cfg)
+			if err != nil {
+				return err
+			}
+
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("standup", map[string]string{"since": standupSince})
+			start := time.Now()
+
+			result, err := standup.Run(cmd.Context(), standup.Config{
+				Repos: repos,
+				Since: since,
+				Runner: standup.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
+				}),
+				Parallel: standupParallel,
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result)
+			devlog.Complete(id, "standup", map[string]string{"since": standupSince}, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "standup", result, map[string]string{
+				"since": standupSince,
+				"repos": strings.Join(repos, ","),
+			})
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	standupCmd.Flags().StringVar(&standupSince, "since", "24h", "Time window (Go duration, e.g. 24h, 8h)")
+	standupCmd.Flags().StringArrayVar(&standupRepos, "repo", nil, "Repo paths to include (repeatable, defaults to cwd)")
+	standupCmd.Flags().BoolVar(&standupParallel, "parallel", false, "Summarize repos in parallel then synthesize")
+
+	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd, standupCmd)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
