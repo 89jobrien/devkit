@@ -146,7 +146,15 @@ HOOK
 if [ "${DEVKIT_SKIP_HOOKS:-0}" = "1" ]; then
   exit 0
 fi
-devkit council --base main || echo "devkit: council failed (non-blocking)"
+if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -z "${OPENAI_API_KEY:-}" ]; then
+  echo "devkit: no API key set, skipping council"
+  exit 0
+fi
+BASE=$(git merge-base HEAD origin/main 2>/dev/null || echo "HEAD~10")
+if [ "$BASE" = "$(git rev-parse HEAD 2>/dev/null)" ]; then
+  BASE="HEAD~10"
+fi
+devkit council --base "$BASE" || echo "devkit: council failed (non-blocking)"
 HOOK
     chmod +x .git/hooks/pre-push
     echo "Installed git pre-push hook (devkit council)"
