@@ -41,6 +41,7 @@ type Config struct {
 		BalancedModel     string `toml:"balanced_model"`
 		LargeContextModel string `toml:"large_context_model"`
 		CodingModel       string `toml:"coding_model"`
+		UseBAML           bool   `toml:"use_baml"`
 	} `toml:"providers"`
 }
 

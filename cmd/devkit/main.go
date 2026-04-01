@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/89jobrien/devkit/internal/baml"
 	"github.com/89jobrien/devkit/internal/council"
 	"github.com/89jobrien/devkit/internal/diagnose"
 	devlog "github.com/89jobrien/devkit/internal/log"
@@ -127,8 +128,12 @@ func main() {
 			// Build per-role runners based on semantic tier routing.
 			roleRunners := make(map[string]council.Runner)
 			for _, role := range []string{"creative-explorer", "performance-analyst", "general-analyst", "security-reviewer", "strict-critic"} {
-				tier := providers.TierForRole(role)
-				roleRunners[role] = router.For(tier)
+				if cfg.Providers.UseBAML {
+					roleRunners[role] = baml.New(role, os.Stdout)
+				} else {
+					tier := providers.TierForRole(role)
+					roleRunners[role] = router.For(tier)
+				}
 			}
 
 			councilCfg := council.Config{
