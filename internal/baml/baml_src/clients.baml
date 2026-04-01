@@ -1,5 +1,6 @@
 client<llm> AnthropicBalanced {
   provider anthropic
+  retry_policy CouncilRetry
   options {
     model "claude-sonnet-4-6"
     api_key env.ANTHROPIC_API_KEY
@@ -8,6 +9,7 @@ client<llm> AnthropicBalanced {
 
 client<llm> OpenAIBalanced {
   provider openai
+  retry_policy CouncilRetry
   options {
     model "gpt-5.4"
     api_key env.OPENAI_API_KEY
@@ -16,6 +18,7 @@ client<llm> OpenAIBalanced {
 
 client<llm> GeminiFast {
   provider google-ai
+  retry_policy CouncilRetry
   options {
     model "gemini-3-flash-preview"
     api_key env.GEMINI_API_KEY

@@ -14,11 +14,11 @@
 package baml_client
 
 import (
-	"context"
 	"fmt"
+    "context"
 
-	"baml_client/baml_client/types"
-	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
+    "baml_client/baml_client/types"
+    baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 )
 
 

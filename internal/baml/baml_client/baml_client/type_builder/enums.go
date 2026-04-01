@@ -14,3 +14,4 @@
 package type_builder
 
 import _ "github.com/boundaryml/baml/engine/language_client_go/pkg"
+
