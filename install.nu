@@ -25,9 +25,8 @@ def warn_missing [cmd: string, feature: string] {
 require "go"   "Install Go from https://go.dev/dl/ and try again."
 require "gum"  "Install gum from https://github.com/charmbracelet/gum and try again."
 
-let have_curl   = (which curl | is-not-empty)
-let have_wget   = (which wget | is-not-empty)
-let have_python = (which python3 | is-not-empty)
+let have_curl = (which curl | is-not-empty)
+let have_wget = (which wget | is-not-empty)
 
 # --- UI ---
 
@@ -247,51 +246,24 @@ if $has_review {
   }
 }'
     if ($claude_settings | path exists) {
-        if $have_python {
-            let hooks_tmp = (mktemp)
-            let py_tmp = (mktemp --suffix .py)
-            $hook_json | save -f $hooks_tmp
-"import sys, json
-
-settings_path = sys.argv[1]
-hooks_path    = sys.argv[2]
-
-with open(settings_path) as f:
-    existing = json.load(f)
-with open(hooks_path) as f:
-    new_hooks = json.load(f)
-
-existing.setdefault('hooks', {})
-existing['hooks'].setdefault('PostToolUse', [])
-
-new_entries = new_hooks.get('hooks', {}).get('PostToolUse', [])
-existing_cmds = {
-    h.get('command')
-    for entry in existing['hooks']['PostToolUse']
-    for h in entry.get('hooks', [])
-}
-for entry in new_entries:
-    for h in entry.get('hooks', []):
-        if h.get('command') not in existing_cmds:
-            existing['hooks']['PostToolUse'].append(entry)
-            break
-
-with open(settings_path, 'w') as f:
-    json.dump(existing, f, indent=2)
-    f.write('\n')
-" | save -f $py_tmp
-            let result = (do { run-external "python3" $py_tmp $claude_settings $hooks_tmp } | complete)
-            rm $hooks_tmp $py_tmp
-            if $result.exit_code != 0 {
-                print -e $"error: failed to merge Claude Code hooks into ($claude_settings)"
-                exit 1
-            }
-            print $"Merged Claude Code hooks into ($claude_settings)"
+        let existing = (open $claude_settings)
+        let new_entry = ($hook_json | from json | get hooks.PostToolUse | first)
+        let existing_cmds = (
+            $existing
+            | get -i hooks.PostToolUse
+            | default []
+            | each { |e| $e | get -i hooks | default [] | each { |h| $h | get -i command | default "" } }
+            | flatten
+        )
+        let new_cmd = ($new_entry | get hooks | first | get command)
+        let merged = if ($existing_cmds | any { |c| $c == $new_cmd }) {
+            $existing
         } else {
-            print $"warning: python3 not found — cannot safely merge ($claude_settings)"
-            print $"  Add the following to ($claude_settings) manually:"
-            print $hook_json
+            let ptu = ($existing | get -i hooks.PostToolUse | default [] | append $new_entry)
+            $existing | upsert hooks.PostToolUse $ptu
         }
+        $merged | to json --indent 2 | save -f $claude_settings
+        print $"Merged Claude Code hooks into ($claude_settings)"
     } else {
         $hook_json | save -f $claude_settings
         print $"Wrote Claude Code hooks to ($claude_settings)"
