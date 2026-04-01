@@ -81,10 +81,9 @@ func TestRunSinglePromptContainsProjectAndCommits(t *testing.T) {
 	if !strings.Contains(prompt, project) {
 		t.Errorf("prompt missing project name %q:\n%s", project, prompt)
 	}
-	// Note: git log --since="24h ago" may not capture the just-made commit depending on git version;
-	// assert the commits section header is present regardless.
-	if !strings.Contains(prompt, "Recent commits:") {
-		t.Errorf("prompt missing 'Recent commits:' section:\n%s", prompt)
+	// Check that the commit message appears in the prompt (now that git --since format is fixed).
+	if !strings.Contains(prompt, "initial commit") {
+		t.Errorf("prompt missing commit message:\n%s", prompt)
 	}
 	for _, section := range []string{"## What I did", "## What's next", "## Blockers"} {
 		if !strings.Contains(prompt, section) {

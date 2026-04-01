@@ -137,7 +137,7 @@ func gatherRepoContext(repoPath string, since time.Duration) (*repoContext, erro
 		return string(out)
 	}
 
-	sinceStr := fmt.Sprintf("%.0fh ago", since.Hours())
+	sinceStr := fmt.Sprintf("%.0f hours ago", since.Hours())
 	commits := run("git", "log", "--since="+sinceStr, "--oneline")
 
 	// Diff stat — fall back gracefully if the ref doesn't resolve.
