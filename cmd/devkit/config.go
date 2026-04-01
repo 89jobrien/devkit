@@ -35,6 +35,13 @@ type Config struct {
 		LogCmd  string `toml:"log_cmd"`
 		Service string `toml:"service"`
 	} `toml:"diagnose"`
+	Providers struct {
+		Primary           string `toml:"primary"`
+		FastModel         string `toml:"fast_model"`
+		BalancedModel     string `toml:"balanced_model"`
+		LargeContextModel string `toml:"large_context_model"`
+		CodingModel       string `toml:"coding_model"`
+	} `toml:"providers"`
 }
 
 // LoadConfig finds and parses the nearest .devkit.toml walking up from cwd.
