@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -86,7 +85,6 @@ func runSingle(ctx context.Context, repoPath string, since time.Duration, runner
 // runParallel spawns one goroutine per repo for per-repo summaries, then synthesizes.
 func runParallel(ctx context.Context, cfg Config) (string, error) {
 	summaries := make([]string, len(cfg.Repos))
-	var mu sync.Mutex
 
 	g, gctx := errgroup.WithContext(ctx)
 	for i, repoPath := range cfg.Repos {
@@ -103,9 +101,7 @@ func runParallel(ctx context.Context, cfg Config) (string, error) {
 				fmt.Fprintf(os.Stderr, "warning: runner failed for %s: %v\n", repoPath, err)
 				return nil
 			}
-			mu.Lock()
 			summaries[i] = fmt.Sprintf("### %s\n%s", rc.Project, out)
-			mu.Unlock()
 			return nil
 		})
 	}
@@ -118,6 +114,9 @@ func runParallel(ctx context.Context, cfg Config) (string, error) {
 		if s != "" {
 			nonEmpty = append(nonEmpty, s)
 		}
+	}
+	if len(nonEmpty) == 0 {
+		return "", fmt.Errorf("standup: no repo summaries available (all repos failed or had no activity)")
 	}
 	return synthesize(ctx, nonEmpty, cfg.Runner)
 }
@@ -192,19 +191,23 @@ func gatherJSONLRuns(project string, since time.Duration) []runEntry {
 	return entries
 }
 
+func writeRepoBody(sb *strings.Builder, rc *repoContext) {
+	fmt.Fprintf(sb, "Recent commits:\n%s\n", ifEmpty(rc.Commits, "(no commits in window)"))
+	fmt.Fprintf(sb, "Changed files:\n%s\n", ifEmpty(rc.Stat, "(no diff available)"))
+	if len(rc.Runs) > 0 {
+		sb.WriteString("Devkit runs:\n")
+		for _, r := range rc.Runs {
+			fmt.Fprintf(sb, "- %s (%.1fs)\n", r.Command, float64(r.DurationMs)/1000)
+		}
+		sb.WriteString("\n")
+	}
+}
+
 func buildSinglePrompt(rc *repoContext, since time.Duration) string {
 	var sb strings.Builder
 	sb.WriteString("You are generating a standup update for a software engineer.\n\n")
 	fmt.Fprintf(&sb, "Project: %s\nTime window: last %.0f hours\n\n", rc.Project, since.Hours())
-	fmt.Fprintf(&sb, "Recent commits:\n%s\n", ifEmpty(rc.Commits, "(no commits in window)"))
-	fmt.Fprintf(&sb, "Changed files:\n%s\n", ifEmpty(rc.Stat, "(no diff available)"))
-	if len(rc.Runs) > 0 {
-		sb.WriteString("Devkit runs:\n")
-		for _, r := range rc.Runs {
-			fmt.Fprintf(&sb, "- %s (%.1fs)\n", r.Command, float64(r.DurationMs)/1000)
-		}
-		sb.WriteString("\n")
-	}
+	writeRepoBody(&sb, rc)
 	sb.WriteString(`Produce a standup update with exactly three sections:
 ## What I did
 ## What's next
@@ -217,15 +220,8 @@ Be concise. Infer "what's next" from incomplete work and commit messages. If no 
 func buildSummaryPrompt(rc *repoContext, since time.Duration) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Summarize work done in the %s repository over the last %.0f hours.\n\n", rc.Project, since.Hours())
-	fmt.Fprintf(&sb, "Recent commits:\n%s\n", ifEmpty(rc.Commits, "(no commits in window)"))
-	fmt.Fprintf(&sb, "Changed files:\n%s\n", ifEmpty(rc.Stat, "(no diff available)"))
-	if len(rc.Runs) > 0 {
-		sb.WriteString("Devkit runs:\n")
-		for _, r := range rc.Runs {
-			fmt.Fprintf(&sb, "- %s (%.1fs)\n", r.Command, float64(r.DurationMs)/1000)
-		}
-	}
-	sb.WriteString("\nWrite 3-5 concise bullet points summarising what was done. No headers, no fluff.")
+	writeRepoBody(&sb, rc)
+	sb.WriteString("Write 3-5 concise bullet points summarising what was done. No headers, no fluff.")
 	return sb.String()
 }
 
