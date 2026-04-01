@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/89jobrien/devkit/internal/council"
 	"github.com/89jobrien/devkit/internal/tools"
 )
 
@@ -60,11 +59,11 @@ func TierForRole(role string) Tier {
 	return TierBalanced
 }
 
-// For returns a council.Runner that tries the provider chain for the given tier.
+// For returns a Runner that tries the provider chain for the given tier.
 // Providers with missing API keys are skipped. If no provider has a key,
 // the runner returns an error on first call.
-func (r *Router) For(tier Tier) council.Runner {
-	return council.RunnerFunc(func(ctx context.Context, prompt string, toolNames []string) (string, error) {
+func (r *Router) For(tier Tier) Runner {
+	return RunnerFunc(func(ctx context.Context, prompt string, toolNames []string) (string, error) {
 		chain := r.chainFor(tier)
 		if len(chain) == 0 {
 			return "", errors.New("no provider available for tier " + string(tier) + ": set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY")
@@ -82,10 +81,10 @@ func (r *Router) For(tier Tier) council.Runner {
 	})
 }
 
-// AgentRunnerFor returns a council.Runner that passes tools through to the first
+// AgentRunnerFor returns a Runner that passes tools through to the first
 // AgentProvider in the chain. Use this for commands that require tool use (diagnose, review, meta).
-func (r *Router) AgentRunnerFor(tier Tier, ts []tools.Tool) council.Runner {
-	return council.RunnerFunc(func(ctx context.Context, prompt string, _ []string) (string, error) {
+func (r *Router) AgentRunnerFor(tier Tier, ts []tools.Tool) Runner {
+	return RunnerFunc(func(ctx context.Context, prompt string, _ []string) (string, error) {
 		chain := r.chainFor(tier)
 		if len(chain) == 0 {
 			return "", errors.New("no provider available for tier " + string(tier))

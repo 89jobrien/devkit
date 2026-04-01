@@ -7,6 +7,19 @@ import (
 	"github.com/89jobrien/devkit/internal/tools"
 )
 
+// Runner executes a prompt and returns a response. Tool names are passed for
+// providers that support tool-use routing; non-tool runners may ignore them.
+type Runner interface {
+	Run(ctx context.Context, prompt string, toolNames []string) (string, error)
+}
+
+// RunnerFunc adapts a plain function to the Runner interface.
+type RunnerFunc func(ctx context.Context, prompt string, toolNames []string) (string, error)
+
+func (f RunnerFunc) Run(ctx context.Context, prompt string, toolNames []string) (string, error) {
+	return f(ctx, prompt, toolNames)
+}
+
 // ChatProvider is a single-turn LLM completion with no tool use.
 type ChatProvider interface {
 	Chat(ctx context.Context, prompt string) (string, error)
