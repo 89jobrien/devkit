@@ -30,3 +30,4 @@ vendor/
 .idea/
 .vscode/
 *.swp
+.worktrees/
