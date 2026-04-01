@@ -19,7 +19,11 @@ func main() {
 	task := strings.Join(os.Args[1:], " ")
 	if task == "" {
 		// Try stdin
-		info, _ := os.Stdin.Stat()
+		info, err := os.Stdin.Stat()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "error: could not stat stdin:", err)
+			os.Exit(1)
+		}
 		if info.Mode()&os.ModeCharDevice == 0 {
 			var sb strings.Builder
 			buf := make([]byte, 4096)
@@ -44,7 +48,11 @@ func main() {
 		GeminiKey:    os.Getenv("GEMINI_API_KEY"),
 	})
 
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error: could not get working directory:", err)
+		os.Exit(1)
+	}
 	agentTools := []tools.Tool{
 		tools.ReadTool(wd),
 		tools.GlobTool(wd),
@@ -78,6 +86,10 @@ func main() {
 	allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", result.Summary))
 
 	devlog.Complete(id, "meta", map[string]string{"task": taskPreview}, allOutput.String(), time.Since(start))
-	path, _ := devlog.SaveCommitLog(sha, "meta", allOutput.String(), map[string]string{"task": taskPreview})
-	fmt.Printf("\nLogged to: %s\n", path)
+	path, err := devlog.SaveCommitLog(sha, "meta", allOutput.String(), map[string]string{"task": taskPreview})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "warning: could not save log:", err)
+	} else {
+		fmt.Printf("\nLogged to: %s\n", path)
+	}
 }
