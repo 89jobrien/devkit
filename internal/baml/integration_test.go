@@ -8,28 +8,50 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/89jobrien/devkit/internal/baml"
 )
+
+// requireAPIKey skips the test if ANTHROPIC_API_KEY is not set.
+func requireAPIKey(t *testing.T) {
+	t.Helper()
+	if os.Getenv("ANTHROPIC_API_KEY") == "" {
+		t.Skip("ANTHROPIC_API_KEY not set")
+	}
+}
 
 // TestAdapterIntegrationStrictCritic runs one real BAML call.
 // Requires: ANTHROPIC_API_KEY env var.
 // Run with: go test ./internal/baml/... -tags integration
 func TestAdapterIntegrationStrictCritic(t *testing.T) {
-	if os.Getenv("ANTHROPIC_API_KEY") == "" {
-		t.Skip("ANTHROPIC_API_KEY not set")
-	}
+	requireAPIKey(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	var buf bytes.Buffer
 	a := baml.New("strict-critic", &buf)
 
-	result, err := a.Run(context.Background(), "Review this: simple hello world program with no tests.", nil)
+	result, err := a.Run(ctx, "Review this: simple hello world program with no tests.", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(result, "Health Score") {
-		t.Errorf("expected Health Score in result, got: %s", result)
+
+	// Validate required rubric sections are present.
+	for _, section := range []string{"Health Score", "Summary", "Recommendations"} {
+		if !strings.Contains(result, section) {
+			t.Errorf("expected %q in result, got:\n%s", section, result)
+		}
 	}
-	t.Logf("streamed tokens: %q", buf.String())
-	t.Logf("final result: %s", result)
+
+	// Validate streaming actually emitted tokens.
+	if buf.Len() == 0 {
+		t.Error("expected streamed tokens in buf, got empty")
+	}
+
+	if testing.Verbose() {
+		t.Logf("streamed tokens: %q", buf.String())
+		t.Logf("final result:\n%s", result)
+	}
 }
