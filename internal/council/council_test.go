@@ -181,8 +181,8 @@ func TestMetaScore(t *testing.T) {
 		"general-analyst":   "**Health Score:** 0.8",
 	}
 	score := council.MetaScore(outputs)
-	// strict-critic weight 1.5x: (0.6*1.5 + 0.9 + 0.8) / (1.5+1+1) = 2.6/3.5 ≈ 0.743
-	assert.InDelta(t, 0.743, score, 0.01)
+	// simple average: (0.6 + 0.9 + 0.8) / 3 ≈ 0.767
+	assert.InDelta(t, 0.767, score, 0.01)
 }
 
 func TestParseHealthScore(t *testing.T) {

@@ -219,28 +219,21 @@ func ParseHealthScore(text string) float64 {
 	return v
 }
 
-// MetaScore computes the weighted meta-score (Strict Critic 1.5x, others 1.0x).
+// MetaScore computes the simple average of all role health scores.
 func MetaScore(outputs map[string]string) float64 {
-	weights := map[string]float64{
-		"strict-critic":       1.5,
-		"creative-explorer":   1.0,
-		"general-analyst":     1.0,
-		"security-reviewer":   1.0,
-		"performance-analyst": 1.0,
-	}
-	var sum, totalW float64
-	for key, out := range outputs {
-		w := weights[key]
-		if w == 0 {
-			w = 1.0
+	var sum float64
+	var count int
+	for _, out := range outputs {
+		score := ParseHealthScore(out)
+		if score > 0 {
+			sum += score
+			count++
 		}
-		sum += ParseHealthScore(out) * w
-		totalW += w
 	}
-	if totalW == 0 {
+	if count == 0 {
 		return 0
 	}
-	return sum / totalW
+	return sum / float64(count)
 }
 
 // Synthesize runs a synthesis agent over all role outputs.
@@ -259,7 +252,7 @@ func Synthesize(ctx context.Context, outputs map[string]string, cfg Config, runn
 	prompt := fmt.Sprintf(`Synthesize this multi-role council review into a final verdict.
 
 Required sections:
-**Health Scores** — list each role's score, compute meta-score (Strict Critic 1.5x weight).
+**Health Scores** — list each role's score, then the average as the meta-score.
 **Areas of Consensus** — findings where 2+ roles agree.
 **Areas of Tension** — "[Role A] sees [X], AND [Role B] sees [Y], suggesting [resolution]."
 **Balanced Recommendations** — top 3-5 ranked actions.
