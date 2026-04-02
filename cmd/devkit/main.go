@@ -18,6 +18,7 @@ import (
 	"github.com/89jobrien/devkit/internal/diagnose"
 	devlog "github.com/89jobrien/devkit/internal/log"
 	"github.com/89jobrien/devkit/internal/meta"
+	"github.com/89jobrien/devkit/internal/pr"
 	"github.com/89jobrien/devkit/internal/providers"
 	"github.com/89jobrien/devkit/internal/review"
 	"github.com/89jobrien/devkit/internal/standup"
@@ -476,7 +477,63 @@ func main() {
 	standupCmd.Flags().StringArrayVar(&standupRepos, "repo", nil, "Repo paths to include (repeatable, defaults to cwd)")
 	standupCmd.Flags().BoolVar(&standupParallel, "parallel", false, "Summarize repos in parallel then synthesize")
 
-	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd, standupCmd)
+	// pr subcommand
+	var prBase string
+	prCmd := &cobra.Command{
+		Use:   "pr",
+		Short: "Draft a pull request description from branch diff",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := LoadConfig()
+			if err != nil {
+				return err
+			}
+			if cfg.Project.Name != "" {
+				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+			}
+
+			base := pr.ResolveBase(prBase)
+			diff := gitDiff(base)
+			commitLog := gitLog(base)
+			stat := gitStat(base)
+
+			var runner pr.Runner
+			if cfg.Providers.UseBAML {
+				runner = baml.New("pr", os.Stdout)
+			} else {
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				runner = pr.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
+				})
+			}
+
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("pr", map[string]string{"base": base})
+			start := time.Now()
+
+			result, err := pr.Run(cmd.Context(), pr.Config{
+				Base:   base,
+				Diff:   diff,
+				Log:    commitLog,
+				Stat:   stat,
+				Runner: runner,
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result)
+			devlog.Complete(id, "pr", map[string]string{"base": base}, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "pr", result, map[string]string{"base": base})
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	prCmd.Flags().StringVar(&prBase, "base", "", "Base branch (default: auto-detect from GitHub)")
+
+	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd, standupCmd, prCmd)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
