@@ -220,3 +220,18 @@ func TestSynthesize(t *testing.T) {
 	assert.Contains(t, synthPrompt, "**Health Scores**")
 	assert.Contains(t, synthPrompt, "**Branch Health**")
 }
+
+func TestPersonasExported(t *testing.T) {
+	p, ok := council.Personas["strict-critic"]
+	if !ok {
+		t.Fatal("Personas missing strict-critic")
+	}
+	if p == "" {
+		t.Fatal("strict-critic persona is empty")
+	}
+	for _, key := range []string{"strict-critic", "security-reviewer", "performance-analyst"} {
+		if _, ok := council.Personas[key]; !ok {
+			t.Fatalf("Personas missing %s", key)
+		}
+	}
+}

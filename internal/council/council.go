@@ -166,6 +166,17 @@ func roleKeysForMode(mode string) []string {
 	return out
 }
 
+// Personas exports role persona strings for use by other packages (e.g. lint).
+// Keys match the role keys accepted by council: "strict-critic", "creative-explorer",
+// "general-analyst", "security-reviewer", "performance-analyst".
+var Personas = func() map[string]string {
+	m := make(map[string]string, len(roles))
+	for k, v := range roles {
+		m[k] = v.persona
+	}
+	return m
+}()
+
 // Run executes all council roles concurrently and returns their outputs.
 func Run(ctx context.Context, cfg Config) (*Result, error) {
 	roleKeys := roleKeysForMode(cfg.Mode)
