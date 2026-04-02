@@ -60,6 +60,10 @@ func buildPrompt(cfg Config) string {
 	truncated := false
 	if len(diff) > maxDiffBytes {
 		diff = diff[:maxDiffBytes]
+		// trim back to a valid UTF-8 rune boundary
+		for len(diff) > 0 && diff[len(diff)-1]&0xC0 == 0x80 {
+			diff = diff[:len(diff)-1]
+		}
 		truncated = true
 	}
 
