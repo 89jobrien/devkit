@@ -160,6 +160,54 @@ func (t *GeneralAnalystOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type PRDescriptionClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *PRDescriptionClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *PRDescriptionClassView) PropertyTitle() (ClassPropertyView, error) {
+    return t.inner.Property("title")
+}
+
+func (t *PRDescriptionClassView) PropertySummary() (ClassPropertyView, error) {
+    return t.inner.Property("summary")
+}
+
+func (t *PRDescriptionClassView) PropertyChanges() (ClassPropertyView, error) {
+    return t.inner.Property("changes")
+}
+
+func (t *PRDescriptionClassView) PropertyTest_plan() (ClassPropertyView, error) {
+    return t.inner.Property("test_plan")
+}
+
+
+func (t *TypeBuilder) PRDescription() (*PRDescriptionClassView, error) {
+	bld, err := t.inner.Class("PRDescription")
+	if err != nil {
+		return nil, err
+	}
+	return &PRDescriptionClassView{inner: bld}, nil
+}
+
+func (t *PRDescriptionClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type RoleOutputClassView struct {
     inner baml.ClassBuilder
 }

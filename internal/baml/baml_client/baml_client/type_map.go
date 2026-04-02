@@ -28,6 +28,8 @@ var typeMap = map[string]reflect.Type{
     "STREAM_TYPES.FindingSeverity": reflect.TypeOf(stream_types.FindingSeverity{}),
 "TYPES.GeneralAnalystOutput": reflect.TypeOf(types.GeneralAnalystOutput{}),
     "STREAM_TYPES.GeneralAnalystOutput": reflect.TypeOf(stream_types.GeneralAnalystOutput{}),
+"TYPES.PRDescription": reflect.TypeOf(types.PRDescription{}),
+    "STREAM_TYPES.PRDescription": reflect.TypeOf(stream_types.PRDescription{}),
 "TYPES.RoleOutput": reflect.TypeOf(types.RoleOutput{}),
     "STREAM_TYPES.RoleOutput": reflect.TypeOf(stream_types.RoleOutput{}),
 "TYPES.SecurityReviewerOutput": reflect.TypeOf(types.SecurityReviewerOutput{}),

@@ -411,3 +411,77 @@ func (*stream) AnalyzeBranchStrictCritic(ctx context.Context, prompt string, opt
     }()
     return channel, nil
 }
+
+/// Streaming version of DraftPR
+func (*stream) DraftPR(ctx context.Context, prompt string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.PRDescription, types.PRDescription], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "prompt": prompt, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftPR: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "DraftPR", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.PRDescription, types.PRDescription])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.PRDescription, types.PRDescription]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.PRDescription)
+                    channel <- StreamValue[stream_types.PRDescription, types.PRDescription]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.PRDescription)
+                channel <- StreamValue[stream_types.PRDescription, types.PRDescription]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}

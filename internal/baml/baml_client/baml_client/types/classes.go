@@ -217,6 +217,71 @@ func (c GeneralAnalystOutput) BamlTypeName() string {
     return "GeneralAnalystOutput"
 }
 
+type PRDescription struct {
+    
+Title string `json:"title"`
+Summary string `json:"summary"`
+Changes []string `json:"changes"`
+Test_plan []string `json:"test_plan"`
+    
+}
+
+func (c *PRDescription) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_TYPES, got %s", string(typeName.Namespace.String())))
+	}
+	if typeName.Name != "PRDescription" {
+		panic(fmt.Sprintf("expected PRDescription, got %s", typeName.Name))
+	}
+
+   
+
+	
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+			switch key {
+				
+				case "title":
+					c.Title = baml.Decode(valueHolder).Interface().(string)
+				
+				case "summary":
+					c.Summary = baml.Decode(valueHolder).Interface().(string)
+				
+				case "changes":
+					c.Changes = baml.Decode(valueHolder).Interface().([]string)
+				
+				case "test_plan":
+					c.Test_plan = baml.Decode(valueHolder).Interface().([]string)
+				
+		default:
+			
+			panic(fmt.Sprintf("unexpected field: %s in class PRDescription", key))
+			
+		}
+	}
+
+}
+
+func (c PRDescription) Encode() (*cffi.HostValue, error) {
+    fields := map[string]any{}
+    
+    fields["title"] = c.Title
+    
+    fields["summary"] = c.Summary
+    
+    fields["changes"] = c.Changes
+    
+    fields["test_plan"] = c.Test_plan
+    
+    return baml.EncodeClass("PRDescription", fields, nil)
+}
+
+func (c PRDescription) BamlTypeName() string {
+    return "PRDescription"
+}
+
 type RoleOutput struct {
     
 Health_score float64 `json:"health_score"`
