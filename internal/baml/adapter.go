@@ -75,6 +75,12 @@ func realRun(ctx context.Context, role, prompt string) (string, error) {
 			return "", err
 		}
 		return drainGeneralAnalyst(ch)
+	case "pr":
+		ch, err := baml_client.Stream.DraftPR(ctx, prompt)
+		if err != nil {
+			return "", err
+		}
+		return drainDraftPR(ch)
 	default:
 		ch, err := baml_client.Stream.AnalyzeBranchDefault(ctx, prompt)
 		if err != nil {
@@ -146,6 +152,22 @@ func drainGeneralAnalyst(ch <-chan baml_client.StreamValue[stream_types.GeneralA
 		return "", fmt.Errorf("no final value received from BAML general-analyst")
 	}
 	return formatGeneralAnalyst(final), nil
+}
+
+func drainDraftPR(ch <-chan baml_client.StreamValue[stream_types.PRDescription, types.PRDescription]) (string, error) {
+	var final *types.PRDescription
+	for v := range ch {
+		if v.IsError {
+			return "", v.Error
+		}
+		if v.IsFinal {
+			final = v.Final()
+		}
+	}
+	if final == nil {
+		return "", fmt.Errorf("no final value received from BAML pr")
+	}
+	return formatPRDescription(final), nil
 }
 
 func drainDefault(ch <-chan baml_client.StreamValue[stream_types.RoleOutput, types.RoleOutput]) (string, error) {
@@ -245,6 +267,25 @@ func formatGeneralAnalyst(r *types.GeneralAnalystOutput) string {
 		sb.WriteString("\n")
 	}
 	fmt.Fprintf(&sb, "**Work Patterns:**\n%s\n", r.Work_patterns)
+	return sb.String()
+}
+
+func formatPRDescription(r *types.PRDescription) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "# %s\n\n", r.Title)
+	fmt.Fprintf(&sb, "%s\n", r.Summary)
+	if len(r.Changes) > 0 {
+		sb.WriteString("\n## Changes\n")
+		for _, c := range r.Changes {
+			fmt.Fprintf(&sb, "- %s\n", c)
+		}
+	}
+	if len(r.Test_plan) > 0 {
+		sb.WriteString("\n## Test Plan\n")
+		for _, t := range r.Test_plan {
+			fmt.Fprintf(&sb, "- %s\n", t)
+		}
+	}
 	return sb.String()
 }
 
