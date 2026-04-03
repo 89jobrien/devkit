@@ -183,7 +183,7 @@ items:
   description: |
     Original test called the command but made no assertions. Replaced with a test that parses stdin input and asserts correct behavior.
   files:
-  - internal/ops/citriage/citriage_test.go
+  - cmd/devkit/commands_new_test.go
   extra: []
   completed: 2026-04-03
 - id: devkit-5
@@ -198,9 +198,14 @@ items:
   extra: []
 log:
 - date: 2026-04-03
+  summary: 'Merged diverged remote (12 commits) + local (5 commits); sentinel inspect: replaced no-op ci-triage test with real runner-not-called assertion (devkit-16 already done); false-positive automate panic confirmed not a real bug. 230 tests passing.'
+  commits:
+  - 3cd3b4d
+  - c11feea
+- date: 2026-04-03
   summary: 'council run: health 75% on onMainAtBase fallback — added devkit-14/15 for range-resolver refactor and error handling; devkit-2,16 done.'
   commits:
-  - c11feea
+  - e968de7
 - date: 2026-04-03
   summary: automate registry refactor (devkit-6) + command wiring tests (devkit-8) done; 230 tests passing.
   commits:
