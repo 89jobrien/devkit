@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/89jobrien/devkit/internal/ops/changelog"
@@ -20,11 +21,11 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				base, err := buildTierRunner(providers.TierBalanced)
+				tierRunner, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				r = changelog.RunnerFunc(base.Run)
+				r = changelog.RunnerFunc(tierRunner.Run)
 			}
 
 			resolvedBase := base
@@ -33,11 +34,11 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 			}
 			rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
 			if err != nil {
-				return err
+				return fmt.Errorf("changelog: resolve git range: %w", err)
 			}
 			log, err := devgit.Log(rangeResult)
 			if err != nil {
-				return err
+				return fmt.Errorf("changelog: git log: %w", err)
 			}
 
 			logMeta := map[string]string{"base": resolvedBase, "format": format}
