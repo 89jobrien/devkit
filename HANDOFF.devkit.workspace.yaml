@@ -3,176 +3,215 @@ id: devkit
 updated: 2026-04-03
 branch: main
 state:
-  tests: "230 passing (31 packages)"
+  tests: 230 passing (31 packages)
   build: clean
-  notes: "baml_client regenerated and committed; go.mod/go.sum now manually maintained (baml 0.220.0 no longer generates them)"
-
+  notes: |
+    council health 75%: onMainAtBase fallback useful but duplicated logic across gitDiff/gitLog/ gitStat, HEAD~1 unsafe on single-commit repos, main hard-coded. Centralize range resolver and add tests before next council work.
 items:
-  - id: devkit-1
-    name: baml-uncommitted-changes
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: "Commit pending BAML schema changes"
-    description: >
-      citriage.baml: added context/environment/tools fields to ReproductionStep,
-      category field to RootCause. logpattern.baml: moved LogPatternOutput class
-      to top (no semantic change). Regenerate BAML client after commit.
-    files:
-      - internal/ai/baml/baml_src/citriage.baml
-      - internal/ai/baml/baml_src/logpattern.baml
-
-  - id: devkit-2
-    name: baml-client-tmp
-    priority: P2
-    status: open
-    title: "Clean up stale baml_client.tmp/ directory"
-    description: "Generated artifact left over, delete or add to .gitignore."
-    files:
-      - internal/ai/baml/baml_client.tmp/
-
-  - id: devkit-3
-    name: provider-fallback-smoke-test
-    priority: P2
-    status: open
-    title: "Smoke-test provider fallback routing end-to-end"
-    description: >
-      Run devkit council and devkit diagnose against a test repo with a real
-      ANTHROPIC_API_KEY to confirm Router wiring works in production.
-      (doob #31)
-
-  - id: devkit-4
-    name: gather-repo-context-ownership
-    priority: P2
-    status: open
-    title: "Clarify package ownership for GatherRepoContext"
-    description: >
-      Move GatherRepoContext to a more cohesive package or redefine
-      internal/log as a broader runtime/ops utility package. (doob #35)
-    files:
-      - internal/log/
-
-  - id: devkit-6
-    name: automate-task-registry
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: "Promote automate dispatch to data-driven task registry"
-    description: >
-      Adding new routine tasks requires edits to orchestration control flow.
-      Refactor internal/ops/automate/automate.go:42 to a registry pattern.
-    files:
-      - internal/ops/automate/automate.go
-
-  - id: devkit-7
-    name: shared-repo-context-helper
-    priority: P1
-    status: open
-    title: "Extract shared repo-context gathering helper"
-    description: >
-      reporeview, health, and ci-triage each independently collect repo name,
-      README, CLAUDE notes, and git history. Extract a shared helper.
-    files:
-      - internal/dev/reporeview/reporeview.go
-      - internal/ops/health/health.go
-      - internal/ops/citriage/citriage.go
-
-  - id: devkit-8
-    name: command-wiring-tests
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: "Add targeted tests for new command wiring"
-    description: >
-      Tests only cover basic runner-injection happy paths. Add tests for Cobra
-      registration, flag handling, repo-scoped shell invocation in ci-triage,
-      and reporeview gatherContext filesystem behavior.
-    files:
-      - cmd/devkit/main.go
-      - internal/ops/citriage/citriage.go
-      - internal/dev/reporeview/reporeview.go
-
-  - id: devkit-9
-    name: automate-failure-semantics
-    priority: P3
-    status: open
-    title: "Harden automate failure semantics"
-    description: >
-      Unknown tasks and delegated task failures embedded in output text instead
-      of returning non-zero error — automation consumers report success on
-      partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
-    files:
-      - internal/ops/automate/automate.go
-
-  - id: devkit-10
-    name: citriage-repo-scoping
-    priority: P3
-    status: open
-    title: "Fix ci-triage repo-scoping: gh run list missing cmd.Dir"
-    description: >
-      'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view'
-      has it. In multi-repo environments this selects the wrong run.
-    files:
-      - internal/ops/citriage/citriage.go
-
-  - id: devkit-11
-    name: citriage-baml-schema-drift
-    priority: P3
-    status: done
-    completed: 2026-04-03
-    title: "Reconcile ci-triage BAML schema vs generated artifacts vs formatter"
-    description: >
-      Resolved: regenerated baml_client, fixed patch-generated.sh guards,
-      updated adapter_tools.go formatCITriage to use new ReproductionSteps struct.
-    files:
-      - internal/ai/baml/baml_src/citriage.baml
-      - internal/ai/baml/adapter_tools.go
-      - internal/ai/baml/baml_client/baml_source_map.go
-
-  - id: devkit-12
-    name: repo-review-format-flag
-    priority: P3
-    status: open
-    title: "Fix non-functional --format flag on repo-review command"
-    description: >
-      Flag exposed but reporeview.Config has no Format field — machine-readable
-      output callers silently get wrong behavior.
-    files:
-      - cmd/devkit/cmd_reporeview.go
-      - internal/dev/reporeview/reporeview.go
-
-  - id: devkit-13
-    name: health-format-flag
-    priority: P3
-    status: open
-    title: "Fix non-functional --format flag on health command"
-    description: >
-      Flag is parsed and logged but never passed into health.Run or used to
-      vary output shape — CLI contract violation.
-    files:
-      - cmd/devkit/cmd_health.go
-      - internal/ops/health/health.go
-
-  - id: devkit-5
-    name: ideas-backlog
-    priority: P2
-    status: parked
-    title: "Unimplemented command ideas"
-    description: >
-      Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold,
-      log-pattern, incident, profile, ticket, standup, changelog, test-gen,
-      explain, lint. None blocked, none urgent. Revisit when core is stable.
-
+- id: devkit-1
+  doob_uuid: ca6a92d3-d254-47db-aace-94d8190eac8f
+  name: baml-uncommitted-changes
+  priority: P1
+  status: done
+  title: Commit pending BAML schema changes
+  description: |
+    citriage.baml: added context/environment/tools fields to ReproductionStep, category field to RootCause. logpattern.baml: moved LogPatternOutput class to top (no semantic change). Regenerate BAML client after commit.
+  files:
+  - internal/ai/baml/baml_src/citriage.baml
+  - internal/ai/baml/baml_src/logpattern.baml
+  extra: []
+  completed: 2026-04-03
+- id: devkit-2
+  doob_uuid: 004b1ea0-70dd-47c4-97dd-3b62e7b06579
+  name: baml-client-tmp
+  priority: P2
+  status: done
+  title: Clean up stale baml_client.tmp/ directory
+  description: Generated artifact left over, delete or add to .gitignore.
+  files:
+  - internal/ai/baml/baml_client.tmp/
+  extra: []
+  completed: 2026-04-03
+- id: devkit-3
+  doob_uuid: 1bb4885d-96f8-4274-957e-230d0f012618
+  name: provider-fallback-smoke-test
+  priority: P2
+  status: open
+  title: Smoke-test provider fallback routing end-to-end
+  description: |
+    Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY to confirm Router wiring works in production. (doob #31)
+  files: []
+  extra: []
+- id: devkit-4
+  doob_uuid: 05a0f4d8-0b6b-471b-99cf-a08be716d9a3
+  name: gather-repo-context-ownership
+  priority: P2
+  status: open
+  title: Clarify package ownership for GatherRepoContext
+  description: |
+    Move GatherRepoContext to a more cohesive package or redefine internal/log as a broader runtime/ops utility package. (doob #35)
+  files:
+  - internal/log/
+  extra: []
+- id: devkit-6
+  doob_uuid: 35194999-c11f-4441-833a-5238c5f9874e
+  name: automate-task-registry
+  priority: P1
+  status: done
+  title: Promote automate dispatch to data-driven task registry
+  description: |
+    Adding new routine tasks requires edits to orchestration control flow. Refactor internal/ops/automate/automate.go:42 to a registry pattern.
+  files:
+  - internal/ops/automate/automate.go
+  extra: []
+  completed: 2026-04-03
+- id: devkit-7
+  doob_uuid: ff0661ec-3eaa-422f-9c85-92988c36c224
+  name: shared-repo-context-helper
+  priority: P1
+  status: open
+  title: Extract shared repo-context gathering helper
+  description: |
+    reporeview, health, and ci-triage each independently collect repo name, README, CLAUDE notes, and git history. Extract a shared helper.
+  files:
+  - internal/dev/reporeview/reporeview.go
+  - internal/ops/health/health.go
+  - internal/ops/citriage/citriage.go
+  extra: []
+- id: devkit-8
+  doob_uuid: 82a65e8c-7d73-489e-9067-a8fa531c6d0c
+  name: command-wiring-tests
+  priority: P1
+  status: done
+  title: Add targeted tests for new command wiring
+  description: |
+    Tests only cover basic runner-injection happy paths. Add tests for Cobra registration, flag handling, repo-scoped shell invocation in ci-triage, and reporeview gatherContext filesystem behavior.
+  files:
+  - cmd/devkit/main.go
+  - internal/ops/citriage/citriage.go
+  - internal/dev/reporeview/reporeview.go
+  extra: []
+  completed: 2026-04-03
+- id: devkit-9
+  doob_uuid: 50533bfd-9608-438b-b5b3-a6673631556a
+  name: automate-failure-semantics
+  priority: P3
+  status: open
+  title: Harden automate failure semantics
+  description: |
+    Unknown tasks and delegated task failures embedded in output text instead of returning non-zero error — automation consumers report success on partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
+  files:
+  - internal/ops/automate/automate.go
+  extra: []
+- id: devkit-10
+  doob_uuid: d3ac9c6f-ce95-4eb2-892b-048a6a5e51d1
+  name: citriage-repo-scoping
+  priority: P3
+  status: open
+  title: 'Fix ci-triage repo-scoping: gh run list missing cmd.Dir'
+  description: |
+    'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view' has it. In multi-repo environments this selects the wrong run.
+  files:
+  - internal/ops/citriage/citriage.go
+  extra: []
+- id: devkit-11
+  doob_uuid: 3cfc5312-8643-45ce-8d60-8760bad30ab7
+  name: citriage-baml-schema-drift
+  priority: P3
+  status: done
+  title: Reconcile ci-triage BAML schema vs generated artifacts vs formatter
+  description: |
+    Resolved: regenerated baml_client, fixed patch-generated.sh guards, updated adapter_tools.go formatCITriage to use new ReproductionSteps struct.
+  files:
+  - internal/ai/baml/baml_src/citriage.baml
+  - internal/ai/baml/adapter_tools.go
+  - internal/ai/baml/baml_client/baml_source_map.go
+  extra: []
+  completed: 2026-04-03
+- id: devkit-12
+  doob_uuid: 95953f45-e0a9-4f57-82d0-a4c9a25377fa
+  name: repo-review-format-flag
+  priority: P3
+  status: open
+  title: Fix non-functional --format flag on repo-review command
+  description: |
+    Flag exposed but reporeview.Config has no Format field — machine-readable output callers silently get wrong behavior.
+  files:
+  - cmd/devkit/cmd_reporeview.go
+  - internal/dev/reporeview/reporeview.go
+  extra: []
+- id: devkit-13
+  doob_uuid: eb8d5e67-7e42-4f93-aaf1-c84ea26c5dfa
+  name: health-format-flag
+  priority: P3
+  status: open
+  title: Fix non-functional --format flag on health command
+  description: |
+    Flag is parsed and logged but never passed into health.Run or used to vary output shape — CLI contract violation.
+  files:
+  - cmd/devkit/cmd_health.go
+  - internal/ops/health/health.go
+  extra: []
+- id: devkit-14
+  doob_uuid: 5a02b752-73e2-4869-98ca-37b26f313761
+  name: council-range-resolver
+  priority: P1
+  status: open
+  title: Centralize git revision-range selection into one helper
+  description: |
+    gitDiff, gitLog, and gitStat each call onMainAtBase independently and duplicate the HEAD~1...HEAD range construction. Extract a single resolveReviewRange helper that returns the effective comparison range once, used by all three. Eliminates repeated subprocess calls and prevents future drift.
+  files:
+  - cmd/devkit/main.go
+  extra: []
+- id: devkit-15
+  doob_uuid: 8f7550c6-db15-45f4-9937-0468e50526af
+  name: council-range-error-handling
+  priority: P1
+  status: open
+  title: Handle HEAD~1 invalidity and surface git errors in fallback paths
+  description: |
+    onMainAtBase collapses all errors to false; gitDiff/gitLog/gitStat ignore command errors in the HEAD~1...HEAD fallback and return empty string. On single-commit or shallow-clone repos this silently produces misleading empty output. Add parent-commit existence check and surface/log failures. Also add tests: normal branch, main-at-base, single-commit, detached HEAD.
+  files:
+  - cmd/devkit/main.go
+  extra: []
+- id: devkit-16
+  doob_uuid: 72135f7f-3f34-4a58-837a-056153c97191
+  name: citriage-stdin-test
+  priority: P2
+  status: done
+  title: Replace no-op TestCITriageCmd_StdinFlag with meaningful stdin assertion
+  description: |
+    Original test called the command but made no assertions. Replaced with a test that parses stdin input and asserts correct behavior.
+  files:
+  - internal/ops/citriage/citriage_test.go
+  extra: []
+  completed: 2026-04-03
+- id: devkit-5
+  doob_uuid: 501e0acc-20b7-4b6d-83d0-a25a2011e0d7
+  name: ideas-backlog
+  priority: P2
+  status: parked
+  title: Unimplemented command ideas
+  description: |
+    Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint. None blocked, none urgent. Revisit when core is stable.
+  files: []
+  extra: []
 log:
-  - date: 2026-04-03
-    summary: "automate registry refactor (devkit-6) + command wiring tests (devkit-8) done; 230 tests passing."
-    commits: [837824f]
-  - date: 2026-04-03
-    summary: "Updated CLAUDE.md with BAML regeneration workflow docs; marked devkit-11 done."
-    commits: [a63c356]
-  - date: 2026-04-03
-    summary: "Sentinel review: diff was HANDOFF.yaml rename only — no code changes, no findings."
-  - date: 2026-04-03
-    summary: "Regenerated baml_client for new schema fields; fixed patch-generated.sh guard logic; updated adapter_tools.go for ReproductionSteps struct. 215 tests passing."
-  - date: 2026-04-03
-    summary: "Bootstrapped HANDOFF.yaml from git state and doob todos."
+- date: 2026-04-03
+  summary: 'council run: health 75% on onMainAtBase fallback — added devkit-14/15 for range-resolver refactor and error handling; devkit-2,16 done.'
+  commits:
+  - c11feea
+- date: 2026-04-03
+  summary: automate registry refactor (devkit-6) + command wiring tests (devkit-8) done; 230 tests passing.
+  commits:
+  - 837824f
+- date: 2026-04-03
+  summary: Updated CLAUDE.md with BAML regeneration workflow docs; marked devkit-11 done.
+  commits:
+  - a63c356
+- date: 2026-04-03
+  summary: 'Sentinel review: diff was HANDOFF.yaml rename only — no code changes, no findings.'
+- date: 2026-04-03
+  summary: Regenerated baml_client for new schema fields; fixed patch-generated.sh guard logic; updated adapter_tools.go for ReproductionSteps struct. 215 tests passing.
+- date: 2026-04-03
+  summary: Bootstrapped HANDOFF.yaml from git state and doob todos.
