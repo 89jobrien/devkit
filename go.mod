@@ -25,4 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace baml_devkit => ./internal/baml/baml_client
+replace baml_devkit => ./internal/ai/baml/baml_client

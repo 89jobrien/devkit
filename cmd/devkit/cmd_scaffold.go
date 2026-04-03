@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/baml"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/scaffold"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/dev/scaffold"
 	"github.com/spf13/cobra"
 )
 

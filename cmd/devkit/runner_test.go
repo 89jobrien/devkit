@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/89jobrien/devkit/internal/providers"
+	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/providers"
-	"github.com/89jobrien/devkit/internal/ticket"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/providers"
+	"github.com/89jobrien/devkit/internal/dev/ticket"
 	"github.com/spf13/cobra"
 )
 

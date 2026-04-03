@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	"github.com/89jobrien/devkit/internal/changelog"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/providers"
+	"github.com/89jobrien/devkit/internal/ops/changelog"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/spf13/cobra"
 )
 

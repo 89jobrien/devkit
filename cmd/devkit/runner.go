@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/providers"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/providers"
 )
 
 // newRouterFromConfig constructs a Router using API keys from the environment

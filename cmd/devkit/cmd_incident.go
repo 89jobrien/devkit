@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/baml"
-	"github.com/89jobrien/devkit/internal/incident"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/providers"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	"github.com/89jobrien/devkit/internal/ops/incident"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/spf13/cobra"
 )
 

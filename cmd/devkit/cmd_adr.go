@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/adr"
-	"github.com/89jobrien/devkit/internal/baml"
-	devlog "github.com/89jobrien/devkit/internal/log"
+	"github.com/89jobrien/devkit/internal/dev/adr"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/spf13/cobra"
 )
 

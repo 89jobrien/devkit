@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/89jobrien/devkit/internal/platform"
+	"github.com/89jobrien/devkit/internal/infra/platform"
 	"github.com/BurntSushi/toml"
 )
 

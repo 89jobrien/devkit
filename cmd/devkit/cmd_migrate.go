@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/baml"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/migrate"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/dev/migrate"
 	"github.com/spf13/cobra"
 )
 

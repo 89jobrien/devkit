@@ -6,10 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/baml"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/pr"
-	"github.com/89jobrien/devkit/internal/providers"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/dev/pr"
+	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/spf13/cobra"
 )
 

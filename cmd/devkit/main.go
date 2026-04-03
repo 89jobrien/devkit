@@ -13,15 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/89jobrien/devkit/internal/baml"
-	"github.com/89jobrien/devkit/internal/council"
-	"github.com/89jobrien/devkit/internal/diagnose"
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/meta"
-	"github.com/89jobrien/devkit/internal/providers"
-	"github.com/89jobrien/devkit/internal/review"
-	"github.com/89jobrien/devkit/internal/standup"
-	"github.com/89jobrien/devkit/internal/tools"
+	"github.com/89jobrien/devkit/internal/ai/baml"
+	"github.com/89jobrien/devkit/internal/ai/council"
+	"github.com/89jobrien/devkit/internal/ops/diagnose"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/meta"
+	"github.com/89jobrien/devkit/internal/ai/providers"
+	"github.com/89jobrien/devkit/internal/dev/review"
+	"github.com/89jobrien/devkit/internal/ops/standup"
+	"github.com/89jobrien/devkit/internal/infra/tools"
 	"github.com/spf13/cobra"
 )
 
@@ -155,6 +155,10 @@ func main() {
 			diff := gitDiff(councilBase)
 			commits := gitLog(councilBase)
 			stat := gitStat(councilBase)
+
+			if strings.TrimSpace(diff) == "" {
+				return fmt.Errorf("no diff found vs %q — nothing to review (run `git log %s..HEAD --oneline` to verify commits exist)", councilBase, councilBase)
+			}
 
 			router, err := newRouterFromConfig(cfg)
 			if err != nil {

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	devlog "github.com/89jobrien/devkit/internal/log"
-	"github.com/89jobrien/devkit/internal/meta"
-	"github.com/89jobrien/devkit/internal/providers"
-	"github.com/89jobrien/devkit/internal/tools"
+	devlog "github.com/89jobrien/devkit/internal/infra/log"
+	"github.com/89jobrien/devkit/internal/ai/meta"
+	"github.com/89jobrien/devkit/internal/ai/providers"
+	"github.com/89jobrien/devkit/internal/infra/tools"
 )
 
 func main() {
