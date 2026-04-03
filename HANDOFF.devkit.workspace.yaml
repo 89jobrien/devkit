@@ -52,6 +52,105 @@ items:
     files:
       - internal/log/
 
+  - id: devkit-6
+    name: automate-task-registry
+    priority: P1
+    status: open
+    title: "Promote automate dispatch to data-driven task registry"
+    description: >
+      Adding new routine tasks requires edits to orchestration control flow.
+      Refactor internal/ops/automate/automate.go:42 to a registry pattern.
+    files:
+      - internal/ops/automate/automate.go
+
+  - id: devkit-7
+    name: shared-repo-context-helper
+    priority: P1
+    status: open
+    title: "Extract shared repo-context gathering helper"
+    description: >
+      reporeview, health, and ci-triage each independently collect repo name,
+      README, CLAUDE notes, and git history. Extract a shared helper.
+    files:
+      - internal/dev/reporeview/reporeview.go
+      - internal/ops/health/health.go
+      - internal/ops/citriage/citriage.go
+
+  - id: devkit-8
+    name: command-wiring-tests
+    priority: P1
+    status: open
+    title: "Add targeted tests for new command wiring"
+    description: >
+      Tests only cover basic runner-injection happy paths. Add tests for Cobra
+      registration, flag handling, repo-scoped shell invocation in ci-triage,
+      and reporeview gatherContext filesystem behavior.
+    files:
+      - cmd/devkit/main.go
+      - internal/ops/citriage/citriage.go
+      - internal/dev/reporeview/reporeview.go
+
+  - id: devkit-9
+    name: automate-failure-semantics
+    priority: P3
+    status: open
+    title: "Harden automate failure semantics"
+    description: >
+      Unknown tasks and delegated task failures embedded in output text instead
+      of returning non-zero error — automation consumers report success on
+      partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
+    files:
+      - internal/ops/automate/automate.go
+
+  - id: devkit-10
+    name: citriage-repo-scoping
+    priority: P3
+    status: open
+    title: "Fix ci-triage repo-scoping: gh run list missing cmd.Dir"
+    description: >
+      'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view'
+      has it. In multi-repo environments this selects the wrong run.
+    files:
+      - internal/ops/citriage/citriage.go
+
+  - id: devkit-11
+    name: citriage-baml-schema-drift
+    priority: P3
+    status: done
+    completed: 2026-04-03
+    title: "Reconcile ci-triage BAML schema vs generated artifacts vs formatter"
+    description: >
+      Resolved: regenerated baml_client, fixed patch-generated.sh guards,
+      updated adapter_tools.go formatCITriage to use new ReproductionSteps struct.
+    files:
+      - internal/ai/baml/baml_src/citriage.baml
+      - internal/ai/baml/adapter_tools.go
+      - internal/ai/baml/baml_client/baml_source_map.go
+
+  - id: devkit-12
+    name: repo-review-format-flag
+    priority: P3
+    status: open
+    title: "Fix non-functional --format flag on repo-review command"
+    description: >
+      Flag exposed but reporeview.Config has no Format field — machine-readable
+      output callers silently get wrong behavior.
+    files:
+      - cmd/devkit/cmd_reporeview.go
+      - internal/dev/reporeview/reporeview.go
+
+  - id: devkit-13
+    name: health-format-flag
+    priority: P3
+    status: open
+    title: "Fix non-functional --format flag on health command"
+    description: >
+      Flag is parsed and logged but never passed into health.Run or used to
+      vary output shape — CLI contract violation.
+    files:
+      - cmd/devkit/cmd_health.go
+      - internal/ops/health/health.go
+
   - id: devkit-5
     name: ideas-backlog
     priority: P2
@@ -63,6 +162,11 @@ items:
       explain, lint. None blocked, none urgent. Revisit when core is stable.
 
 log:
+  - date: 2026-04-03
+    summary: "Updated CLAUDE.md with BAML regeneration workflow docs; marked devkit-11 done."
+    commits: [a63c356]
+  - date: 2026-04-03
+    summary: "Sentinel review: diff was HANDOFF.yaml rename only — no code changes, no findings."
   - date: 2026-04-03
     summary: "Regenerated baml_client for new schema fields; fixed patch-generated.sh guard logic; updated adapter_tools.go for ReproductionSteps struct. 215 tests passing."
   - date: 2026-04-03
