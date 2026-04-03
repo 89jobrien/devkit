@@ -3,13 +3,12 @@ id: devkit
 updated: 2026-04-03
 branch: main
 state:
-  tests: 230 passing (31 packages)
+  tests: 235 passing (32 packages)
   build: clean
-  notes: |
-    council health 75%: onMainAtBase fallback useful but duplicated logic across gitDiff/gitLog/ gitStat, HEAD~1 unsafe on single-commit repos, main hard-coded. Centralize range resolver and add tests before next council work.
+  notes: null
 items:
 - id: devkit-1
-  doob_uuid: ca6a92d3-d254-47db-aace-94d8190eac8f
+  doob_uuid: 3c8ee38f-382d-4268-a221-fc46b044347f
   name: baml-uncommitted-changes
   priority: P1
   status: done
@@ -22,7 +21,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-2
-  doob_uuid: 004b1ea0-70dd-47c4-97dd-3b62e7b06579
+  doob_uuid: 097e8d39-4526-4ef1-9b6e-4942de4a5529
   name: baml-client-tmp
   priority: P2
   status: done
@@ -33,7 +32,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-3
-  doob_uuid: 1bb4885d-96f8-4274-957e-230d0f012618
+  doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
   name: provider-fallback-smoke-test
   priority: P2
   status: open
@@ -43,7 +42,7 @@ items:
   files: []
   extra: []
 - id: devkit-4
-  doob_uuid: 05a0f4d8-0b6b-471b-99cf-a08be716d9a3
+  doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
   name: gather-repo-context-ownership
   priority: P2
   status: open
@@ -54,7 +53,7 @@ items:
   - internal/log/
   extra: []
 - id: devkit-6
-  doob_uuid: 35194999-c11f-4441-833a-5238c5f9874e
+  doob_uuid: 1ad5d2ec-4b39-4ba2-a56c-f1268dd769ee
   name: automate-task-registry
   priority: P1
   status: done
@@ -66,7 +65,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-7
-  doob_uuid: ff0661ec-3eaa-422f-9c85-92988c36c224
+  doob_uuid: e748de28-71f9-4421-955d-5b4c1f1cfa5d
   name: shared-repo-context-helper
   priority: P1
   status: open
@@ -79,7 +78,7 @@ items:
   - internal/ops/citriage/citriage.go
   extra: []
 - id: devkit-8
-  doob_uuid: 82a65e8c-7d73-489e-9067-a8fa531c6d0c
+  doob_uuid: bd686500-df40-4974-baa8-5bdf82ee970b
   name: command-wiring-tests
   priority: P1
   status: done
@@ -93,7 +92,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-9
-  doob_uuid: 50533bfd-9608-438b-b5b3-a6673631556a
+  doob_uuid: de30cbbd-d0e9-4099-b564-7dab2399f03a
   name: automate-failure-semantics
   priority: P3
   status: open
@@ -104,7 +103,7 @@ items:
   - internal/ops/automate/automate.go
   extra: []
 - id: devkit-10
-  doob_uuid: d3ac9c6f-ce95-4eb2-892b-048a6a5e51d1
+  doob_uuid: db81858a-0e93-44a0-93f6-036fa43907d7
   name: citriage-repo-scoping
   priority: P3
   status: open
@@ -115,7 +114,7 @@ items:
   - internal/ops/citriage/citriage.go
   extra: []
 - id: devkit-11
-  doob_uuid: 3cfc5312-8643-45ce-8d60-8760bad30ab7
+  doob_uuid: 8a4c9a66-f128-4c5d-8174-f213ee32bce2
   name: citriage-baml-schema-drift
   priority: P3
   status: done
@@ -129,7 +128,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-12
-  doob_uuid: 95953f45-e0a9-4f57-82d0-a4c9a25377fa
+  doob_uuid: b976b730-a380-4aa4-b01f-40241240db34
   name: repo-review-format-flag
   priority: P3
   status: open
@@ -141,7 +140,7 @@ items:
   - internal/dev/reporeview/reporeview.go
   extra: []
 - id: devkit-13
-  doob_uuid: eb8d5e67-7e42-4f93-aaf1-c84ea26c5dfa
+  doob_uuid: 3f7a14bb-faac-4faa-a0d4-eaf1695d8052
   name: health-format-flag
   priority: P3
   status: open
@@ -153,29 +152,31 @@ items:
   - internal/ops/health/health.go
   extra: []
 - id: devkit-14
-  doob_uuid: 5a02b752-73e2-4869-98ca-37b26f313761
+  doob_uuid: d98a0241-66b1-4c24-a002-597e88a4bba5
   name: council-range-resolver
   priority: P1
-  status: open
+  status: done
   title: Centralize git revision-range selection into one helper
   description: |
     gitDiff, gitLog, and gitStat each call onMainAtBase independently and duplicate the HEAD~1...HEAD range construction. Extract a single resolveReviewRange helper that returns the effective comparison range once, used by all three. Eliminates repeated subprocess calls and prevents future drift.
   files:
   - cmd/devkit/main.go
   extra: []
+  completed: 2026-04-03
 - id: devkit-15
-  doob_uuid: 8f7550c6-db15-45f4-9937-0468e50526af
+  doob_uuid: c1bab175-81ca-4cf6-b587-72a86468b39e
   name: council-range-error-handling
   priority: P1
-  status: open
+  status: done
   title: Handle HEAD~1 invalidity and surface git errors in fallback paths
   description: |
     onMainAtBase collapses all errors to false; gitDiff/gitLog/gitStat ignore command errors in the HEAD~1...HEAD fallback and return empty string. On single-commit or shallow-clone repos this silently produces misleading empty output. Add parent-commit existence check and surface/log failures. Also add tests: normal branch, main-at-base, single-commit, detached HEAD.
   files:
   - cmd/devkit/main.go
   extra: []
+  completed: 2026-04-03
 - id: devkit-16
-  doob_uuid: 72135f7f-3f34-4a58-837a-056153c97191
+  doob_uuid: ee8567e9-6524-4b97-b88c-5dda678ba0b2
   name: citriage-stdin-test
   priority: P2
   status: done
@@ -187,7 +188,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: devkit-5
-  doob_uuid: 501e0acc-20b7-4b6d-83d0-a25a2011e0d7
+  doob_uuid: 70731e49-e3b4-43f2-ac87-c1612dd2d94e
   name: ideas-backlog
   priority: P2
   status: parked
@@ -197,6 +198,15 @@ items:
   files: []
   extra: []
 log:
+- date: 2026-04-03
+  summary: 'Implemented devkit-14/15: new internal/infra/git package (RangeResolver port, ExecRangeResolver adapter, Diff/Log/Stat helpers, 4 real-repo tests); wired into council/review/pr/changelog/explain/testgen; deleted onMainAtBase/gitDiff/gitLog/gitStat. Sentinel follow-up: injected RangeResolver into 4 cmd constructors (was hardcoded). 235 tests passing.'
+  commits:
+  - 5bc0ecb
+  - fc7d297
+  - 71ff203
+  - 37e9524
+  - 23f8821
+  - b7bcf42
 - date: 2026-04-03
   summary: 'Merged diverged remote (12 commits) + local (5 commits); sentinel inspect: replaced no-op ci-triage test with real runner-not-called assertion (devkit-16 already done); false-positive automate panic confirmed not a real bug. 230 tests passing.'
   commits:
