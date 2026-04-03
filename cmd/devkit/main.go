@@ -310,53 +310,29 @@ func main() {
 				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
 			}
 
-			repoContext := devlog.GatherRepoContext()
-			sdkDocs := fetchSDKDocs(metaRefreshDocs)
-
 			router, err := newRouterFromConfig(cfg)
 			if err != nil {
 				return err
 			}
 
-			sha := devlog.GitShortSHA()
+			runner := meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+				wd, _ := os.Getwd()
+				agentTools := []tools.Tool{
+					tools.ReadTool(wd),
+					tools.GlobTool(wd),
+					tools.GrepTool(wd),
+					tools.BashTool(30_000, nil),
+				}
+				return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
+			})
 
-			taskPreview := task
-			if len(taskPreview) > 80 {
-				taskPreview = taskPreview[:80]
-			}
-
-			id := devlog.Start("meta", map[string]string{"task": taskPreview})
-			start := time.Now()
-
-			result, err := meta.Run(cmd.Context(), task, repoContext, sdkDocs,
-				meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					wd, _ := os.Getwd()
-					agentTools := []tools.Tool{
-						tools.ReadTool(wd),
-						tools.GlobTool(wd),
-						tools.GrepTool(wd),
-						tools.BashTool(30_000, nil),
-					}
-					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
-				}))
+			res, err := meta.Exec(cmd.Context(), task, devlog.GatherRepoContext(), fetchSDKDocs(metaRefreshDocs), runner, cmd.OutOrStdout(), metaNoSynth)
 			if err != nil {
 				return err
 			}
-
-			var allOutput strings.Builder
-			for name, out := range result.Outputs {
-				fmt.Printf("\n---- %s ----\n%s\n", name, out)
-				allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", name, out))
+			if res.LogPath != "" {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", res.LogPath)
 			}
-			if !metaNoSynth {
-				fmt.Printf("\n---- SYNTHESIS ----\n%s\n", result.Summary)
-				allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", result.Summary))
-			}
-
-			devlog.Complete(id, "meta", map[string]string{"task": taskPreview},
-				allOutput.String(), time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "meta", allOutput.String(), map[string]string{"task": taskPreview})
-			fmt.Printf("\nLogged to: %s\n", path)
 			return nil
 		},
 	}

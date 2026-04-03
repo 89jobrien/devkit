@@ -60,39 +60,19 @@ func main() {
 		tools.BashTool(30_000, nil),
 	}
 
-	sha := devlog.GitShortSHA()
-	taskPreview := task
-	if len(taskPreview) > 80 {
-		taskPreview = taskPreview[:80]
-	}
-	id := devlog.Start("meta", map[string]string{"task": taskPreview})
-	start := time.Now()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	result, err := meta.Run(ctx, task, devlog.GatherRepoContext(), "",
-		meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-			return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
-		}))
+	runner := meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+		return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
+	})
+
+	res, err := meta.Exec(ctx, task, devlog.GatherRepoContext(), "", runner, os.Stdout, false)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
-
-	var allOutput strings.Builder
-	for name, out := range result.Outputs {
-		fmt.Printf("\n---- %s ----\n%s\n", name, out)
-		allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", name, out))
-	}
-	fmt.Printf("\n---- SYNTHESIS ----\n%s\n", result.Summary)
-	allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", result.Summary))
-
-	devlog.Complete(id, "meta", map[string]string{"task": taskPreview}, allOutput.String(), time.Since(start))
-	path, err := devlog.SaveCommitLog(sha, "meta", allOutput.String(), map[string]string{"task": taskPreview})
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "warning: could not save log:", err)
-	} else {
-		fmt.Printf("\nLogged to: %s\n", path)
+	if res.LogPath != "" {
+		fmt.Printf("\nLogged to: %s\n", res.LogPath)
 	}
 }
