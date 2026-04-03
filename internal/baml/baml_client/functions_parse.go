@@ -261,6 +261,241 @@ func (*parse) AnalyzeBranchStrictCritic(text string, opts ...CallOptionFunc) (ty
     return casted, nil
 }
 
+/// Parse version of AnalyzeLogPatterns (Takes in string and returns types.LogPatternOutput)
+func (*parse) AnalyzeLogPatterns(text string, opts ...CallOptionFunc) (types.LogPatternOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeLogPatterns: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeLogPatterns", encoded)
+    if err != nil {
+        return types.LogPatternOutput{}, err
+    }
+
+    casted := (result).(types.LogPatternOutput)
+
+    return casted, nil
+}
+
+/// Parse version of AnalyzeMigration (Takes in string and returns types.MigrateOutput)
+func (*parse) AnalyzeMigration(text string, opts ...CallOptionFunc) (types.MigrateOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeMigration: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeMigration", encoded)
+    if err != nil {
+        return types.MigrateOutput{}, err
+    }
+
+    casted := (result).(types.MigrateOutput)
+
+    return casted, nil
+}
+
+/// Parse version of AnalyzeProfile (Takes in string and returns types.ProfileOutput)
+func (*parse) AnalyzeProfile(text string, opts ...CallOptionFunc) (types.ProfileOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeProfile: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeProfile", encoded)
+    if err != nil {
+        return types.ProfileOutput{}, err
+    }
+
+    casted := (result).(types.ProfileOutput)
+
+    return casted, nil
+}
+
+/// Parse version of DraftADR (Takes in string and returns types.ADROutput)
+func (*parse) DraftADR(text string, opts ...CallOptionFunc) (types.ADROutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftADR: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "DraftADR", encoded)
+    if err != nil {
+        return types.ADROutput{}, err
+    }
+
+    casted := (result).(types.ADROutput)
+
+    return casted, nil
+}
+
+/// Parse version of DraftIncidentReport (Takes in string and returns types.IncidentOutput)
+func (*parse) DraftIncidentReport(text string, opts ...CallOptionFunc) (types.IncidentOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftIncidentReport: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "DraftIncidentReport", encoded)
+    if err != nil {
+        return types.IncidentOutput{}, err
+    }
+
+    casted := (result).(types.IncidentOutput)
+
+    return casted, nil
+}
+
 /// Parse version of DraftPR (Takes in string and returns types.PRDescription)
 func (*parse) DraftPR(text string, opts ...CallOptionFunc) (types.PRDescription, error) {
 
@@ -304,6 +539,100 @@ func (*parse) DraftPR(text string, opts ...CallOptionFunc) (types.PRDescription,
     }
 
     casted := (result).(types.PRDescription)
+
+    return casted, nil
+}
+
+/// Parse version of GenerateDocs (Takes in string and returns types.DocgenOutput)
+func (*parse) GenerateDocs(text string, opts ...CallOptionFunc) (types.DocgenOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateDocs: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "GenerateDocs", encoded)
+    if err != nil {
+        return types.DocgenOutput{}, err
+    }
+
+    casted := (result).(types.DocgenOutput)
+
+    return casted, nil
+}
+
+/// Parse version of GenerateScaffold (Takes in string and returns types.ScaffoldOutput)
+func (*parse) GenerateScaffold(text string, opts ...CallOptionFunc) (types.ScaffoldOutput, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateScaffold: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "GenerateScaffold", encoded)
+    if err != nil {
+        return types.ScaffoldOutput{}, err
+    }
+
+    casted := (result).(types.ScaffoldOutput)
 
     return casted, nil
 }

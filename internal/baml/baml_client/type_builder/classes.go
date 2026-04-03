@@ -16,6 +16,54 @@ package type_builder
 import baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 
 
+type ADROutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *ADROutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ADROutputClassView) PropertyStatus() (ClassPropertyView, error) {
+    return t.inner.Property("status")
+}
+
+func (t *ADROutputClassView) PropertyContext() (ClassPropertyView, error) {
+    return t.inner.Property("context")
+}
+
+func (t *ADROutputClassView) PropertyDecision() (ClassPropertyView, error) {
+    return t.inner.Property("decision")
+}
+
+func (t *ADROutputClassView) PropertyConsequences() (ClassPropertyView, error) {
+    return t.inner.Property("consequences")
+}
+
+
+func (t *TypeBuilder) ADROutput() (*ADROutputClassView, error) {
+	bld, err := t.inner.Class("ADROutput")
+	if err != nil {
+		return nil, err
+	}
+	return &ADROutputClassView{inner: bld}, nil
+}
+
+func (t *ADROutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type CreativeExplorerOutputClassView struct {
     inner baml.ClassBuilder
 }
@@ -65,6 +113,46 @@ func (t *TypeBuilder) CreativeExplorerOutput() (*CreativeExplorerOutputClassView
 }
 
 func (t *CreativeExplorerOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type DocgenOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *DocgenOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *DocgenOutputClassView) PropertyPackage_doc() (ClassPropertyView, error) {
+    return t.inner.Property("package_doc")
+}
+
+func (t *DocgenOutputClassView) PropertySymbol_docs() (ClassPropertyView, error) {
+    return t.inner.Property("symbol_docs")
+}
+
+
+func (t *TypeBuilder) DocgenOutput() (*DocgenOutputClassView, error) {
+	bld, err := t.inner.Class("DocgenOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &DocgenOutputClassView{inner: bld}, nil
+}
+
+func (t *DocgenOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
@@ -160,6 +248,242 @@ func (t *GeneralAnalystOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type IncidentActionClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *IncidentActionClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *IncidentActionClassView) PropertyAction() (ClassPropertyView, error) {
+    return t.inner.Property("action")
+}
+
+func (t *IncidentActionClassView) PropertyOwner() (ClassPropertyView, error) {
+    return t.inner.Property("owner")
+}
+
+func (t *IncidentActionClassView) PropertyDue() (ClassPropertyView, error) {
+    return t.inner.Property("due")
+}
+
+
+func (t *TypeBuilder) IncidentAction() (*IncidentActionClassView, error) {
+	bld, err := t.inner.Class("IncidentAction")
+	if err != nil {
+		return nil, err
+	}
+	return &IncidentActionClassView{inner: bld}, nil
+}
+
+func (t *IncidentActionClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type IncidentOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *IncidentOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *IncidentOutputClassView) PropertyTimeline() (ClassPropertyView, error) {
+    return t.inner.Property("timeline")
+}
+
+func (t *IncidentOutputClassView) PropertyRoot_cause() (ClassPropertyView, error) {
+    return t.inner.Property("root_cause")
+}
+
+func (t *IncidentOutputClassView) PropertyImpact() (ClassPropertyView, error) {
+    return t.inner.Property("impact")
+}
+
+func (t *IncidentOutputClassView) PropertyMitigations_applied() (ClassPropertyView, error) {
+    return t.inner.Property("mitigations_applied")
+}
+
+func (t *IncidentOutputClassView) PropertyFollow_up_actions() (ClassPropertyView, error) {
+    return t.inner.Property("follow_up_actions")
+}
+
+
+func (t *TypeBuilder) IncidentOutput() (*IncidentOutputClassView, error) {
+	bld, err := t.inner.Class("IncidentOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &IncidentOutputClassView{inner: bld}, nil
+}
+
+func (t *IncidentOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type LogPatternEntryClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *LogPatternEntryClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *LogPatternEntryClassView) PropertyPattern() (ClassPropertyView, error) {
+    return t.inner.Property("pattern")
+}
+
+func (t *LogPatternEntryClassView) PropertyCount() (ClassPropertyView, error) {
+    return t.inner.Property("count")
+}
+
+func (t *LogPatternEntryClassView) PropertySeverity() (ClassPropertyView, error) {
+    return t.inner.Property("severity")
+}
+
+func (t *LogPatternEntryClassView) PropertyFirst_seen() (ClassPropertyView, error) {
+    return t.inner.Property("first_seen")
+}
+
+func (t *LogPatternEntryClassView) PropertyLast_seen() (ClassPropertyView, error) {
+    return t.inner.Property("last_seen")
+}
+
+func (t *LogPatternEntryClassView) PropertySuggestion() (ClassPropertyView, error) {
+    return t.inner.Property("suggestion")
+}
+
+
+func (t *TypeBuilder) LogPatternEntry() (*LogPatternEntryClassView, error) {
+	bld, err := t.inner.Class("LogPatternEntry")
+	if err != nil {
+		return nil, err
+	}
+	return &LogPatternEntryClassView{inner: bld}, nil
+}
+
+func (t *LogPatternEntryClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type LogPatternOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *LogPatternOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *LogPatternOutputClassView) PropertySummary() (ClassPropertyView, error) {
+    return t.inner.Property("summary")
+}
+
+func (t *LogPatternOutputClassView) PropertyPatterns() (ClassPropertyView, error) {
+    return t.inner.Property("patterns")
+}
+
+
+func (t *TypeBuilder) LogPatternOutput() (*LogPatternOutputClassView, error) {
+	bld, err := t.inner.Class("LogPatternOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &LogPatternOutputClassView{inner: bld}, nil
+}
+
+func (t *LogPatternOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type MigrateOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *MigrateOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *MigrateOutputClassView) PropertySummary() (ClassPropertyView, error) {
+    return t.inner.Property("summary")
+}
+
+func (t *MigrateOutputClassView) PropertyDiff() (ClassPropertyView, error) {
+    return t.inner.Property("diff")
+}
+
+func (t *MigrateOutputClassView) PropertyNotes() (ClassPropertyView, error) {
+    return t.inner.Property("notes")
+}
+
+
+func (t *TypeBuilder) MigrateOutput() (*MigrateOutputClassView, error) {
+	bld, err := t.inner.Class("MigrateOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &MigrateOutputClassView{inner: bld}, nil
+}
+
+func (t *MigrateOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type PRDescriptionClassView struct {
     inner baml.ClassBuilder
 }
@@ -208,6 +532,98 @@ func (t *PRDescriptionClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type ProfileHotspotClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *ProfileHotspotClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ProfileHotspotClassView) PropertySymbol() (ClassPropertyView, error) {
+    return t.inner.Property("symbol")
+}
+
+func (t *ProfileHotspotClassView) PropertyCost() (ClassPropertyView, error) {
+    return t.inner.Property("cost")
+}
+
+func (t *ProfileHotspotClassView) PropertyExplanation() (ClassPropertyView, error) {
+    return t.inner.Property("explanation")
+}
+
+func (t *ProfileHotspotClassView) PropertySuggestion() (ClassPropertyView, error) {
+    return t.inner.Property("suggestion")
+}
+
+
+func (t *TypeBuilder) ProfileHotspot() (*ProfileHotspotClassView, error) {
+	bld, err := t.inner.Class("ProfileHotspot")
+	if err != nil {
+		return nil, err
+	}
+	return &ProfileHotspotClassView{inner: bld}, nil
+}
+
+func (t *ProfileHotspotClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type ProfileOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *ProfileOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ProfileOutputClassView) PropertySummary() (ClassPropertyView, error) {
+    return t.inner.Property("summary")
+}
+
+func (t *ProfileOutputClassView) PropertyHotspots() (ClassPropertyView, error) {
+    return t.inner.Property("hotspots")
+}
+
+func (t *ProfileOutputClassView) PropertyQuick_wins() (ClassPropertyView, error) {
+    return t.inner.Property("quick_wins")
+}
+
+
+func (t *TypeBuilder) ProfileOutput() (*ProfileOutputClassView, error) {
+	bld, err := t.inner.Class("ProfileOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &ProfileOutputClassView{inner: bld}, nil
+}
+
+func (t *ProfileOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type RoleOutputClassView struct {
     inner baml.ClassBuilder
 }
@@ -249,6 +665,46 @@ func (t *TypeBuilder) RoleOutput() (*RoleOutputClassView, error) {
 }
 
 func (t *RoleOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type ScaffoldOutputClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *ScaffoldOutputClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ScaffoldOutputClassView) PropertyFile_content() (ClassPropertyView, error) {
+    return t.inner.Property("file_content")
+}
+
+func (t *ScaffoldOutputClassView) PropertyUsage_notes() (ClassPropertyView, error) {
+    return t.inner.Property("usage_notes")
+}
+
+
+func (t *TypeBuilder) ScaffoldOutput() (*ScaffoldOutputClassView, error) {
+	bld, err := t.inner.Class("ScaffoldOutput")
+	if err != nil {
+		return nil, err
+	}
+	return &ScaffoldOutputClassView{inner: bld}, nil
+}
+
+func (t *ScaffoldOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 

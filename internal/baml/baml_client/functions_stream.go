@@ -412,6 +412,376 @@ func (*stream) AnalyzeBranchStrictCritic(ctx context.Context, prompt string, opt
     return channel, nil
 }
 
+/// Streaming version of AnalyzeLogPatterns
+func (*stream) AnalyzeLogPatterns(ctx context.Context, logs string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.LogPatternOutput, types.LogPatternOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "logs": logs, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeLogPatterns: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "AnalyzeLogPatterns", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.LogPatternOutput, types.LogPatternOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.LogPatternOutput, types.LogPatternOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.LogPatternOutput)
+                    channel <- StreamValue[stream_types.LogPatternOutput, types.LogPatternOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.LogPatternOutput)
+                channel <- StreamValue[stream_types.LogPatternOutput, types.LogPatternOutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of AnalyzeMigration
+func (*stream) AnalyzeMigration(ctx context.Context, old_api string, new_api string, code string, file_path string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.MigrateOutput, types.MigrateOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "old_api": old_api,"new_api": new_api,"code": code,"file_path": file_path, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeMigration: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "AnalyzeMigration", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.MigrateOutput, types.MigrateOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.MigrateOutput, types.MigrateOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.MigrateOutput)
+                    channel <- StreamValue[stream_types.MigrateOutput, types.MigrateOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.MigrateOutput)
+                channel <- StreamValue[stream_types.MigrateOutput, types.MigrateOutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of AnalyzeProfile
+func (*stream) AnalyzeProfile(ctx context.Context, input string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.ProfileOutput, types.ProfileOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "input": input, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeProfile: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "AnalyzeProfile", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.ProfileOutput, types.ProfileOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.ProfileOutput, types.ProfileOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.ProfileOutput)
+                    channel <- StreamValue[stream_types.ProfileOutput, types.ProfileOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.ProfileOutput)
+                channel <- StreamValue[stream_types.ProfileOutput, types.ProfileOutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of DraftADR
+func (*stream) DraftADR(ctx context.Context, title string, ctx_text string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.ADROutput, types.ADROutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "title": title,"ctx_text": ctx_text, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftADR: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "DraftADR", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.ADROutput, types.ADROutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.ADROutput, types.ADROutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.ADROutput)
+                    channel <- StreamValue[stream_types.ADROutput, types.ADROutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.ADROutput)
+                channel <- StreamValue[stream_types.ADROutput, types.ADROutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of DraftIncidentReport
+func (*stream) DraftIncidentReport(ctx context.Context, description string, logs string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.IncidentOutput, types.IncidentOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "description": description,"logs": logs, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftIncidentReport: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "DraftIncidentReport", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.IncidentOutput, types.IncidentOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.IncidentOutput, types.IncidentOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.IncidentOutput)
+                    channel <- StreamValue[stream_types.IncidentOutput, types.IncidentOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.IncidentOutput)
+                channel <- StreamValue[stream_types.IncidentOutput, types.IncidentOutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
 /// Streaming version of DraftPR
 func (*stream) DraftPR(ctx context.Context, prompt string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.PRDescription, types.PRDescription], error) {
 
@@ -474,6 +844,154 @@ func (*stream) DraftPR(ctx context.Context, prompt string, opts ...CallOptionFun
             } else {
                 data := (result.StreamData).(stream_types.PRDescription)
                 channel <- StreamValue[stream_types.PRDescription, types.PRDescription]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of GenerateDocs
+func (*stream) GenerateDocs(ctx context.Context, file_content string, file_path string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.DocgenOutput, types.DocgenOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "file_content": file_content,"file_path": file_path, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateDocs: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateDocs", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.DocgenOutput, types.DocgenOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.DocgenOutput, types.DocgenOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.DocgenOutput)
+                    channel <- StreamValue[stream_types.DocgenOutput, types.DocgenOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.DocgenOutput)
+                channel <- StreamValue[stream_types.DocgenOutput, types.DocgenOutput]{
+                    IsFinal: false,
+                    as_stream: &data,
+                }
+            }
+        }
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+    }()
+    return channel, nil
+}
+
+/// Streaming version of GenerateScaffold
+func (*stream) GenerateScaffold(ctx context.Context, package_name string, purpose string, repo_context string, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.ScaffoldOutput, types.ScaffoldOutput], error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "package_name": package_name,"purpose": purpose,"repo_context": repo_context, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateScaffold: %w", err)
+        panic(wrapped_err)
+    }
+
+    internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateScaffold", encoded, callOpts.onTick)
+    if err != nil {
+        return nil, err
+    }
+
+    channel := make(chan StreamValue[stream_types.ScaffoldOutput, types.ScaffoldOutput])
+    go func() {
+        for result := range internal_channel {
+            if result.Error != nil {
+                channel <- StreamValue[stream_types.ScaffoldOutput, types.ScaffoldOutput]{
+                    IsError: true,
+                    Error:   result.Error,
+                }
+                close(channel)
+                return
+            }
+            if result.HasData {
+                    data := (result.Data).(types.ScaffoldOutput)
+                    channel <- StreamValue[stream_types.ScaffoldOutput, types.ScaffoldOutput]{
+                        IsFinal: true,
+                        as_final: &data,
+                    }
+            } else {
+                data := (result.StreamData).(stream_types.ScaffoldOutput)
+                channel <- StreamValue[stream_types.ScaffoldOutput, types.ScaffoldOutput]{
                     IsFinal: false,
                     as_stream: &data,
                 }

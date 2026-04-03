@@ -255,6 +255,236 @@ func (*build_request_stream) AnalyzeBranchStrictCritic(prompt string, opts ...Ca
     return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchStrictCritic", encoded)
 }
 
+// Build streaming HTTP request for AnalyzeLogPatterns (returns baml.HTTPRequest)
+func (*build_request_stream) AnalyzeLogPatterns(logs string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "logs": logs, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeLogPatterns: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeLogPatterns", encoded)
+}
+
+// Build streaming HTTP request for AnalyzeMigration (returns baml.HTTPRequest)
+func (*build_request_stream) AnalyzeMigration(old_api string,new_api string,code string,file_path string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "old_api": old_api, "new_api": new_api, "code": code, "file_path": file_path, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeMigration: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeMigration", encoded)
+}
+
+// Build streaming HTTP request for AnalyzeProfile (returns baml.HTTPRequest)
+func (*build_request_stream) AnalyzeProfile(input string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "input": input, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeProfile: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeProfile", encoded)
+}
+
+// Build streaming HTTP request for DraftADR (returns baml.HTTPRequest)
+func (*build_request_stream) DraftADR(title string,ctx_text string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "title": title, "ctx_text": ctx_text, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftADR: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "DraftADR", encoded)
+}
+
+// Build streaming HTTP request for DraftIncidentReport (returns baml.HTTPRequest)
+func (*build_request_stream) DraftIncidentReport(description string,logs string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "description": description, "logs": logs, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftIncidentReport: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "DraftIncidentReport", encoded)
+}
+
 // Build streaming HTTP request for DraftPR (returns baml.HTTPRequest)
 func (*build_request_stream) DraftPR(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
@@ -299,4 +529,96 @@ func (*build_request_stream) DraftPR(prompt string, opts ...CallOptionFunc) (bam
     }
 
     return bamlRuntime.BuildRequest(context.Background(), "DraftPR", encoded)
+}
+
+// Build streaming HTTP request for GenerateDocs (returns baml.HTTPRequest)
+func (*build_request_stream) GenerateDocs(file_content string,file_path string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "file_content": file_content, "file_path": file_path, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateDocs: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "GenerateDocs", encoded)
+}
+
+// Build streaming HTTP request for GenerateScaffold (returns baml.HTTPRequest)
+func (*build_request_stream) GenerateScaffold(package_name string,purpose string,repo_context string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "package_name": package_name, "purpose": purpose, "repo_context": repo_context, "stream": true },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateScaffold: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "GenerateScaffold", encoded)
 }
