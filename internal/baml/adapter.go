@@ -18,15 +18,13 @@ import (
 type runFunc func(ctx context.Context, role, prompt string) (string, error)
 
 // Adapter implements council.Runner using BAML structured output.
-// Streaming partial tokens are written to out as they arrive.
 type Adapter struct {
 	role string
-	out  io.Writer
+	out  io.Writer // reserved for future streaming output; currently unused
 	run  runFunc
 }
 
 // New returns an Adapter backed by the real generated BAML client.
-// out is where streaming partial tokens are written (e.g. os.Stdout).
 func New(role string, out io.Writer) *Adapter {
 	return &Adapter{role: role, out: out, run: realRun}
 }
@@ -36,7 +34,7 @@ func NewWithStub(role string, out io.Writer, fn runFunc) *Adapter {
 	return &Adapter{role: role, out: out, run: fn}
 }
 
-// Run satisfies council.Runner. It calls the per-role BAML function, streams
+// Run satisfies council.Runner. It calls the per-role BAML function and
 // partial tokens to a.out, and returns the final result as a markdown string.
 // The tools []string parameter is accepted for interface compliance but unused.
 func (a *Adapter) Run(ctx context.Context, prompt string, _ []string) (string, error) {
