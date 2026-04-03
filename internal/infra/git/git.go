@@ -48,7 +48,7 @@ func (ExecRangeResolver) ResolveRange(base string) (RangeResult, error) {
 
 	// base == HEAD: fall back to HEAD~1 if a parent exists.
 	if err := exec.Command("git", "rev-parse", "--verify", "HEAD~1").Run(); err != nil {
-		return RangeResult{}, fmt.Errorf("git: no parent commit: single-commit repository")
+		return RangeResult{}, fmt.Errorf("git: no parent commit (single-commit repository): %w", err)
 	}
 	return RangeResult{Range: "HEAD~1...HEAD", Fallback: true}, nil
 }
