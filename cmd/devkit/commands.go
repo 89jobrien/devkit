@@ -40,20 +40,11 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = changelog.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
-				})
+				r = changelog.RunnerFunc(base.Run)
 			}
 
 			resolvedBase := base
@@ -76,13 +67,7 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "changelog", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "changelog", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "changelog", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -101,20 +86,11 @@ func newLintCmd(runner lint.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = lint.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
-				})
+				r = lint.RunnerFunc(base.Run)
 			}
 
 			filePath := args[0]
@@ -138,13 +114,7 @@ func newLintCmd(runner lint.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "lint", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "lint", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "lint", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -218,13 +188,7 @@ func newExplainCmd(runner explain.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "explain", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "explain", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "explain", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -297,13 +261,7 @@ func newTestgenCmd(runner testgen.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "test-gen", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "test-gen", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "test-gen", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -386,13 +344,7 @@ func newTicketCmd(runner ticket.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "ticket", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "ticket", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "ticket", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -410,20 +362,11 @@ func newAdrCmd(runner adr.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierFast)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = adr.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierFast).Run(ctx, prompt, ts)
-				})
+				r = adr.RunnerFunc(base.Run)
 			}
 
 			ctx := contextText
@@ -452,13 +395,7 @@ func newAdrCmd(runner adr.Runner) *cobra.Command {
 				return fmt.Errorf("adr: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "adr", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "adr", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "adr", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -475,20 +412,11 @@ func newDocgenCmd(runner docgen.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierFast)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = docgen.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierFast).Run(ctx, prompt, ts)
-				})
+				r = docgen.RunnerFunc(base.Run)
 			}
 
 			filePath := args[0]
@@ -511,13 +439,7 @@ func newDocgenCmd(runner docgen.Runner) *cobra.Command {
 				return fmt.Errorf("docgen: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "docgen", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "docgen", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "docgen", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -534,20 +456,11 @@ func newMigrateCmd(runner migrate.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = migrate.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
-				})
+				r = migrate.RunnerFunc(base.Run)
 			}
 
 			if oldSig == "" || newSig == "" {
@@ -576,13 +489,7 @@ func newMigrateCmd(runner migrate.Runner) *cobra.Command {
 				return fmt.Errorf("migrate: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "migrate", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "migrate", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "migrate", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -601,20 +508,11 @@ func newScaffoldCmd(runner scaffold.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierFast)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = scaffold.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierFast).Run(ctx, prompt, ts)
-				})
+				r = scaffold.RunnerFunc(base.Run)
 			}
 
 			repoCtx := devlog.GatherRepoContext()
@@ -634,13 +532,7 @@ func newScaffoldCmd(runner scaffold.Runner) *cobra.Command {
 				return fmt.Errorf("scaffold: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "scaffold", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "scaffold", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "scaffold", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -657,20 +549,11 @@ func newLogPatternCmd(runner logpattern.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierFast)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = logpattern.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierFast).Run(ctx, prompt, ts)
-				})
+				r = logpattern.RunnerFunc(base.Run)
 			}
 
 			var logs string
@@ -708,13 +591,7 @@ func newLogPatternCmd(runner logpattern.Runner) *cobra.Command {
 				return fmt.Errorf("log-pattern: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "log-pattern", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "log-pattern", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "log-pattern", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -730,20 +607,11 @@ func newIncidentCmd(runner incident.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = incident.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
-				})
+				r = incident.RunnerFunc(base.Run)
 			}
 
 			if description == "" {
@@ -773,13 +641,7 @@ func newIncidentCmd(runner incident.Runner) *cobra.Command {
 				return fmt.Errorf("incident: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "incident", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "incident", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "incident", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -797,20 +659,11 @@ func newProfileCmd(runner profile.Runner) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := runner
 			if r == nil {
-				cfg, err := LoadConfig()
+				base, err := buildTierRunner(providers.TierBalanced)
 				if err != nil {
 					return err
 				}
-				if cfg.Project.Name != "" {
-					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
-				}
-				router, err := newRouterFromConfig(cfg)
-				if err != nil {
-					return err
-				}
-				r = profile.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
-					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
-				})
+				r = profile.RunnerFunc(base.Run)
 			}
 
 			var input string
@@ -848,13 +701,7 @@ func newProfileCmd(runner profile.Runner) *cobra.Command {
 				return fmt.Errorf("profile: %w", err)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-			devlog.Complete(id, "profile", logMeta, result, time.Since(start))
-			if path, err := devlog.SaveCommitLog(sha, "profile", result, logMeta); err != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
-			}
+			logResult(cmd.OutOrStdout(), "profile", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
@@ -916,14 +763,7 @@ func newPrCmd(runner pr.Runner) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(result)
-			devlog.Complete(id, "pr", logMeta, result, time.Since(start))
-			logPath, logErr := devlog.SaveCommitLog(sha, "pr", result, logMeta)
-			if logErr != nil {
-				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save commit log: %v\n", logErr)
-			} else {
-				fmt.Printf("\nLogged to: %s\n", logPath)
-			}
+			logResult(cmd.OutOrStdout(), "pr", sha, logMeta, result, id, start)
 			return nil
 		},
 	}
