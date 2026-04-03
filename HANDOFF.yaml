@@ -1,0 +1,66 @@
+project: devkit
+id: devkit
+updated: 2026-04-03
+branch: main
+state:
+  tests: "80 passing (12 packages)"
+  build: clean
+  notes: "2 uncommitted BAML schema changes; stale baml_client.tmp/ present"
+
+items:
+  - id: devkit-1
+    name: baml-uncommitted-changes
+    priority: P1
+    status: open
+    title: "Commit pending BAML schema changes"
+    description: >
+      citriage.baml: added context/environment/tools fields to ReproductionStep,
+      category field to RootCause. logpattern.baml: moved LogPatternOutput class
+      to top (no semantic change). Regenerate BAML client after commit.
+    files:
+      - internal/ai/baml/baml_src/citriage.baml
+      - internal/ai/baml/baml_src/logpattern.baml
+
+  - id: devkit-2
+    name: baml-client-tmp
+    priority: P2
+    status: open
+    title: "Clean up stale baml_client.tmp/ directory"
+    description: "Generated artifact left over, delete or add to .gitignore."
+    files:
+      - internal/ai/baml/baml_client.tmp/
+
+  - id: devkit-3
+    name: provider-fallback-smoke-test
+    priority: P2
+    status: open
+    title: "Smoke-test provider fallback routing end-to-end"
+    description: >
+      Run devkit council and devkit diagnose against a test repo with a real
+      ANTHROPIC_API_KEY to confirm Router wiring works in production.
+      (doob #31)
+
+  - id: devkit-4
+    name: gather-repo-context-ownership
+    priority: P2
+    status: open
+    title: "Clarify package ownership for GatherRepoContext"
+    description: >
+      Move GatherRepoContext to a more cohesive package or redefine
+      internal/log as a broader runtime/ops utility package. (doob #35)
+    files:
+      - internal/log/
+
+  - id: devkit-5
+    name: ideas-backlog
+    priority: P2
+    status: parked
+    title: "Unimplemented command ideas"
+    description: >
+      Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold,
+      log-pattern, incident, profile, ticket, standup, changelog, test-gen,
+      explain, lint. None blocked, none urgent. Revisit when core is stable.
+
+log:
+  - date: 2026-04-03
+    summary: "Bootstrapped HANDOFF.yaml from git state and doob todos."
