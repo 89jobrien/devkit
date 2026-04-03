@@ -11,9 +11,13 @@ class FailingJob {
 
 class ReproductionSteps {
   steps        string[]   @description("Steps to reproduce the failure locally")
+  context      string     @description("Context for the reproduction steps")
+  environment  string     @description("Environment variables and configuration for the reproduction steps")
+  tools        string[]   @description("Tools and dependencies required for the reproduction steps")
 }
 
 class RootCause {
+  category    string   @description("Category of the root cause (e.g. 'dependency', 'configuration', 'code')")
   description  string   @description("Specific root cause of the failure")
 }
 

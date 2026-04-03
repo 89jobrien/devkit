@@ -1,3 +1,8 @@
+class LogPatternOutput {
+  summary  string          @description("2-3 sentence overview of log health")
+  patterns LogPatternEntry[] @description("Recurring patterns sorted by severity then frequency")
+}
+
 enum LogPatternSeverity {
   Critical
   High
@@ -13,11 +18,6 @@ class LogPatternEntry {
   first_seen  string @description("Timestamp or context of first occurrence")
   last_seen   string @description("Timestamp or context of last occurrence")
   suggestion  string @description("Actionable suggestion to address this pattern")
-}
-
-class LogPatternOutput {
-  summary  string          @description("2-3 sentence overview of log health")
-  patterns LogPatternEntry[] @description("Recurring patterns sorted by severity then frequency")
 }
 
 function AnalyzeLogPatterns(logs: string) -> LogPatternOutput {
