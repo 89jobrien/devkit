@@ -14,7 +14,7 @@ Current version in `VERSION` file. CI bumps minor on push to main (`0.N.0`). Pat
 `.github/workflows/devkit.yml` runs `devkit council` on PRs (posts as comment); requires `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` secrets in repo settings. Council uses provider fallback chain (Anthropic → OpenAI → Gemini) configured via `.devkit.toml` `[providers]`.
 
 ## Development
-- `go test ./...` — 80 tests across 12 packages, no real API calls (httptest + stub runners)
+- `go test ./...` — 215 tests across 31 packages, no real API calls (httptest + stub runners)
 - `go build ./cmd/devkit ./cmd/ci-agent ./cmd/meta` — verify all three binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
 - Pre-commit hook runs `go build ./cmd/devkit ./cmd/ci-agent && go test ./...`; pre-push hook runs `devkit council --base <merge-base>`; bypass both with `DEVKIT_SKIP_HOOKS=1`
@@ -25,6 +25,18 @@ Pre-push hook requires `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` — use op run:
 `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY op run --account=my.1password.com --env-file=$HOME/.secrets -- sh -c 'PATH="$HOME/go/bin:$PATH" git push'`
 Never run multiple background pushes concurrently — causes "cannot lock ref" failures.
 `go install` writes to mise GOBIN, not `~/go/bin` — use `GOBIN=$HOME/go/bin go install` or prefix PATH.
+
+## BAML client regeneration
+Regeneration workflow (run from `internal/ai/baml/`):
+1. `rm baml_client/go.mod baml_client/go.sum` — baml 0.220.0 errors if these exist
+2. `baml generate`
+3. `python3 patch-generated.sh` — fixes codegen import bugs (see comments in script)
+4. Restore: `git checkout -- baml_client/go.mod baml_client/go.sum`
+5. `go build ./...` to verify
+
+`patch-generated.sh` guards are content-aware: `types/enums.go` and `stream_types/classes.go` imports are only blanked when no real content references them. Schema additions introducing new enum fields or cross-package type references may require updating the script's guards.
+
+Schema changes that alter struct shapes (e.g. `[]string` → `struct`) require updating `adapter_tools.go` callers — check `formatCITriage` and similar formatter functions.
 
 ## tools package
 `GlobTool` shells out to `fd`; `GrepTool` shells out to `rg` — both must be installed on the host. `BashTool(maxBytes)` runs `sh -c`; output capped at maxBytes with `[truncated]` suffix, non-zero exit appended as `(exit: ...)` rather than returned as a Go error.
