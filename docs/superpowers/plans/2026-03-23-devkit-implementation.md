@@ -54,14 +54,14 @@
 - Create: `Justfile`
 - Create: `.gitignore`
 
-- [ ] **Step 1: Initialize Go module**
+- [x] **Step 1: Initialize Go module**
 
 ```bash
 cd /Users/joe/dev/devkit
 go mod init github.com/89jobrien/devkit
 ```
 
-- [ ] **Step 2: Add dependencies**
+- [x] **Step 2: Add dependencies**
 
 ```bash
 go get github.com/anthropics/anthropic-sdk-go@latest
@@ -71,20 +71,20 @@ go get golang.org/x/sync@latest
 go get github.com/stretchr/testify@latest
 ```
 
-- [ ] **Step 3: Create VERSION**
+- [x] **Step 3: Create VERSION**
 
 ```
 1.0.0
 ```
 
-- [ ] **Step 4: Create .gitignore**
+- [x] **Step 4: Create .gitignore**
 
 ```
 devkit
 dist/
 ```
 
-- [ ] **Step 5: Create Justfile**
+- [x] **Step 5: Create Justfile**
 
 ```makefile
 build:
@@ -100,7 +100,7 @@ lint:
     go vet ./...
 ```
 
-- [ ] **Step 6: Verify build scaffolding compiles**
+- [x] **Step 6: Verify build scaffolding compiles**
 
 Create `cmd/devkit/main.go` with just `package main\nfunc main() {}` and `cmd/ci-agent/main.go` the same, then:
 
@@ -126,7 +126,7 @@ git commit -m "feat: initialize Go module scaffold"
 - Create: `internal/log/log.go`
 - Create: `internal/log/log_test.go`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```go
 // internal/log/log_test.go
@@ -193,7 +193,7 @@ func TestProjectNameFallback(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./internal/log/... 2>&1 | head -5
@@ -201,7 +201,7 @@ go test ./internal/log/... 2>&1 | head -5
 
 Expected: compile error (package doesn't exist yet).
 
-- [ ] **Step 3: Implement `internal/log/log.go`**
+- [x] **Step 3: Implement `internal/log/log.go`**
 
 ```go
 // internal/log/log.go
@@ -317,7 +317,7 @@ func SaveCommitLog(sha, command, content string, meta map[string]string) (string
 }
 ```
 
-- [ ] **Step 4: Run tests — verify PASS**
+- [x] **Step 4: Run tests — verify PASS**
 
 ```bash
 go test ./internal/log/... -v
@@ -341,7 +341,7 @@ git commit -m "feat: add internal/log telemetry package"
 - Create: `internal/tools/tools.go`
 - Create: `internal/tools/tools_test.go`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```go
 // internal/tools/tools_test.go
@@ -406,13 +406,13 @@ func TestGrepTool(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./internal/tools/... 2>&1 | head -5
 ```
 
-- [ ] **Step 3: Implement `internal/tools/tools.go`**
+- [x] **Step 3: Implement `internal/tools/tools.go`**
 
 ```go
 // internal/tools/tools.go
@@ -576,7 +576,7 @@ func Definitions(ts []Tool) []anthropic.ToolUnionParam {
 }
 ```
 
-- [ ] **Step 4: Run tests — verify PASS**
+- [x] **Step 4: Run tests — verify PASS**
 
 ```bash
 go test ./internal/tools/... -v
@@ -600,7 +600,7 @@ git commit -m "feat: add internal/tools Read/Glob/Grep"
 - Create: `internal/loop/loop.go`
 - Create: `internal/loop/loop_test.go`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```go
 // internal/loop/loop_test.go
@@ -704,13 +704,13 @@ func TestRunAgentToolUse(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./internal/loop/... 2>&1 | head -5
 ```
 
-- [ ] **Step 3: Implement `internal/loop/loop.go`**
+- [x] **Step 3: Implement `internal/loop/loop.go`**
 
 ```go
 // internal/loop/loop.go
@@ -796,7 +796,7 @@ func RunAgent(ctx context.Context, client *anthropic.Client, prompt string, ts [
 }
 ```
 
-- [ ] **Step 4: Run tests — verify PASS**
+- [x] **Step 4: Run tests — verify PASS**
 
 ```bash
 go test ./internal/loop/... -v
@@ -822,7 +822,7 @@ git commit -m "feat: add internal/loop tool-use execution loop"
 - Create: `internal/platform/github.go`
 - Create: `internal/platform/platform_test.go`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```go
 // internal/platform/platform_test.go
@@ -926,13 +926,13 @@ func TestGitHubFetchFailedJobLogs(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./internal/platform/... 2>&1 | head -5
 ```
 
-- [ ] **Step 3: Implement `internal/platform/platform.go`**
+- [x] **Step 3: Implement `internal/platform/platform.go`**
 
 ```go
 // internal/platform/platform.go
@@ -989,7 +989,7 @@ func truncateLast(s string, n int) string {
 }
 ```
 
-- [ ] **Step 4: Implement `internal/platform/gitea.go`**
+- [x] **Step 4: Implement `internal/platform/gitea.go`**
 
 ```go
 // internal/platform/gitea.go
@@ -1155,7 +1155,7 @@ func (g *giteaPlatform) AddComment(ctx context.Context, issueNumber int, diagnos
 }
 ```
 
-- [ ] **Step 5: Implement `internal/platform/github.go`**
+- [x] **Step 5: Implement `internal/platform/github.go`**
 
 ```go
 // internal/platform/github.go
@@ -1321,7 +1321,7 @@ func (g *githubPlatform) AddComment(ctx context.Context, issueNumber int, diagno
 }
 ```
 
-- [ ] **Step 6: Run tests — verify PASS**
+- [x] **Step 6: Run tests — verify PASS**
 
 ```bash
 go test ./internal/platform/... -v
@@ -1346,7 +1346,7 @@ git commit -m "feat: add internal/platform Gitea+GitHub API clients"
 - Create: `cmd/ci-agent/main.go`
 - Create: `cmd/ci-agent/main_test.go`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```go
 // cmd/ci-agent/main_test.go
@@ -1385,13 +1385,13 @@ func TestProviderFallbackSkipsWhenNoKey(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./cmd/ci-agent/... 2>&1 | head -5
 ```
 
-- [ ] **Step 3: Implement `cmd/ci-agent/providers.go`**
+- [x] **Step 3: Implement `cmd/ci-agent/providers.go`**
 
 ```go
 // cmd/ci-agent/providers.go
@@ -1552,7 +1552,7 @@ func askGemini(prompt, key string) (string, error) {
 }
 ```
 
-- [ ] **Step 4: Implement `cmd/ci-agent/main.go`**
+- [x] **Step 4: Implement `cmd/ci-agent/main.go`**
 
 ````go
 // cmd/ci-agent/main.go
@@ -1700,7 +1700,7 @@ func main() {
 }
 ````
 
-- [ ] **Step 5: Run tests — verify PASS**
+- [x] **Step 5: Run tests — verify PASS**
 
 ```bash
 go test ./cmd/ci-agent/... -v
@@ -1708,7 +1708,7 @@ go test ./cmd/ci-agent/... -v
 
 Expected: 2 tests pass.
 
-- [ ] **Step 6: Build check**
+- [x] **Step 6: Build check**
 
 ```bash
 go build ./cmd/ci-agent/
@@ -1736,7 +1736,7 @@ git commit -m "feat: add cmd/ci-agent standalone CI diagnosis agent"
 - Create: `internal/meta/meta.go`
 - Create: `internal/meta/meta_test.go`
 
-- [ ] **Step 1: Write failing tests for council**
+- [x] **Step 1: Write failing tests for council**
 
 ```go
 // internal/council/council_test.go
@@ -1793,13 +1793,13 @@ func TestMetaScore(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run — verify FAIL**
+- [x] **Step 2: Run — verify FAIL**
 
 ```bash
 go test ./internal/council/... 2>&1 | head -5
 ```
 
-- [ ] **Step 3: Implement `internal/council/council.go`**
+- [x] **Step 3: Implement `internal/council/council.go`**
 
 ````go
 // internal/council/council.go
@@ -1962,7 +1962,7 @@ Council findings:
 // Note: min() is a Go 1.21+ builtin — no local helper needed with go1.23
 ````
 
-- [ ] **Step 4: Write and implement `internal/review/review.go`**
+- [x] **Step 4: Write and implement `internal/review/review.go`**
 
 ````go
 // internal/review/review.go
@@ -2056,7 +2056,7 @@ type RunnerFunc func(ctx context.Context, prompt string, tools []string) (string
 func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (string, error) { return f(ctx, prompt, tools) }
 ```
 
-- [ ] **Step 5: Write and implement `internal/meta/meta.go`**
+- [x] **Step 5: Write and implement `internal/meta/meta.go`**
 
 ````go
 // internal/meta/meta.go
@@ -2256,7 +2256,7 @@ func TestRunFallsBackOnInvalidJSON(t *testing.T) {
 }
 ```
 
-- [ ] **Step 6: Run all three tests — verify PASS**
+- [x] **Step 6: Run all three tests — verify PASS**
 
 ```bash
 go test ./internal/council/... ./internal/review/... ./internal/meta/... -v
@@ -2281,7 +2281,7 @@ git commit -m "feat: add council, review, and meta-agent internals"
 - Create: `cmd/devkit/config.go`
 - Create: `cmd/devkit/runner.go`
 
-- [ ] **Step 1: Implement `cmd/devkit/config.go`**
+- [x] **Step 1: Implement `cmd/devkit/config.go`**
 
 ```go
 // cmd/devkit/config.go
@@ -2342,7 +2342,7 @@ func LoadConfig() (*Config, error) {
 }
 ```
 
-- [ ] **Step 2: Implement `cmd/devkit/runner.go`**
+- [x] **Step 2: Implement `cmd/devkit/runner.go`**
 
 ```go
 // cmd/devkit/runner.go
@@ -2397,7 +2397,7 @@ func (r *agentRunner) Run(ctx context.Context, prompt string, toolNames []string
 }
 ```
 
-- [ ] **Step 3: Implement `cmd/devkit/main.go`**
+- [x] **Step 3: Implement `cmd/devkit/main.go`**
 
 ```go
 // cmd/devkit/main.go
@@ -2626,7 +2626,7 @@ func main() {
 // Note: min() is a Go 1.21+ builtin — no local helper needed with go1.23
 ```
 
-- [ ] **Step 4: Add `gatherRepoContext` and `fetchSDKDocs` helpers to `cmd/devkit/main.go`**
+- [x] **Step 4: Add `gatherRepoContext` and `fetchSDKDocs` helpers to `cmd/devkit/main.go`**
 
 Add imports `"io"`, `"net/http"`, `"regexp"` to the import block. Append to main.go:
 
@@ -2711,7 +2711,7 @@ func htmlToText(html string) string {
 }
 ```
 
-- [ ] **Step 5: Add `RunnerFunc` adapter to `meta` package** (add to `internal/meta/meta.go`):
+- [x] **Step 5: Add `RunnerFunc` adapter to `meta` package** (add to `internal/meta/meta.go`):
 
 ```go
 // RunnerFunc is a function adapter for Runner.
@@ -2719,7 +2719,7 @@ type RunnerFunc func(ctx context.Context, prompt string, tools []string) (string
 func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (string, error) { return f(ctx, prompt, tools) }
 ```
 
-- [ ] **Step 6: Build the binary — verify it compiles**
+- [x] **Step 6: Build the binary — verify it compiles**
 
 ```bash
 go build ./cmd/devkit/
@@ -2728,7 +2728,7 @@ go build ./cmd/devkit/
 
 Expected: help text with council/review/meta subcommands.
 
-- [ ] **Step 7: Run full test suite**
+- [x] **Step 7: Run full test suite**
 
 ```bash
 go test ./...
@@ -2754,7 +2754,7 @@ git commit -m "feat: add cmd/devkit CLI binary with council/review/meta"
 - Create: `install.sh`
 - Create: `upgrade.sh`
 
-- [ ] **Step 1: Create `ci/gitea.yml`**
+- [x] **Step 1: Create `ci/gitea.yml`**
 
 ```yaml
 name: CI
@@ -2798,7 +2798,7 @@ jobs:
         run: go run github.com/89jobrien/devkit/cmd/ci-agent@DEVKIT_VERSION
 ```
 
-- [ ] **Step 2: Create `ci/github.yml`**
+- [x] **Step 2: Create `ci/github.yml`**
 
 ```yaml
 name: CI
@@ -2841,7 +2841,7 @@ jobs:
         run: go run github.com/89jobrien/devkit/cmd/ci-agent@DEVKIT_VERSION
 ```
 
-- [ ] **Step 3: Create `install.sh`** (use `gum` for interactive prompts per tooling preferences)
+- [x] **Step 3: Create `install.sh`** (use `gum` for interactive prompts per tooling preferences)
 
 ```bash
 #!/usr/bin/env bash
@@ -2955,7 +2955,7 @@ JUST
 chmod +x install.sh
 ```
 
-- [ ] **Step 4: Create `upgrade.sh`**
+- [x] **Step 4: Create `upgrade.sh`**
 
 ```bash
 #!/usr/bin/env bash
@@ -3016,7 +3016,7 @@ echo "✓ .devkit.toml updated to v$NEW_VERSION"
 chmod +x upgrade.sh
 ```
 
-- [ ] **Step 5: Verify scripts are executable and CI templates parse cleanly**
+- [x] **Step 5: Verify scripts are executable and CI templates parse cleanly**
 
 ```bash
 bash -n install.sh && echo "install.sh: ok"
@@ -3039,26 +3039,26 @@ git commit -m "feat: add CI templates and install/upgrade scripts"
 
 **Files:** None (git/GitHub operations only)
 
-- [ ] **Step 1: Create GitHub repo**
+- [x] **Step 1: Create GitHub repo**
 
 ```bash
 gh repo create 89jobrien/devkit --private --description "AI-powered dev workflow toolkit for any project" --source=. --remote=origin
 ```
 
-- [ ] **Step 2: Push**
+- [x] **Step 2: Push**
 
 ```bash
 git push -u origin main
 ```
 
-- [ ] **Step 3: Create v1.0.0 tag**
+- [x] **Step 3: Create v1.0.0 tag**
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-- [ ] **Step 4: Verify `go install` works**
+- [x] **Step 4: Verify `go install` works**
 
 ```bash
 go install github.com/89jobrien/devkit/cmd/devkit@v1.0.0
@@ -3067,7 +3067,7 @@ devkit --help
 
 Expected: help output with council/review/meta subcommands.
 
-- [ ] **Step 5: Verify `go run ci-agent` resolves**
+- [x] **Step 5: Verify `go run ci-agent` resolves**
 
 ```bash
 go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0 2>&1 | grep -i "required env var"
@@ -3075,7 +3075,7 @@ go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0 2>&1 | grep -i "required 
 
 Expected: error about missing `CI_PLATFORM` env var (confirming it runs).
 
-- [ ] **Step 6: Final test run**
+- [x] **Step 6: Final test run**
 
 ```bash
 go test ./...
