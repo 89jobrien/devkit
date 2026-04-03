@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/89jobrien/devkit/internal/ops/changelog"
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/spf13/cobra"
@@ -30,7 +31,14 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 			if resolvedBase == "" {
 				resolvedBase = resolveChangelogBase()
 			}
-			log := gitLog(resolvedBase)
+			rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+			if err != nil {
+				return err
+			}
+			log, err := devgit.Log(rangeResult)
+			if err != nil {
+				return err
+			}
 
 			logMeta := map[string]string{"base": resolvedBase, "format": format}
 			sha := devlog.GitShortSHA()

@@ -16,6 +16,7 @@ import (
 	"github.com/89jobrien/devkit/internal/ai/baml"
 	"github.com/89jobrien/devkit/internal/ai/council"
 	"github.com/89jobrien/devkit/internal/ops/diagnose"
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/ai/meta"
 	"github.com/89jobrien/devkit/internal/ai/providers"
@@ -24,24 +25,6 @@ import (
 	"github.com/89jobrien/devkit/internal/infra/tools"
 	"github.com/spf13/cobra"
 )
-
-func gitDiff(base string) string {
-	out, err := exec.Command("git", "diff", base+"...HEAD").Output()
-	if err != nil || len(strings.TrimSpace(string(out))) == 0 {
-		out, _ = exec.Command("git", "diff", "HEAD").Output()
-	}
-	return string(out)
-}
-
-func gitLog(base string) string {
-	out, _ := exec.Command("git", "log", base+"...HEAD", "--oneline").Output()
-	return string(out)
-}
-
-func gitStat(base string) string {
-	out, _ := exec.Command("git", "diff", base+"...HEAD", "--stat").Output()
-	return string(out)
-}
 
 // resolveDiffBase returns the most recent git tag if one exists and is reachable,
 // otherwise falls back to "main". Commands that need a consistent default base
@@ -137,6 +120,8 @@ func main() {
 		Short: "AI-powered dev workflow toolkit",
 	}
 
+	resolver := devgit.ExecRangeResolver{}
+
 	// council subcommand
 	var councilBase, councilMode string
 	var councilNoSynth bool
@@ -152,9 +137,22 @@ func main() {
 				os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
 			}
 
-			diff := gitDiff(councilBase)
-			commits := gitLog(councilBase)
-			stat := gitStat(councilBase)
+			rangeResult, err := resolver.ResolveRange(councilBase)
+			if err != nil {
+				return fmt.Errorf("council: resolve git range: %w", err)
+			}
+			diff, err := devgit.Diff(rangeResult)
+			if err != nil {
+				return fmt.Errorf("council: git diff: %w", err)
+			}
+			commits, err := devgit.Log(rangeResult)
+			if err != nil {
+				return fmt.Errorf("council: git log: %w", err)
+			}
+			stat, err := devgit.Stat(rangeResult)
+			if err != nil {
+				return fmt.Errorf("council: git stat: %w", err)
+			}
 
 			if strings.TrimSpace(diff) == "" {
 				return fmt.Errorf("no diff found vs %q — nothing to review (run `git log %s..HEAD --oneline` to verify commits exist)", councilBase, councilBase)
@@ -238,7 +236,14 @@ func main() {
 			if err != nil {
 				return err
 			}
-			diff := gitDiff(reviewBase)
+			rangeResult, err := resolver.ResolveRange(reviewBase)
+			if err != nil {
+				return fmt.Errorf("review: resolve git range: %w", err)
+			}
+			diff, err := devgit.Diff(rangeResult)
+			if err != nil {
+				return fmt.Errorf("review: git diff: %w", err)
+			}
 			if strings.TrimSpace(diff) == "" {
 				fmt.Printf("No changes versus %s — nothing to review.\n", reviewBase)
 				return nil

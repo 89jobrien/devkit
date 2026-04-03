@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/89jobrien/devkit/internal/dev/explain"
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/spf13/cobra"
@@ -62,9 +63,22 @@ func newExplainCmd(runner explain.Runner) *cobra.Command {
 				if err := validateRef(resolvedBase); err != nil {
 					return fmt.Errorf("explain: %w", err)
 				}
-				cfg.Diff = gitDiff(resolvedBase)
-				cfg.Log = gitLog(resolvedBase)
-				cfg.Stat = gitStat(resolvedBase)
+				rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+				if err != nil {
+					return fmt.Errorf("explain: resolve git range: %w", err)
+				}
+				cfg.Diff, err = devgit.Diff(rangeResult)
+				if err != nil {
+					return fmt.Errorf("explain: git diff: %w", err)
+				}
+				cfg.Log, err = devgit.Log(rangeResult)
+				if err != nil {
+					return fmt.Errorf("explain: git log: %w", err)
+				}
+				cfg.Stat, err = devgit.Stat(rangeResult)
+				if err != nil {
+					return fmt.Errorf("explain: git stat: %w", err)
+				}
 				base = resolvedBase
 			}
 

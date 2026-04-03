@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/89jobrien/devkit/internal/ai/baml"
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/dev/pr"
 	"github.com/89jobrien/devkit/internal/ai/providers"
@@ -48,9 +49,22 @@ func newPrCmd(runner pr.Runner) *cobra.Command {
 			}
 			fmt.Fprintf(os.Stderr, "devkit: generating PR description from base %q\n", resolvedBase)
 
-			diff := gitDiff(resolvedBase)
-			commitLog := gitLog(resolvedBase)
-			stat := gitStat(resolvedBase)
+			rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+			if err != nil {
+				return fmt.Errorf("pr: resolve git range: %w", err)
+			}
+			diff, err := devgit.Diff(rangeResult)
+			if err != nil {
+				return fmt.Errorf("pr: git diff: %w", err)
+			}
+			commitLog, err := devgit.Log(rangeResult)
+			if err != nil {
+				return fmt.Errorf("pr: git log: %w", err)
+			}
+			stat, err := devgit.Stat(rangeResult)
+			if err != nil {
+				return fmt.Errorf("pr: git stat: %w", err)
+			}
 
 			logMeta := map[string]string{"base": resolvedBase}
 			sha := devlog.GitShortSHA()

@@ -16,6 +16,7 @@ import (
 	"github.com/89jobrien/devkit/internal/ops/changelog"
 	"github.com/89jobrien/devkit/internal/dev/docgen"
 	"github.com/89jobrien/devkit/internal/dev/explain"
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	"github.com/89jobrien/devkit/internal/ops/incident"
 	"github.com/89jobrien/devkit/internal/dev/lint"
 	"github.com/89jobrien/devkit/internal/ops/logpattern"
@@ -383,6 +384,28 @@ func TestScaffoldCmd_RequiresPurpose(t *testing.T) {
 	out, err := runCmd(t, cmd, "scaffold", "mypkg")
 	require.NoError(t, err)
 	assert.Contains(t, out, "stub:")
+}
+
+// stubRangeResolver is a RangeResolver that returns a fixed RangeResult.
+type stubRangeResolver struct {
+	result devgit.RangeResult
+	err    error
+}
+
+func (s stubRangeResolver) ResolveRange(_ string) (devgit.RangeResult, error) {
+	return s.result, s.err
+}
+
+func TestResolveRange_ErrorInNonGitDir(t *testing.T) {
+	// Verify that ExecRangeResolver returns a useful error outside a git repo.
+	dir := t.TempDir()
+	orig, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(dir))
+	t.Cleanup(func() { os.Chdir(orig) })
+
+	_, resolveErr := devgit.ExecRangeResolver{}.ResolveRange("main")
+	require.Error(t, resolveErr, "expected error in non-git directory")
 }
 
 func TestTicketCmd_FromUsedWhenNoArg(t *testing.T) {

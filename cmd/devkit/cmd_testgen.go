@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/89jobrien/devkit/internal/dev/testgen"
@@ -61,8 +62,18 @@ func newTestgenCmd(runner testgen.Runner) *cobra.Command {
 				if err := validateRef(resolvedBase); err != nil {
 					return fmt.Errorf("test-gen: %w", err)
 				}
-				tgCfg.Diff = gitDiff(resolvedBase)
-				tgCfg.Log = gitLog(resolvedBase)
+				rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+				if err != nil {
+					return fmt.Errorf("test-gen: resolve git range: %w", err)
+				}
+				tgCfg.Diff, err = devgit.Diff(rangeResult)
+				if err != nil {
+					return fmt.Errorf("test-gen: git diff: %w", err)
+				}
+				tgCfg.Log, err = devgit.Log(rangeResult)
+				if err != nil {
+					return fmt.Errorf("test-gen: git log: %w", err)
+				}
 				base = resolvedBase
 			}
 
