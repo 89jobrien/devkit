@@ -1,10 +1,7 @@
-module baml_client
+module baml_devkit
 
-go 1.26.1
+go 1.24.0
 
-require github.com/boundaryml/baml v0.218.0
+require github.com/boundaryml/baml v0.220.0
 
-require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
-)
+require google.golang.org/protobuf v1.36.6 // indirect

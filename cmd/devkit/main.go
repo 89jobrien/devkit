@@ -49,12 +49,40 @@ func gitStat(base string) string {
 	return string(out)
 }
 
-func resolveChangelogBase() string {
+// resolveDiffBase returns the most recent git tag if one exists and is reachable,
+// otherwise falls back to "main". Commands that need a consistent default base
+// should call this rather than hardcoding "main".
+func resolveDiffBase() string {
 	out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
 	if err != nil || strings.TrimSpace(string(out)) == "" {
 		return "main"
 	}
-	return strings.TrimSpace(string(out))
+	tag := strings.TrimSpace(string(out))
+	// Verify the tag resolves to an actual object so we don't silently use a broken ref.
+	if err := exec.Command("git", "rev-parse", "--verify", tag).Run(); err != nil {
+		return "main"
+	}
+	return tag
+}
+
+// resolveChangelogBase is an alias kept for clarity at the changelog call site.
+func resolveChangelogBase() string { return resolveDiffBase() }
+
+// validateRef returns an error if the ref cannot be resolved in the local repo.
+func validateRef(ref string) error {
+	if err := exec.Command("git", "rev-parse", "--verify", ref).Run(); err != nil {
+		return fmt.Errorf("base ref %q not found in local repository", ref)
+	}
+	return nil
+}
+
+// agentToolsAt returns the standard set of code-intelligence tools rooted at wd.
+func agentToolsAt(wd string) []tools.Tool {
+	return []tools.Tool{
+		tools.ReadTool(wd),
+		tools.GlobTool(wd),
+		tools.GrepTool(wd),
+	}
 }
 
 var sdkDocURLs = []string{
@@ -666,12 +694,11 @@ func main() {
 				return err
 			}
 
-			wd, _ := os.Getwd()
-			agentTools := []tools.Tool{
-				tools.ReadTool(wd),
-				tools.GlobTool(wd),
-				tools.GrepTool(wd),
+			wd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("explain: cannot determine working directory: %w", err)
 			}
+			agentTools := agentToolsAt(wd)
 			runner := explain.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
 				return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 			})
@@ -690,15 +717,20 @@ func main() {
 			} else {
 				base := explainBase
 				if base == "" {
-					base = "main"
+					base = resolveDiffBase()
+				}
+				if err := validateRef(base); err != nil {
+					return fmt.Errorf("explain: %w", err)
 				}
 				explainCfg.Diff = gitDiff(base)
 				explainCfg.Log = gitLog(base)
 				explainCfg.Stat = gitStat(base)
+				explainBase = base // normalize so logMeta below is accurate
 			}
 
+			logMeta := map[string]string{"path": explainCfg.Path, "base": explainBase}
 			sha := devlog.GitShortSHA()
-			id := devlog.Start("explain", map[string]string{"path": explainCfg.Path, "base": explainBase})
+			id := devlog.Start("explain", logMeta)
 			start := time.Now()
 
 			result, err := explain.Run(cmd.Context(), explainCfg)
@@ -707,8 +739,8 @@ func main() {
 			}
 
 			fmt.Println(result)
-			devlog.Complete(id, "explain", map[string]string{"path": explainCfg.Path}, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "explain", result, map[string]string{"path": explainCfg.Path})
+			devlog.Complete(id, "explain", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "explain", result, logMeta)
 			fmt.Printf("\nLogged to: %s\n", path)
 			return nil
 		},
@@ -736,12 +768,11 @@ func main() {
 				return err
 			}
 
-			wd, _ := os.Getwd()
-			agentTools := []tools.Tool{
-				tools.ReadTool(wd),
-				tools.GlobTool(wd),
-				tools.GrepTool(wd),
+			wd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("test-gen: cannot determine working directory: %w", err)
 			}
+			agentTools := agentToolsAt(wd)
 			runner := testgen.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
 				return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 			})
@@ -759,14 +790,19 @@ func main() {
 			} else {
 				base := testgenBase
 				if base == "" {
-					base = "main"
+					base = resolveDiffBase()
+				}
+				if err := validateRef(base); err != nil {
+					return fmt.Errorf("test-gen: %w", err)
 				}
 				tgCfg.Diff = gitDiff(base)
 				tgCfg.Log = gitLog(base)
+				testgenBase = base // normalize so logMeta below is accurate
 			}
 
+			logMeta := map[string]string{"path": tgCfg.Path, "base": testgenBase}
 			sha := devlog.GitShortSHA()
-			id := devlog.Start("test-gen", map[string]string{"path": tgCfg.Path, "base": testgenBase})
+			id := devlog.Start("test-gen", logMeta)
 			start := time.Now()
 
 			result, err := testgen.Run(cmd.Context(), tgCfg)
@@ -775,8 +811,8 @@ func main() {
 			}
 
 			fmt.Println(result)
-			devlog.Complete(id, "test-gen", map[string]string{"path": tgCfg.Path}, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "test-gen", result, map[string]string{"path": tgCfg.Path})
+			devlog.Complete(id, "test-gen", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "test-gen", result, logMeta)
 			fmt.Printf("\nLogged to: %s\n", path)
 			return nil
 		},
@@ -799,27 +835,25 @@ func main() {
 			}
 
 			var prompt string
+			inputSource := "arg"
 			if len(args) > 0 {
 				prompt = args[0]
 			} else {
 				info, _ := os.Stdin.Stat()
 				if info.Mode()&os.ModeCharDevice == 0 {
-					var sb strings.Builder
-					buf := make([]byte, 4096)
-					for {
-						n, readErr := os.Stdin.Read(buf)
-						sb.Write(buf[:n])
-						if readErr != nil {
-							break
-						}
+					inputSource = "stdin"
+					raw, readErr := io.ReadAll(os.Stdin)
+					if readErr != nil && readErr != io.EOF {
+						return fmt.Errorf("ticket: error reading stdin: %w", readErr)
 					}
-					prompt = strings.TrimSpace(sb.String())
+					prompt = strings.TrimSpace(string(raw))
 				}
 			}
 
 			// In code-context mode, read file and prepend found TODOs/FIXMEs to prompt.
 			ticketPath := ticketFrom
 			if ticketFrom != "" && prompt == "" {
+				inputSource = "file"
 				content, err := os.ReadFile(ticketFrom)
 				if err != nil {
 					return fmt.Errorf("ticket: cannot read %s: %w", ticketFrom, err)
@@ -836,18 +870,18 @@ func main() {
 				return err
 			}
 
-			wd, _ := os.Getwd()
-			agentTools := []tools.Tool{
-				tools.ReadTool(wd),
-				tools.GlobTool(wd),
-				tools.GrepTool(wd),
+			wd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("ticket: cannot determine working directory: %w", err)
 			}
+			agentTools := agentToolsAt(wd)
 			runner := ticket.RunnerFunc(func(ctx context.Context, p string, ts []string) (string, error) {
 				return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, p, ts)
 			})
 
+			logMeta := map[string]string{"from": ticketPath, "input": inputSource}
 			sha := devlog.GitShortSHA()
-			id := devlog.Start("ticket", map[string]string{"from": ticketPath})
+			id := devlog.Start("ticket", logMeta)
 			start := time.Now()
 
 			result, err := ticket.Run(cmd.Context(), ticket.Config{
@@ -860,8 +894,8 @@ func main() {
 			}
 
 			fmt.Println(result)
-			devlog.Complete(id, "ticket", map[string]string{"from": ticketPath}, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "ticket", result, map[string]string{"from": ticketPath})
+			devlog.Complete(id, "ticket", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "ticket", result, logMeta)
 			fmt.Printf("\nLogged to: %s\n", path)
 			return nil
 		},

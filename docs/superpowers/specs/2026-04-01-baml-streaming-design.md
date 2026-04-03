@@ -11,7 +11,7 @@ cmd/devkit
     │
     ├─ council roles ──► Router.For(tier) ──► council.Runner (port)
     │                                              │
-    │                              ┌──────────────┴──────────────────┐
+    │                              ┌───────────────┴──────────────────┐
     │                              │                                  │
     │                     baml.Adapter                    providers.chainRunner
     │                   (streaming, structured)          (raw HTTP, existing)

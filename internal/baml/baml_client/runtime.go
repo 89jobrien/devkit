@@ -32,7 +32,7 @@ import (
 	"strings"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
-	"baml_client/baml_client/type_builder"
+	"baml_devkit/type_builder"
 )
 
 var bamlRuntime *baml.BamlRuntime

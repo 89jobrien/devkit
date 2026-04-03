@@ -31,3 +31,6 @@ vendor/
 .vscode/
 *.swp
 .worktrees/
+
+# Other
+meta

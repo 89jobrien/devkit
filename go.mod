@@ -3,7 +3,6 @@ module github.com/89jobrien/devkit
 go 1.26.1
 
 require (
-	baml_client v0.0.0
 	github.com/BurntSushi/toml v1.6.0
 	github.com/anthropics/anthropic-sdk-go v1.27.1
 	github.com/spf13/cobra v1.10.2
@@ -12,6 +11,7 @@ require (
 )
 
 require (
+	baml_devkit v0.0.0 // indirect
 	github.com/boundaryml/baml v0.220.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -25,4 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace baml_client => ./internal/baml/baml_client
+replace baml_devkit => ./internal/baml/baml_client

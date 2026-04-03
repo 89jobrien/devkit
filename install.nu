@@ -43,17 +43,22 @@ let ci_platforms = (gum choose --no-limit github gitea none | lines | where { |i
 
 # Component selection
 print "Select components to enable:"
-let components = (gum choose --no-limit --selected "council,review,meta,ci_agent,diagnose" council review meta ci_agent diagnose | lines | where { |it| $it != "" })
+let components = (gum choose --no-limit --selected "council,review,meta,ci_agent,diagnose,changelog,lint,explain,test_gen,ticket" council review meta ci_agent diagnose changelog lint explain test_gen ticket | lines | where { |it| $it != "" })
 
 # Review focus
 let review_focus = (gum input --placeholder "security, performance, correctness" --prompt "Review focus: ")
 
 # Derive booleans from selections
-let has_council  = ($components | any { |it| $it == "council" })
-let has_review   = ($components | any { |it| $it == "review" })
-let has_meta     = ($components | any { |it| $it == "meta" })
-let has_ci_agent = ($components | any { |it| $it == "ci_agent" })
-let has_diagnose = ($components | any { |it| $it == "diagnose" })
+let has_council   = ($components | any { |it| $it == "council" })
+let has_review    = ($components | any { |it| $it == "review" })
+let has_meta      = ($components | any { |it| $it == "meta" })
+let has_ci_agent  = ($components | any { |it| $it == "ci_agent" })
+let has_diagnose  = ($components | any { |it| $it == "diagnose" })
+let has_changelog = ($components | any { |it| $it == "changelog" })
+let has_lint      = ($components | any { |it| $it == "lint" })
+let has_explain   = ($components | any { |it| $it == "explain" })
+let has_test_gen  = ($components | any { |it| $it == "test_gen" })
+let has_ticket    = ($components | any { |it| $it == "ticket" })
 
 # --- helpers ---
 
@@ -119,11 +124,16 @@ install_date = \"($install_date)\"
 ci_platforms = ($ci_toml_array)
 
 [components]
-council  = ($has_council)
-review   = ($has_review)
-meta     = ($has_meta)
-ci_agent = ($has_ci_agent)
-diagnose = ($has_diagnose)
+council   = ($has_council)
+review    = ($has_review)
+meta      = ($has_meta)
+ci_agent  = ($has_ci_agent)
+diagnose  = ($has_diagnose)
+changelog = ($has_changelog)
+lint      = ($has_lint)
+explain   = ($has_explain)
+test_gen  = ($has_test_gen)
+ticket    = ($has_ticket)
 
 [review]
 focus = \"($safe_focus)\"

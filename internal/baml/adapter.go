@@ -8,9 +8,9 @@ import (
 	"io"
 	"strings"
 
-	baml_client "baml_client/baml_client"
-	"baml_client/baml_client/stream_types"
-	"baml_client/baml_client/types"
+	baml_client "baml_devkit"
+	"baml_devkit/stream_types"
+	"baml_devkit/types"
 )
 
 // runFunc is the injectable call signature used by both the real client and

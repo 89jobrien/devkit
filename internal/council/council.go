@@ -267,7 +267,7 @@ Required sections:
 **Areas of Consensus** — findings where 2+ roles agree.
 **Areas of Tension** — "[Role A] sees [X], AND [Role B] sees [Y], suggesting [resolution]."
 **Balanced Recommendations** — top 3-5 ranked actions.
-**Branch Health** — one of: Good / Needs work / Significant issues — with one-line justification.
+**Branch Health** — one of: Good / Almost / Fucked — with one-line justification.
 
 Branch context vs %s:
 Commits:

@@ -17,8 +17,8 @@ import (
 	"fmt"
     "context"
 
-    "baml_client/baml_client/types"
-    "baml_client/baml_client/stream_types"
+    "baml_devkit/types"
+    "baml_devkit/stream_types"
     baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 )
 

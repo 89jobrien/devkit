@@ -17,25 +17,32 @@ import (
 	"fmt"
     "context"
 
-    "baml_client/baml_client/types"
-    _ "baml_client/baml_client/stream_types"
+    _ "baml_devkit/types"
     baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 )
 
-type parse struct {}
-var Parse = &parse{}
+type build_request struct {}
+var Request = &build_request{}
 
 
-/// Parse version of AnalyzeBranchCreativeExplorer (Takes in string and returns types.CreativeExplorerOutput)
-func (*parse) AnalyzeBranchCreativeExplorer(text string, opts ...CallOptionFunc) (types.CreativeExplorerOutput, error) {
+// Build HTTP request for AnalyzeBranchCreativeExplorer (returns baml.HTTPRequest)
+func (*build_request) AnalyzeBranchCreativeExplorer(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -57,32 +64,31 @@ func (*parse) AnalyzeBranchCreativeExplorer(text string, opts ...CallOptionFunc)
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeBranchCreativeExplorer: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeBranchCreativeExplorer", encoded)
-    if err != nil {
-        return types.CreativeExplorerOutput{}, err
-    }
-
-    casted := (result).(types.CreativeExplorerOutput)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchCreativeExplorer", encoded)
 }
 
-/// Parse version of AnalyzeBranchDefault (Takes in string and returns types.RoleOutput)
-func (*parse) AnalyzeBranchDefault(text string, opts ...CallOptionFunc) (types.RoleOutput, error) {
+// Build HTTP request for AnalyzeBranchDefault (returns baml.HTTPRequest)
+func (*build_request) AnalyzeBranchDefault(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -104,32 +110,31 @@ func (*parse) AnalyzeBranchDefault(text string, opts ...CallOptionFunc) (types.R
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeBranchDefault: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeBranchDefault", encoded)
-    if err != nil {
-        return types.RoleOutput{}, err
-    }
-
-    casted := (result).(types.RoleOutput)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchDefault", encoded)
 }
 
-/// Parse version of AnalyzeBranchGeneralAnalyst (Takes in string and returns types.GeneralAnalystOutput)
-func (*parse) AnalyzeBranchGeneralAnalyst(text string, opts ...CallOptionFunc) (types.GeneralAnalystOutput, error) {
+// Build HTTP request for AnalyzeBranchGeneralAnalyst (returns baml.HTTPRequest)
+func (*build_request) AnalyzeBranchGeneralAnalyst(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -151,32 +156,31 @@ func (*parse) AnalyzeBranchGeneralAnalyst(text string, opts ...CallOptionFunc) (
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeBranchGeneralAnalyst: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeBranchGeneralAnalyst", encoded)
-    if err != nil {
-        return types.GeneralAnalystOutput{}, err
-    }
-
-    casted := (result).(types.GeneralAnalystOutput)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchGeneralAnalyst", encoded)
 }
 
-/// Parse version of AnalyzeBranchSecurityReviewer (Takes in string and returns types.SecurityReviewerOutput)
-func (*parse) AnalyzeBranchSecurityReviewer(text string, opts ...CallOptionFunc) (types.SecurityReviewerOutput, error) {
+// Build HTTP request for AnalyzeBranchSecurityReviewer (returns baml.HTTPRequest)
+func (*build_request) AnalyzeBranchSecurityReviewer(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -198,32 +202,31 @@ func (*parse) AnalyzeBranchSecurityReviewer(text string, opts ...CallOptionFunc)
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeBranchSecurityReviewer: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeBranchSecurityReviewer", encoded)
-    if err != nil {
-        return types.SecurityReviewerOutput{}, err
-    }
-
-    casted := (result).(types.SecurityReviewerOutput)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchSecurityReviewer", encoded)
 }
 
-/// Parse version of AnalyzeBranchStrictCritic (Takes in string and returns types.StrictCriticOutput)
-func (*parse) AnalyzeBranchStrictCritic(text string, opts ...CallOptionFunc) (types.StrictCriticOutput, error) {
+// Build HTTP request for AnalyzeBranchStrictCritic (returns baml.HTTPRequest)
+func (*build_request) AnalyzeBranchStrictCritic(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -245,32 +248,31 @@ func (*parse) AnalyzeBranchStrictCritic(text string, opts ...CallOptionFunc) (ty
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeBranchStrictCritic: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeBranchStrictCritic", encoded)
-    if err != nil {
-        return types.StrictCriticOutput{}, err
-    }
-
-    casted := (result).(types.StrictCriticOutput)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeBranchStrictCritic", encoded)
 }
 
-/// Parse version of DraftPR (Takes in string and returns types.PRDescription)
-func (*parse) DraftPR(text string, opts ...CallOptionFunc) (types.PRDescription, error) {
+// Build HTTP request for DraftPR (returns baml.HTTPRequest)
+func (*build_request) DraftPR(prompt string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
     var callOpts callOption
     for _, opt := range opts {
         opt(&callOpts)
     }
 
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
     args := baml.BamlFunctionArguments{
-        Kwargs: map[string]any{ "text": text, "stream": false },
+        Kwargs: map[string]any{ "prompt": prompt, "stream": false },
         Env: getEnvVars(callOpts.env),
     }
 
@@ -292,18 +294,9 @@ func (*parse) DraftPR(text string, opts ...CallOptionFunc) (types.PRDescription,
 
     encoded, err := args.Encode()
     if err != nil {
-        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
-        // and include the type of the args you're passing in.
         wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: DraftPR: %w", err)
         panic(wrapped_err)
     }
 
-    result, err := bamlRuntime.CallFunctionParse(context.Background(), "DraftPR", encoded)
-    if err != nil {
-        return types.PRDescription{}, err
-    }
-
-    casted := (result).(types.PRDescription)
-
-    return casted, nil
+    return bamlRuntime.BuildRequest(context.Background(), "DraftPR", encoded)
 }
