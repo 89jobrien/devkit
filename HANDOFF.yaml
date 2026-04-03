@@ -3,15 +3,16 @@ id: devkit
 updated: 2026-04-03
 branch: main
 state:
-  tests: "80 passing (12 packages)"
+  tests: "215 passing (31 packages)"
   build: clean
-  notes: "2 uncommitted BAML schema changes; stale baml_client.tmp/ present"
+  notes: "baml_client regenerated and committed; go.mod/go.sum now manually maintained (baml 0.220.0 no longer generates them)"
 
 items:
   - id: devkit-1
     name: baml-uncommitted-changes
     priority: P1
-    status: open
+    status: done
+    completed: 2026-04-03
     title: "Commit pending BAML schema changes"
     description: >
       citriage.baml: added context/environment/tools fields to ReproductionStep,
@@ -62,5 +63,7 @@ items:
       explain, lint. None blocked, none urgent. Revisit when core is stable.
 
 log:
+  - date: 2026-04-03
+    summary: "Regenerated baml_client for new schema fields; fixed patch-generated.sh guard logic; updated adapter_tools.go for ReproductionSteps struct. 215 tests passing."
   - date: 2026-04-03
     summary: "Bootstrapped HANDOFF.yaml from git state and doob todos."
