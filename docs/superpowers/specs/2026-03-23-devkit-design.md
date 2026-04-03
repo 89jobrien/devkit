@@ -123,13 +123,13 @@ Prints Justfile snippet to stdout. No automated Justfile modification.
 
 Checks for manifest files in the project root only (top-level; monorepos fall back to `YOUR_TEST_COMMAND`).
 
-| Detected file | Test command | `review.focus` additions |
-|---|---|---|
-| `Cargo.toml` | `cargo test --workspace` | path traversal, unsafe block soundness |
-| `pyproject.toml` / `setup.py` | `uv run pytest` | injection, deserialization safety |
-| `package.json` | `bun test` | prototype pollution, XSS |
-| `go.mod` | `go test ./...` | nil dereference, goroutine leaks |
-| fallback | `YOUR_TEST_COMMAND` | (no additions) |
+| Detected file                 | Test command             | `review.focus` additions               |
+| ----------------------------- | ------------------------ | -------------------------------------- |
+| `Cargo.toml`                  | `cargo test --workspace` | path traversal, unsafe block soundness |
+| `pyproject.toml` / `setup.py` | `uv run pytest`          | injection, deserialization safety      |
+| `package.json`                | `bun test`               | prototype pollution, XSS               |
+| `go.mod`                      | `go test ./...`          | nil dereference, goroutine leaks       |
+| fallback                      | `YOUR_TEST_COMMAND`      | (no additions)                         |
 
 ---
 
@@ -184,11 +184,12 @@ Reads `.devkit.toml` for project name, then runs multi-role branch analysis.
 **Core mode** (default, `--mode core`): 3 roles run concurrently via `errgroup`. **Extensive mode** (`--mode extensive`): 5 roles. Synthesis is a sequential step after all roles complete.
 
 Roles:
+
 - **Strict Critic** — conservative, demands evidence, health score 0–1
 - **Creative Explorer** — optimistic, surfaces opportunities
 - **General Analyst** — balanced, evidence-based
-- *(extensive only)* **Security Reviewer** — attack surface, injection, traversal, auth, dependencies
-- *(extensive only)* **Performance Analyst** — allocations, blocking calls, algorithmic complexity
+- _(extensive only)_ **Security Reviewer** — attack surface, injection, traversal, auth, dependencies
+- _(extensive only)_ **Performance Analyst** — allocations, blocking calls, algorithmic complexity
 
 Synthesis: weighted meta-score (Strict Critic 1.5×, others 1.0×), consensus, tensions, ranked recommendations, verdict.
 
@@ -213,12 +214,14 @@ Diff: `git diff {base}...HEAD`; falls back to `git diff HEAD`.
 ## `devkit meta`
 
 Caches Claude Agent SDK docs (24h TTL) at `~/.dev-agents/cache/sdk-docs.md`. Source URLs:
+
 - `https://docs.anthropic.com/en/docs/claude-code/sdk`
 - `https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-python`
 
 Discovers repo context from any of `CLAUDE.md`, `AGENTS.md`, `README.md` that exist, plus `git log --oneline -20`, `git status --short`, and top-150 file paths.
 
 Flow:
+
 1. **Designer agent** — receives task + repo context + SDK docs, outputs a JSON array of 2–5 agent specs (`name`, `role`, `prompt`, `tools`)
 2. **Worker agents** — run concurrently via `errgroup`, each receives its self-contained prompt
 3. **Synthesis agent** — combines all outputs into Summary, Key Findings, Recommended Actions, Open Questions
@@ -247,6 +250,7 @@ Flags: `--no-synthesis`, `--refresh-docs`
 Reads `DEVKIT_PROJECT` env var; falls back to `.devkit.toml` project name; falls back to `git rev-parse --show-toplevel` basename.
 
 Writes to:
+
 - `~/.dev-agents/<project>/agent-runs.jsonl` — JSONL telemetry (start + completion)
 - `~/.dev-agents/<project>/ai-logs/<sha>-<command>.md` — per-commit markdown archives
 
@@ -262,6 +266,7 @@ func GitShortSHA() string
 ## `cmd/ci-agent` — Standalone CI Diagnosis Agent
 
 Invoked in CI via:
+
 ```yaml
 run: go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0
 ```
@@ -292,6 +297,7 @@ Skips provider if API key env var absent. Returns `ErrDiagnosisUnavailable` if a
 Selected via `CI_PLATFORM` env var (`"gitea"` or `"github"`).
 
 Both implement:
+
 - `SetCommitStatus(state, description string)` — context: `ci/agent-diagnosis`
 - `EnsureLabelExists()` — creates `ci-failure` label (color `#e11d48`); idempotent
 - `FindIssueForCommit(sha string) (int, bool)` — paginates open `ci-failure` issues, searches body for `<!-- sha: {sha} -->`, returns first match
@@ -299,6 +305,7 @@ Both implement:
 - `AddComment(issueNumber int, diagnosis, provider string) error`
 
 **Job log fetching:**
+
 - **Gitea**: `GET {GITEA_URL}/api/v1/repos/{REPO}/actions/runs/{RUN_ID}/jobs` → `GET /jobs/{id}/logs`. Auth: `Authorization: token {CI_AGENT_TOKEN}`.
 - **GitHub**: `GET https://api.github.com/repos/{REPO}/actions/runs/{RUN_ID}/jobs` → `GET /jobs/{id}/logs` (follows redirect). Auth: `Authorization: Bearer {GITHUB_TOKEN}`.
 
@@ -339,7 +346,7 @@ jobs:
       - name: run diagnosis agent
         env:
           CI_PLATFORM: gitea
-          GITEA_URL: http://YOUR_GITEA_HOST:3000    # full base URL, no /api/v1
+          GITEA_URL: http://YOUR_GITEA_HOST:3000 # full base URL, no /api/v1
           CI_AGENT_TOKEN: ${{ secrets.CI_AGENT_TOKEN }}
           REPO: ${{ gitea.repository }}
           RUN_ID: ${{ gitea.run_id }}
@@ -395,13 +402,13 @@ jobs:
 
 ### Required secrets
 
-| Secret | Required | Notes |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Recommended | Primary LLM provider |
-| `OPENAI_API_KEY` | Optional | Fallback |
-| `GEMINI_API_KEY` | Optional | Fallback |
-| `CI_AGENT_TOKEN` | Gitea only | PAT with repo read + issue write |
-| `GITHUB_TOKEN` | GitHub only | Auto-provided by GitHub Actions |
+| Secret              | Required    | Notes                            |
+| ------------------- | ----------- | -------------------------------- |
+| `ANTHROPIC_API_KEY` | Recommended | Primary LLM provider             |
+| `OPENAI_API_KEY`    | Optional    | Fallback                         |
+| `GEMINI_API_KEY`    | Optional    | Fallback                         |
+| `CI_AGENT_TOKEN`    | Gitea only  | PAT with repo read + issue write |
+| `GITHUB_TOKEN`      | GitHub only | Auto-provided by GitHub Actions  |
 
 ---
 

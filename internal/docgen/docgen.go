@@ -19,24 +19,34 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 	return f(ctx, prompt, tools)
 }
 
+const maxFileBytes = 30 * 1024 // 30KB
+
 // Config holds all inputs for a docgen run.
 type Config struct {
-	File   string // file content
+	File   string // file content (capped at 30KB)
 	Path   string // original file path
 	Runner Runner
 }
 
 // Run generates GoDoc-style documentation for the provided file.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("docgen: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 
 func buildPrompt(cfg Config) string {
+	file := cfg.File
+	if len(file) > maxFileBytes {
+		file = file[:maxFileBytes] + "\n[truncated]"
+	}
+
 	var sb strings.Builder
 	sb.WriteString("You are an expert Go developer. Generate GoDoc-style documentation comments for the following Go source file.\n\n")
 	fmt.Fprintf(&sb, "File: %s\n\n", cfg.Path)
 	sb.WriteString("```go\n")
-	sb.WriteString(cfg.File)
+	sb.WriteString(file)
 	sb.WriteString("\n```\n\n")
 	sb.WriteString("Output ONLY the documentation comments — the `// Package ...` comment at the top and `//` doc comments for each exported function, type, method, and constant. ")
 	sb.WriteString("Do NOT output the full file. Follow GoDoc conventions: first sentence is a summary starting with the symbol name. Be concise and accurate.")

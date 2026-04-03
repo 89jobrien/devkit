@@ -28,6 +28,9 @@ type Config struct {
 
 // Run drafts an Architecture Decision Record using the configured runner.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("adr: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 

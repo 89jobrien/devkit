@@ -12,41 +12,42 @@
 
 ## File Map
 
-| File | Responsibility |
-|------|---------------|
-| `go.mod` | Module declaration, dependency pinning |
-| `VERSION` | Semver string read by upgrade logic |
-| `Justfile` | Build/test/install recipes for devkit itself |
-| `install.sh` | Generate `.devkit.toml` + CI YAMLs in target project |
-| `upgrade.sh` | `go install @latest` + CI template regeneration |
-| `ci/gitea.yml` | Gitea Actions CI template |
-| `ci/github.yml` | GitHub Actions CI template |
-| `internal/log/log.go` | JSONL telemetry + per-commit markdown sinks |
-| `internal/log/log_test.go` | Unit tests for all log functions |
-| `internal/tools/tools.go` | Read/Glob/Grep as `Tool` structs with handlers |
-| `internal/tools/tools_test.go` | Unit tests with temp dirs |
-| `internal/loop/loop.go` | Tool-use execution loop + `Tool` type |
-| `internal/loop/loop_test.go` | Tests against mock Anthropic HTTP server |
-| `internal/platform/platform.go` | `Platform` interface + `JobLog` type + `New()` factory |
-| `internal/platform/gitea.go` | Gitea API implementation |
-| `internal/platform/github.go` | GitHub API implementation |
-| `internal/platform/platform_test.go` | Tests against httptest mock servers |
-| `internal/council/council.go` | Role definitions, concurrent execution, synthesis |
-| `internal/council/council_test.go` | Unit tests with stub RunAgent |
-| `internal/review/review.go` | Single-agent diff review |
-| `internal/review/review_test.go` | Unit tests with stub RunAgent |
-| `internal/meta/meta.go` | Designer → parallel workers → synthesis |
-| `internal/meta/meta_test.go` | Unit tests with stub designer output |
-| `cmd/ci-agent/main.go` | Standalone CI agent (no Anthropic SDK dep) |
-| `cmd/ci-agent/providers.go` | Raw HTTP LLM fallback chain |
-| `cmd/ci-agent/main_test.go` | Unit tests for provider selection + env parsing |
-| `cmd/devkit/main.go` | cobra root + subcommand wiring |
+| File                                 | Responsibility                                         |
+| ------------------------------------ | ------------------------------------------------------ |
+| `go.mod`                             | Module declaration, dependency pinning                 |
+| `VERSION`                            | Semver string read by upgrade logic                    |
+| `Justfile`                           | Build/test/install recipes for devkit itself           |
+| `install.sh`                         | Generate `.devkit.toml` + CI YAMLs in target project   |
+| `upgrade.sh`                         | `go install @latest` + CI template regeneration        |
+| `ci/gitea.yml`                       | Gitea Actions CI template                              |
+| `ci/github.yml`                      | GitHub Actions CI template                             |
+| `internal/log/log.go`                | JSONL telemetry + per-commit markdown sinks            |
+| `internal/log/log_test.go`           | Unit tests for all log functions                       |
+| `internal/tools/tools.go`            | Read/Glob/Grep as `Tool` structs with handlers         |
+| `internal/tools/tools_test.go`       | Unit tests with temp dirs                              |
+| `internal/loop/loop.go`              | Tool-use execution loop + `Tool` type                  |
+| `internal/loop/loop_test.go`         | Tests against mock Anthropic HTTP server               |
+| `internal/platform/platform.go`      | `Platform` interface + `JobLog` type + `New()` factory |
+| `internal/platform/gitea.go`         | Gitea API implementation                               |
+| `internal/platform/github.go`        | GitHub API implementation                              |
+| `internal/platform/platform_test.go` | Tests against httptest mock servers                    |
+| `internal/council/council.go`        | Role definitions, concurrent execution, synthesis      |
+| `internal/council/council_test.go`   | Unit tests with stub RunAgent                          |
+| `internal/review/review.go`          | Single-agent diff review                               |
+| `internal/review/review_test.go`     | Unit tests with stub RunAgent                          |
+| `internal/meta/meta.go`              | Designer → parallel workers → synthesis                |
+| `internal/meta/meta_test.go`         | Unit tests with stub designer output                   |
+| `cmd/ci-agent/main.go`               | Standalone CI agent (no Anthropic SDK dep)             |
+| `cmd/ci-agent/providers.go`          | Raw HTTP LLM fallback chain                            |
+| `cmd/ci-agent/main_test.go`          | Unit tests for provider selection + env parsing        |
+| `cmd/devkit/main.go`                 | cobra root + subcommand wiring                         |
 
 ---
 
 ## Task 1: Module scaffold
 
 **Files:**
+
 - Create: `go.mod`
 - Create: `go.sum` (generated)
 - Create: `VERSION`
@@ -106,6 +107,7 @@ Create `cmd/devkit/main.go` with just `package main\nfunc main() {}` and `cmd/ci
 ```bash
 go build ./...
 ```
+
 Expected: no errors.
 
 - [ ] **Step 7: Commit**
@@ -120,6 +122,7 @@ git commit -m "feat: initialize Go module scaffold"
 ## Task 2: `internal/log` — telemetry
 
 **Files:**
+
 - Create: `internal/log/log.go`
 - Create: `internal/log/log_test.go`
 
@@ -195,6 +198,7 @@ func TestProjectNameFallback(t *testing.T) {
 ```bash
 go test ./internal/log/... 2>&1 | head -5
 ```
+
 Expected: compile error (package doesn't exist yet).
 
 - [ ] **Step 3: Implement `internal/log/log.go`**
@@ -318,6 +322,7 @@ func SaveCommitLog(sha, command, content string, meta map[string]string) (string
 ```bash
 go test ./internal/log/... -v
 ```
+
 Expected: all 3 tests pass.
 
 - [ ] **Step 5: Commit**
@@ -332,6 +337,7 @@ git commit -m "feat: add internal/log telemetry package"
 ## Task 3: `internal/tools` — Read/Glob/Grep
 
 **Files:**
+
 - Create: `internal/tools/tools.go`
 - Create: `internal/tools/tools_test.go`
 
@@ -575,6 +581,7 @@ func Definitions(ts []Tool) []anthropic.ToolUnionParam {
 ```bash
 go test ./internal/tools/... -v
 ```
+
 Expected: 4 tests pass.
 
 - [ ] **Step 5: Commit**
@@ -589,6 +596,7 @@ git commit -m "feat: add internal/tools Read/Glob/Grep"
 ## Task 4: `internal/loop` — tool-use execution loop
 
 **Files:**
+
 - Create: `internal/loop/loop.go`
 - Create: `internal/loop/loop_test.go`
 
@@ -793,6 +801,7 @@ func RunAgent(ctx context.Context, client *anthropic.Client, prompt string, ts [
 ```bash
 go test ./internal/loop/... -v
 ```
+
 Expected: 2 tests pass.
 
 - [ ] **Step 5: Commit**
@@ -807,6 +816,7 @@ git commit -m "feat: add internal/loop tool-use execution loop"
 ## Task 5: `internal/platform` — Gitea + GitHub API clients
 
 **Files:**
+
 - Create: `internal/platform/platform.go`
 - Create: `internal/platform/gitea.go`
 - Create: `internal/platform/github.go`
@@ -1316,6 +1326,7 @@ func (g *githubPlatform) AddComment(ctx context.Context, issueNumber int, diagno
 ```bash
 go test ./internal/platform/... -v
 ```
+
 Expected: 3 tests pass.
 
 - [ ] **Step 7: Commit**
@@ -1330,6 +1341,7 @@ git commit -m "feat: add internal/platform Gitea+GitHub API clients"
 ## Task 6: `cmd/ci-agent` — standalone CI diagnosis agent
 
 **Files:**
+
 - Create: `cmd/ci-agent/providers.go`
 - Create: `cmd/ci-agent/main.go`
 - Create: `cmd/ci-agent/main_test.go`
@@ -1542,7 +1554,7 @@ func askGemini(prompt, key string) (string, error) {
 
 - [ ] **Step 4: Implement `cmd/ci-agent/main.go`**
 
-```go
+````go
 // cmd/ci-agent/main.go
 package main
 
@@ -1686,13 +1698,14 @@ func main() {
 		}
 	}
 }
-```
+````
 
 - [ ] **Step 5: Run tests — verify PASS**
 
 ```bash
 go test ./cmd/ci-agent/... -v
 ```
+
 Expected: 2 tests pass.
 
 - [ ] **Step 6: Build check**
@@ -1700,6 +1713,7 @@ Expected: 2 tests pass.
 ```bash
 go build ./cmd/ci-agent/
 ```
+
 Expected: no errors.
 
 - [ ] **Step 7: Commit**
@@ -1714,6 +1728,7 @@ git commit -m "feat: add cmd/ci-agent standalone CI diagnosis agent"
 ## Task 7: `internal/council`, `internal/review`, `internal/meta`
 
 **Files:**
+
 - Create: `internal/council/council.go`
 - Create: `internal/council/council_test.go`
 - Create: `internal/review/review.go`
@@ -1786,7 +1801,7 @@ go test ./internal/council/... 2>&1 | head -5
 
 - [ ] **Step 3: Implement `internal/council/council.go`**
 
-```go
+````go
 // internal/council/council.go
 package council
 
@@ -1945,11 +1960,11 @@ Council findings:
 }
 
 // Note: min() is a Go 1.21+ builtin — no local helper needed with go1.23
-```
+````
 
 - [ ] **Step 4: Write and implement `internal/review/review.go`**
 
-```go
+````go
 // internal/review/review.go
 package review
 
@@ -1988,7 +2003,7 @@ If no issues, say so clearly.
 
 	return cfg.Runner.Run(ctx, prompt, []string{"Read", "Glob", "Grep"})
 }
-```
+````
 
 ```go
 // internal/review/review_test.go
@@ -2043,7 +2058,7 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 
 - [ ] **Step 5: Write and implement `internal/meta/meta.go`**
 
-```go
+````go
 // internal/meta/meta.go
 package meta
 
@@ -2187,7 +2202,7 @@ Agent outputs:
 }
 
 // Note: min() is a Go 1.21+ builtin — no local helper needed with go1.23
-```
+````
 
 ```go
 // internal/meta/meta_test.go
@@ -2246,6 +2261,7 @@ func TestRunFallsBackOnInvalidJSON(t *testing.T) {
 ```bash
 go test ./internal/council/... ./internal/review/... ./internal/meta/... -v
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 7: Commit**
@@ -2260,6 +2276,7 @@ git commit -m "feat: add council, review, and meta-agent internals"
 ## Task 8: `cmd/devkit` — main CLI binary
 
 **Files:**
+
 - Modify: `cmd/devkit/main.go`
 - Create: `cmd/devkit/config.go`
 - Create: `cmd/devkit/runner.go`
@@ -2708,6 +2725,7 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 go build ./cmd/devkit/
 ./devkit --help
 ```
+
 Expected: help text with council/review/meta subcommands.
 
 - [ ] **Step 7: Run full test suite**
@@ -2715,6 +2733,7 @@ Expected: help text with council/review/meta subcommands.
 ```bash
 go test ./...
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 8: Commit**
@@ -2729,6 +2748,7 @@ git commit -m "feat: add cmd/devkit CLI binary with council/review/meta"
 ## Task 9: Shell scripts + CI templates
 
 **Files:**
+
 - Create: `ci/gitea.yml`
 - Create: `ci/github.yml`
 - Create: `install.sh`
@@ -3003,6 +3023,7 @@ bash -n install.sh && echo "install.sh: ok"
 bash -n upgrade.sh && echo "upgrade.sh: ok"
 python3 -c "import yaml, sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" ci/gitea.yml ci/github.yml && echo "CI YAMLs: ok"
 ```
+
 Expected: all three "ok".
 
 - [ ] **Step 6: Commit**
@@ -3043,6 +3064,7 @@ git push origin v1.0.0
 go install github.com/89jobrien/devkit/cmd/devkit@v1.0.0
 devkit --help
 ```
+
 Expected: help output with council/review/meta subcommands.
 
 - [ ] **Step 5: Verify `go run ci-agent` resolves**
@@ -3050,6 +3072,7 @@ Expected: help output with council/review/meta subcommands.
 ```bash
 go run github.com/89jobrien/devkit/cmd/ci-agent@v1.0.0 2>&1 | grep -i "required env var"
 ```
+
 Expected: error about missing `CI_PLATFORM` env var (confirming it runs).
 
 - [ ] **Step 6: Final test run**
@@ -3057,6 +3080,7 @@ Expected: error about missing `CI_PLATFORM` env var (confirming it runs).
 ```bash
 go test ./...
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 7: Commit anything remaining + push**

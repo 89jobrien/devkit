@@ -3,6 +3,7 @@ package profile
 
 import (
 	"context"
+	"fmt"
 	"strings"
 )
 
@@ -28,6 +29,9 @@ type Config struct {
 
 // Run analyzes pprof or benchmark output with LLM commentary.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("profile: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 

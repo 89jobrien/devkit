@@ -19,6 +19,8 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 	return f(ctx, prompt, tools)
 }
 
+const maxCodeBytes = 30 * 1024 // 30KB
+
 // Config holds all inputs for a migrate run.
 type Config struct {
 	Old    string // old API signature or description
@@ -30,15 +32,23 @@ type Config struct {
 
 // Run analyzes a breaking API change and suggests callsite updates as a unified diff.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("migrate: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 
 func buildPrompt(cfg Config) string {
+	code := cfg.Code
+	if len(code) > maxCodeBytes {
+		code = code[:maxCodeBytes] + "\n[truncated]"
+	}
+
 	var sb strings.Builder
 	sb.WriteString("You are an expert Go developer performing an API migration. Analyze the breaking change below and produce a unified diff showing the callsite updates needed.\n\n")
 	fmt.Fprintf(&sb, "### Old API\n```\n%s\n```\n\n", cfg.Old)
 	fmt.Fprintf(&sb, "### New API\n```\n%s\n```\n\n", cfg.New)
-	fmt.Fprintf(&sb, "### File to update: %s\n```go\n%s\n```\n\n", cfg.Path, cfg.Code)
+	fmt.Fprintf(&sb, "### File to update: %s\n```go\n%s\n```\n\n", cfg.Path, code)
 	sb.WriteString("Output a unified diff (`--- a/file` / `+++ b/file` format) with the minimal changes needed to migrate every callsite. ")
 	sb.WriteString("If no changes are needed, say so explicitly. Do not rewrite unrelated code.")
 	return sb.String()

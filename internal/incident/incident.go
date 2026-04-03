@@ -19,6 +19,8 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 	return f(ctx, prompt, tools)
 }
 
+const maxLogBytes = 50 * 1024 // 50KB
+
 // Config holds all inputs for an incident report run.
 type Config struct {
 	Description string // incident description
@@ -28,16 +30,24 @@ type Config struct {
 
 // Run produces a structured incident report using the configured runner.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("incident: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 
 func buildPrompt(cfg Config) string {
+	logs := cfg.Logs
+	if len(logs) > maxLogBytes {
+		logs = logs[:maxLogBytes] + "\n[truncated]"
+	}
+
 	var sb strings.Builder
 	sb.WriteString("You are an incident response engineer. Produce a structured incident report in Markdown based on the information provided.\n\n")
 	fmt.Fprintf(&sb, "### Incident Description\n%s\n\n", cfg.Description)
-	if cfg.Logs != "" {
+	if logs != "" {
 		sb.WriteString("### Supporting Logs\n```\n")
-		sb.WriteString(cfg.Logs)
+		sb.WriteString(logs)
 		sb.WriteString("\n```\n\n")
 	}
 	sb.WriteString("Produce the report with exactly these sections (use ## headings):\n")

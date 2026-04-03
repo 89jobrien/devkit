@@ -12,22 +12,23 @@
 
 ## File Map
 
-| Action | Path | Purpose |
-|--------|------|---------|
-| Modify | `internal/tools/tools.go` | Add `BashTool(maxBytes int) Tool` |
-| Modify | `internal/tools/tools_test.go` | Tests for BashTool |
-| Create | `internal/diagnose/diagnose.go` | `Runner` interface, `Config`, `Run` |
-| Create | `internal/diagnose/diagnose_test.go` | Unit tests with stub runner |
-| Modify | `cmd/devkit/config.go` | Add `Diagnose struct` to `Config` |
-| Modify | `cmd/devkit/runner.go` | Add BashTool to `agentRunner.allTools` |
-| Modify | `cmd/devkit/main.go` | Add `diagnose` cobra subcommand |
-| Modify | `install.sh` | Add `diagnose = true` to generated components block |
+| Action | Path                                 | Purpose                                             |
+| ------ | ------------------------------------ | --------------------------------------------------- |
+| Modify | `internal/tools/tools.go`            | Add `BashTool(maxBytes int) Tool`                   |
+| Modify | `internal/tools/tools_test.go`       | Tests for BashTool                                  |
+| Create | `internal/diagnose/diagnose.go`      | `Runner` interface, `Config`, `Run`                 |
+| Create | `internal/diagnose/diagnose_test.go` | Unit tests with stub runner                         |
+| Modify | `cmd/devkit/config.go`               | Add `Diagnose struct` to `Config`                   |
+| Modify | `cmd/devkit/runner.go`               | Add BashTool to `agentRunner.allTools`              |
+| Modify | `cmd/devkit/main.go`                 | Add `diagnose` cobra subcommand                     |
+| Modify | `install.sh`                         | Add `diagnose = true` to generated components block |
 
 ---
 
 ## Task 1: BashTool
 
 **Files:**
+
 - Modify: `internal/tools/tools.go`
 - Modify: `internal/tools/tools_test.go`
 
@@ -133,6 +134,7 @@ func BashTool(maxBytes int) Tool {
 ```
 
 Add missing imports to `tools.go`:
+
 - `"bytes"`
 - `"os/exec"`
 
@@ -164,6 +166,7 @@ git commit -m "feat(tools): add BashTool with output cap and stderr capture"
 ## Task 2: internal/diagnose package
 
 **Files:**
+
 - Create: `internal/diagnose/diagnose.go`
 - Create: `internal/diagnose/diagnose_test.go`
 
@@ -375,6 +378,7 @@ git commit -m "feat(diagnose): add internal/diagnose package with Runner port an
 ## Task 3: Wire diagnose into cmd/devkit
 
 **Files:**
+
 - Modify: `cmd/devkit/config.go` — add Diagnose config section
 - Modify: `cmd/devkit/runner.go` — add BashTool to agentRunner
 - Modify: `cmd/devkit/main.go` — add diagnose subcommand
@@ -446,6 +450,7 @@ Expected: no output (success).
 - [ ] **Step 3c.1: Add diagnose subcommand to main.go**
 
 In `cmd/devkit/main.go`, add imports at the top:
+
 ```go
 "github.com/89jobrien/devkit/internal/diagnose"
 ```
@@ -517,6 +522,7 @@ cd ~/dev/devkit && go build ./cmd/devkit/ && ./devkit diagnose --help
 ```
 
 Expected:
+
 ```
 Diagnose a service failure from logs and system state
 
@@ -556,6 +562,7 @@ cd ~/dev/devkit && git add cmd/devkit/ && git commit -m "feat: add devkit diagno
 ## Task 4: Update install.sh
 
 **Files:**
+
 - Modify: `install.sh`
 
 `install.sh` uses a two-pass component system: a `gum choose` selection, a `case` block (in a subshell), and a `grep` re-derivation (because the subshell doesn't propagate variables). All four locations must be updated together, plus the TOML heredoc.
@@ -563,10 +570,13 @@ cd ~/dev/devkit && git add cmd/devkit/ && git commit -m "feat: add devkit diagno
 - [ ] **Step 4.1: Add `diagnose` to the `gum choose` line (line 26)**
 
 Change:
+
 ```bash
 components="$(gum choose --no-limit --selected council,review,meta,ci_agent council review meta ci_agent)"
 ```
+
 To:
+
 ```bash
 components="$(gum choose --no-limit --selected council,review,meta,ci_agent,diagnose council review meta ci_agent diagnose)"
 ```
@@ -574,6 +584,7 @@ components="$(gum choose --no-limit --selected council,review,meta,ci_agent,diag
 - [ ] **Step 4.2: Add `has_diagnose=false` to the boolean init block (after line 35)**
 
 After `has_ci_agent=false`, add:
+
 ```bash
 has_diagnose=false
 ```
@@ -581,6 +592,7 @@ has_diagnose=false
 - [ ] **Step 4.3: Add `diagnose` arm to the `case` block (lines 37–42)**
 
 Add before the `esac`:
+
 ```bash
     diagnose)  has_diagnose=true ;;
 ```
@@ -588,6 +600,7 @@ Add before the `esac`:
 - [ ] **Step 4.4: Add grep re-derivation for diagnose (after line 49)**
 
 After the `has_ci_agent` grep line, add:
+
 ```bash
 if echo "$components" | grep -q "diagnose"; then has_diagnose=true; fi
 ```
@@ -595,6 +608,7 @@ if echo "$components" | grep -q "diagnose"; then has_diagnose=true; fi
 - [ ] **Step 4.5: Add `diagnose` to the TOML `[components]` block and add `[diagnose]` section**
 
 In the `cat > .devkit.toml` heredoc, update `[components]`:
+
 ```toml
 [components]
 council  = $has_council
@@ -605,6 +619,7 @@ diagnose = $has_diagnose
 ```
 
 Add after the `[council]` block:
+
 ```toml
 [diagnose]
 # log_cmd = "journalctl -n 200 --no-pager"   # uncomment and customize if needed
@@ -630,6 +645,7 @@ cd ~/dev/devkit && git add install.sh && git commit -m "feat(install): add diagn
 ## Task 5: Update CLAUDE.md
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 5.1: Add diagnose to CLAUDE.md development section**
@@ -664,6 +680,7 @@ cd ~/dev/devkit && go test ./... -v 2>&1 | tail -20
 ```
 
 Expected test output:
+
 ```
 ok  	github.com/89jobrien/devkit/internal/council	0.XXXs
 ok  	github.com/89jobrien/devkit/internal/diagnose	0.XXXs
@@ -676,6 +693,7 @@ ok  	github.com/89jobrien/devkit/internal/tools	0.XXXs
 ```
 
 Expected `./devkit --help`:
+
 ```
 Available Commands:
   council    Multi-role branch analysis

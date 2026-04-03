@@ -29,6 +29,9 @@ type Config struct {
 
 // Run generates boilerplate for a new Go package following hexagonal architecture.
 func Run(ctx context.Context, cfg Config) (string, error) {
+	if cfg.Runner == nil {
+		return "", fmt.Errorf("scaffold: runner is required")
+	}
 	return cfg.Runner.Run(ctx, buildPrompt(cfg), nil)
 }
 

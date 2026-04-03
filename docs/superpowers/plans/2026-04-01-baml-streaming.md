@@ -12,24 +12,25 @@
 
 ## File Map
 
-| Path | Action | Responsibility |
-|---|---|---|
-| `internal/baml/baml_src/generators.baml` | Create | Go codegen config |
-| `internal/baml/baml_src/clients.baml` | Create | LLM client defs per tier |
-| `internal/baml/baml_src/council.baml` | Create | Output types + per-role functions |
-| `internal/baml/baml_client/` | Generated | Go client (committed after generation) |
-| `internal/baml/adapter.go` | Create | `council.Runner` implementation |
-| `internal/baml/adapter_test.go` | Create | Unit tests with mock BAML client |
-| `internal/baml/stream.go` | Create | Streaming renderer (`io.Writer`) |
-| `cmd/devkit/config.go` | Modify | Add `UseBAML bool` to `Providers` struct |
-| `cmd/devkit/main.go` | Modify | Route to `baml.Adapter` when `UseBAML` is true |
-| `.devkit.toml` | Modify | Add `use_baml = false` key |
+| Path                                     | Action    | Responsibility                                 |
+| ---------------------------------------- | --------- | ---------------------------------------------- |
+| `internal/baml/baml_src/generators.baml` | Create    | Go codegen config                              |
+| `internal/baml/baml_src/clients.baml`    | Create    | LLM client defs per tier                       |
+| `internal/baml/baml_src/council.baml`    | Create    | Output types + per-role functions              |
+| `internal/baml/baml_client/`             | Generated | Go client (committed after generation)         |
+| `internal/baml/adapter.go`               | Create    | `council.Runner` implementation                |
+| `internal/baml/adapter_test.go`          | Create    | Unit tests with mock BAML client               |
+| `internal/baml/stream.go`                | Create    | Streaming renderer (`io.Writer`)               |
+| `cmd/devkit/config.go`                   | Modify    | Add `UseBAML bool` to `Providers` struct       |
+| `cmd/devkit/main.go`                     | Modify    | Route to `baml.Adapter` when `UseBAML` is true |
+| `.devkit.toml`                           | Modify    | Add `use_baml = false` key                     |
 
 ---
 
 ## Task 1: BAML Schema Files
 
 **Files:**
+
 - Create: `internal/baml/baml_src/generators.baml`
 - Create: `internal/baml/baml_src/clients.baml`
 - Create: `internal/baml/baml_src/council.baml`
@@ -176,6 +177,7 @@ function AnalyzeBranchDefault(prompt: string) -> RoleOutput {
 ```bash
 cd /Users/joe/dev/devkit/internal/baml && baml-cli check baml_src/
 ```
+
 Expected: no errors printed, exit 0.
 
 - [ ] **Step 6: Commit schema files**
@@ -190,6 +192,7 @@ git commit -m "feat(baml): add BAML schema — clients, output types, per-role f
 ## Task 2: Generate Go Client
 
 **Files:**
+
 - Create (generated): `internal/baml/baml_client/` (all files)
 
 - [ ] **Step 1: Run code generation**
@@ -197,6 +200,7 @@ git commit -m "feat(baml): add BAML schema — clients, output types, per-role f
 ```bash
 cd /Users/joe/dev/devkit/internal/baml && baml-cli generate
 ```
+
 Expected: `baml_client/` directory created with Go files.
 
 - [ ] **Step 2: Verify generated package compiles**
@@ -204,11 +208,13 @@ Expected: `baml_client/` directory created with Go files.
 ```bash
 cd /Users/joe/dev/devkit && go build ./internal/baml/baml_client/...
 ```
+
 Expected: exit 0, no errors.
 
 - [ ] **Step 3: Add baml-go dependency if needed**
 
 If `go build` fails with missing import, run:
+
 ```bash
 cd /Users/joe/dev/devkit && go get github.com/boundaryml/baml-go
 go mod tidy
@@ -226,6 +232,7 @@ git commit -m "feat(baml): commit generated Go client from baml-cli generate"
 ## Task 3: stream.go — Streaming Renderer
 
 **Files:**
+
 - Create: `internal/baml/stream.go`
 - Create: `internal/baml/stream_test.go`
 
@@ -284,6 +291,7 @@ Note: `renderStreamTokens` is unexported and tested via same-package test (`pack
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/...
 ```
+
 Expected: compilation error — `renderStreamTokens` not defined.
 
 - [ ] **Step 3: Write stream.go**
@@ -321,6 +329,7 @@ Change `stream_test.go` first line from `package baml_test` to `package baml` so
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/... -run TestRenderStream
 ```
+
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -335,6 +344,7 @@ git commit -m "feat(baml): add streaming token renderer"
 ## Task 4: adapter.go — council.Runner Implementation
 
 **Files:**
+
 - Create: `internal/baml/adapter.go`
 - Create: `internal/baml/adapter_test.go`
 
@@ -396,6 +406,7 @@ func TestAdapterRunUnknownRoleFallsBack(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/... -run TestAdapter
 ```
+
 Expected: compilation error — `newAdapterWithClient` not defined.
 
 - [ ] **Step 3: Write adapter.go**
@@ -469,6 +480,7 @@ func formatMarkdown(role, raw string) string {
 - [ ] **Step 4: Add newRealClient placeholder**
 
 Add to `adapter.go` to make it compile (replace in Task 5):
+
 ```go
 // newRealClient returns a no-op client. Replaced in Task 5.
 func newRealClient() bamlClient { return &noopClient{} }
@@ -484,6 +496,7 @@ func (n *noopClient) runRole(_ context.Context, _, _ string) (string, error) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/... -run TestAdapter -v
 ```
+
 Expected: both tests PASS.
 
 - [ ] **Step 6: Commit**
@@ -498,6 +511,7 @@ git commit -m "feat(baml): add Adapter stub — council.Runner port with injecta
 ## Task 5: Wire Real BAML Client Into Adapter
 
 **Files:**
+
 - Modify: `internal/baml/adapter.go` (replace noopClient with real generated client)
 
 **Prerequisite:** Task 2 must be done (generated client exists). Consult `internal/baml/baml_client/` for exact type names.
@@ -507,6 +521,7 @@ git commit -m "feat(baml): add Adapter stub — council.Runner port with injecta
 ```bash
 ls /Users/joe/dev/devkit/internal/baml/baml_client/
 ```
+
 Look for the file that exports `BamlClient` and stream methods like `StreamAnalyzeBranchStrictCritic`.
 
 - [ ] **Step 2: Replace noopClient with realBAMLClient in adapter.go**
@@ -674,6 +689,7 @@ func formatRoleOutput(r *baml_client.RoleOutput) string {
 ```bash
 cd /Users/joe/dev/devkit && go build ./internal/baml/...
 ```
+
 Expected: exit 0.
 
 - [ ] **Step 5: Run all baml tests**
@@ -681,6 +697,7 @@ Expected: exit 0.
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/... -v
 ```
+
 Expected: all PASS (stubs still pass; real client only used in integration tests).
 
 - [ ] **Step 6: Commit**
@@ -695,6 +712,7 @@ git commit -m "feat(baml): wire real generated BAML client into Adapter"
 ## Task 6: Streaming Token Output in Adapter.Run
 
 **Files:**
+
 - Modify: `internal/baml/adapter.go` (add live streaming via stream channel)
 
 The BAML streaming API exposes a channel of partial structs. We drain it to print tokens live, then call `.Get()` for the final typed result.
@@ -714,6 +732,7 @@ func (a *Adapter) Run(ctx context.Context, prompt string, _ []string) (string, e
 ```
 
 Update `bamlClient` interface to use streaming method:
+
 ```go
 type bamlClient interface {
 	runRoleStreaming(ctx context.Context, role, prompt string, out io.Writer) (string, error)
@@ -746,6 +765,7 @@ func (r *realBAMLClient) runRoleStreaming(ctx context.Context, role, prompt stri
 **Note:** BAML partial types use pointer fields (`*string`) for streaming. Check generated code for exact field types.
 
 Update `stubBAMLClient` in `adapter_test.go` to match new interface:
+
 ```go
 func (s *stubBAMLClient) runRoleStreaming(_ context.Context, _, _ string, _ io.Writer) (string, error) {
 	return s.response, nil
@@ -757,6 +777,7 @@ func (s *stubBAMLClient) runRoleStreaming(_ context.Context, _, _ string, _ io.W
 ```bash
 cd /Users/joe/dev/devkit && go build ./internal/baml/...
 ```
+
 Expected: exit 0.
 
 - [ ] **Step 3: Run tests**
@@ -764,6 +785,7 @@ Expected: exit 0.
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/... -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 4: Commit**
@@ -778,6 +800,7 @@ git commit -m "feat(baml): stream partial tokens to out during role analysis"
 ## Task 7: Config + Router Integration
 
 **Files:**
+
 - Modify: `cmd/devkit/config.go` (add `UseBAML bool`)
 - Modify: `cmd/devkit/main.go` (route to baml.Adapter when UseBAML=true)
 - Modify: `.devkit.toml` (add `use_baml = false`)
@@ -785,6 +808,7 @@ git commit -m "feat(baml): stream partial tokens to out during role analysis"
 - [ ] **Step 1: Add UseBAML to Config**
 
 In `cmd/devkit/config.go`, add to the `Providers` struct:
+
 ```go
 Providers struct {
     Primary           string `toml:"primary"`
@@ -799,6 +823,7 @@ Providers struct {
 - [ ] **Step 2: Add use_baml to .devkit.toml**
 
 In `.devkit.toml`, under `[providers]`:
+
 ```toml
 use_baml = false   # set true to route council through BAML streaming
 ```
@@ -834,6 +859,7 @@ for _, role := range []string{"creative-explorer", "performance-analyst", "gener
 ```bash
 cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent ./cmd/meta
 ```
+
 Expected: exit 0.
 
 - [ ] **Step 5: Run full test suite**
@@ -841,6 +867,7 @@ Expected: exit 0.
 ```bash
 cd /Users/joe/dev/devkit && go test ./...
 ```
+
 Expected: all 80+ tests PASS (no BAML integration tests fire real API calls).
 
 - [ ] **Step 6: Commit**
@@ -855,6 +882,7 @@ git commit -m "feat(baml): wire UseBAML config flag — routes council to baml.A
 ## Task 8: Integration Test (Build-Tagged)
 
 **Files:**
+
 - Create: `internal/baml/integration_test.go`
 
 - [ ] **Step 1: Write integration test**
@@ -903,6 +931,7 @@ func TestAdapterIntegrationStrictCritic(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/baml/...
 ```
+
 Expected: only unit tests run, no API calls, all PASS.
 
 - [ ] **Step 3: Commit**
@@ -921,14 +950,17 @@ git commit -m "test(baml): add integration test for strict-critic (tagged, requi
 ```bash
 GOBIN=$HOME/go/bin go install ./cmd/devkit ./cmd/meta ./cmd/ci-agent
 ```
+
 Expected: exit 0, binaries updated at `$HOME/go/bin/`.
 
 - [ ] **Step 2: Verify devkit compiles with use_baml flag**
 
 Edit `.devkit.toml` temporarily to set `use_baml = true`, then:
+
 ```bash
 devkit council --base HEAD~1 2>&1 | head -5
 ```
+
 Expected: runs (may fail on API keys) but does not panic or fail at compile time.
 
 Revert `.devkit.toml` back to `use_baml = false`.
@@ -938,6 +970,7 @@ Revert `.devkit.toml` back to `use_baml = false`.
 ```bash
 cd /Users/joe/dev/devkit && go test ./...
 ```
+
 Expected: all tests PASS.
 
 - [ ] **Step 4: Final commit**
@@ -952,6 +985,7 @@ git commit -m "chore: revert use_baml to false (default off until Phase 2)"
 ## Self-Review
 
 **Spec coverage check:**
+
 - ✅ `internal/baml/baml_src/` schema — Task 1
 - ✅ `internal/baml/baml_client/` generated client — Task 2
 - ✅ `stream.go` streaming renderer — Task 3

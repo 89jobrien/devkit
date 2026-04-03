@@ -12,10 +12,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/89jobrien/devkit/internal/adr"
 	"github.com/89jobrien/devkit/internal/changelog"
+	"github.com/89jobrien/devkit/internal/docgen"
 	"github.com/89jobrien/devkit/internal/explain"
+	"github.com/89jobrien/devkit/internal/incident"
 	"github.com/89jobrien/devkit/internal/lint"
+	"github.com/89jobrien/devkit/internal/logpattern"
+	"github.com/89jobrien/devkit/internal/migrate"
 	"github.com/89jobrien/devkit/internal/pr"
+	"github.com/89jobrien/devkit/internal/profile"
+	"github.com/89jobrien/devkit/internal/scaffold"
 	"github.com/89jobrien/devkit/internal/testgen"
 	"github.com/89jobrien/devkit/internal/ticket"
 	"github.com/spf13/cobra"
@@ -286,6 +293,96 @@ func TestTicketCmd_ArgTakesPrecedenceOverFrom(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, capturedPrompt, "fix the login bug", "arg input should be used")
 	assert.NotContains(t, capturedPrompt, "Find TODOs", "file-mode prompt should not be used when arg is present")
+}
+
+// --- migrate ---
+
+func TestMigrateCmd_RequiresOldAndNew(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "main.go")
+	require.NoError(t, os.WriteFile(f, []byte("package main\n"), 0o644))
+
+	r := migrate.RunnerFunc(stubRunner(t))
+
+	// missing --new
+	cmd := newMigrateCmd(r)
+	_, err := runCmd(t, cmd, "migrate", "--old", "foo()", f)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--old and --new are required")
+
+	// missing --old
+	cmd = newMigrateCmd(r)
+	_, err = runCmd(t, cmd, "migrate", "--new", "bar()", f)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--old and --new are required")
+}
+
+// --- incident ---
+
+func TestIncidentCmd_RequiresDescription(t *testing.T) {
+	r := incident.RunnerFunc(stubRunner(t))
+	cmd := newIncidentCmd(r)
+	_, err := runCmd(t, cmd, "incident")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--description is required")
+}
+
+// --- adr ---
+
+func TestAdrCmd_EmptyTitleReturnsError(t *testing.T) {
+	r := adr.RunnerFunc(stubRunner(t))
+	cmd := newAdrCmd(r)
+	_, err := runCmd(t, cmd, "adr")
+	require.Error(t, err)
+}
+
+// --- docgen ---
+
+func TestDocgenCmd_FileNotFound(t *testing.T) {
+	r := docgen.RunnerFunc(stubRunner(t))
+	cmd := newDocgenCmd(r)
+	_, err := runCmd(t, cmd, "docgen", "/nonexistent/file.go")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot read")
+}
+
+// --- log-pattern ---
+
+func TestLogPatternCmd_ReadsFile(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "app.log")
+	require.NoError(t, os.WriteFile(f, []byte("ERROR: connection refused\nERROR: connection refused\n"), 0o644))
+
+	r := logpattern.RunnerFunc(stubRunner(t))
+	cmd := newLogPatternCmd(r)
+	out, err := runCmd(t, cmd, "log-pattern", f)
+	require.NoError(t, err)
+	assert.Contains(t, out, "stub:")
+}
+
+// --- profile ---
+
+func TestProfileCmd_ReadsFile(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "profile.txt")
+	require.NoError(t, os.WriteFile(f, []byte("flat flat% sum% cum cum%\n10ms 50% 50% 10ms 50% runtime.main\n"), 0o644))
+
+	r := profile.RunnerFunc(stubRunner(t))
+	cmd := newProfileCmd(r)
+	out, err := runCmd(t, cmd, "profile", f)
+	require.NoError(t, err)
+	assert.Contains(t, out, "stub:")
+}
+
+// --- scaffold ---
+
+func TestScaffoldCmd_RequiresPurpose(t *testing.T) {
+	// scaffold without --purpose still runs (purpose is optional), so test it succeeds
+	r := scaffold.RunnerFunc(stubRunner(t))
+	cmd := newScaffoldCmd(r)
+	out, err := runCmd(t, cmd, "scaffold", "mypkg")
+	require.NoError(t, err)
+	assert.Contains(t, out, "stub:")
 }
 
 func TestTicketCmd_FromUsedWhenNoArg(t *testing.T) {

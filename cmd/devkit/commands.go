@@ -78,8 +78,11 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 
 			fmt.Println(result)
 			devlog.Complete(id, "changelog", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "changelog", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "changelog", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -137,8 +140,11 @@ func newLintCmd(runner lint.Runner) *cobra.Command {
 
 			fmt.Println(result)
 			devlog.Complete(id, "lint", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "lint", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "lint", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -214,8 +220,11 @@ func newExplainCmd(runner explain.Runner) *cobra.Command {
 
 			fmt.Println(result)
 			devlog.Complete(id, "explain", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "explain", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "explain", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -290,8 +299,11 @@ func newTestgenCmd(runner testgen.Runner) *cobra.Command {
 
 			fmt.Println(result)
 			devlog.Complete(id, "test-gen", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "test-gen", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "test-gen", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -376,8 +388,11 @@ func newTicketCmd(runner ticket.Runner) *cobra.Command {
 
 			fmt.Println(result)
 			devlog.Complete(id, "ticket", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "ticket", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "ticket", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -439,8 +454,11 @@ func newAdrCmd(runner adr.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "adr", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "adr", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "adr", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -495,8 +513,11 @@ func newDocgenCmd(runner docgen.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "docgen", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "docgen", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "docgen", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -529,6 +550,10 @@ func newMigrateCmd(runner migrate.Runner) *cobra.Command {
 				})
 			}
 
+			if oldSig == "" || newSig == "" {
+				return fmt.Errorf("migrate: --old and --new are required")
+			}
+
 			filePath := args[0]
 			content, err := os.ReadFile(filePath)
 			if err != nil {
@@ -553,8 +578,11 @@ func newMigrateCmd(runner migrate.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "migrate", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "migrate", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "migrate", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -608,8 +636,11 @@ func newScaffoldCmd(runner scaffold.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "scaffold", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "scaffold", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "scaffold", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -650,6 +681,10 @@ func newLogPatternCmd(runner logpattern.Runner) *cobra.Command {
 				}
 				logs = string(content)
 			} else {
+				info, _ := os.Stdin.Stat()
+				if info.Mode()&os.ModeCharDevice != 0 {
+					return fmt.Errorf("log-pattern: provide a file argument or pipe input via stdin")
+				}
 				raw, readErr := io.ReadAll(os.Stdin)
 				if readErr != nil && readErr != io.EOF {
 					return fmt.Errorf("log-pattern: error reading stdin: %w", readErr)
@@ -675,8 +710,11 @@ func newLogPatternCmd(runner logpattern.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "log-pattern", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "log-pattern", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "log-pattern", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -708,6 +746,10 @@ func newIncidentCmd(runner incident.Runner) *cobra.Command {
 				})
 			}
 
+			if description == "" {
+				return fmt.Errorf("incident: --description is required")
+			}
+
 			var logs string
 			if logsFile != "" {
 				content, err := os.ReadFile(logsFile)
@@ -733,8 +775,11 @@ func newIncidentCmd(runner incident.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "incident", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "incident", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "incident", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}
@@ -776,6 +821,10 @@ func newProfileCmd(runner profile.Runner) *cobra.Command {
 				}
 				input = string(content)
 			} else {
+				info, _ := os.Stdin.Stat()
+				if info.Mode()&os.ModeCharDevice != 0 {
+					return fmt.Errorf("profile: provide a file argument or pipe input via stdin")
+				}
 				raw, readErr := io.ReadAll(os.Stdin)
 				if readErr != nil && readErr != io.EOF {
 					return fmt.Errorf("profile: error reading stdin: %w", readErr)
@@ -801,8 +850,11 @@ func newProfileCmd(runner profile.Runner) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), result)
 			devlog.Complete(id, "profile", logMeta, result, time.Since(start))
-			path, _ := devlog.SaveCommitLog(sha, "profile", result, logMeta)
-			fmt.Printf("\nLogged to: %s\n", path)
+			if path, err := devlog.SaveCommitLog(sha, "profile", result, logMeta); err != nil {
+				fmt.Fprintf(os.Stderr, "devkit: warning: failed to save log: %v\n", err)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "\nLogged to: %s\n", path)
+			}
 			return nil
 		},
 	}

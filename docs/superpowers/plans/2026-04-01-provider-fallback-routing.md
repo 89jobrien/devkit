@@ -12,30 +12,31 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `internal/providers/provider.go` | Create | `ChatProvider`, `AgentProvider` interfaces; `Tier` constants; `ToolCall`/`Message` shared types |
-| `internal/providers/models.go` | Create | Model ID constants per tier per provider |
-| `internal/providers/anthropic.go` | Create | Anthropic `AgentProvider` (wraps SDK) |
-| `internal/providers/openai.go` | Create | OpenAI `AgentProvider` (function-calling loop via raw HTTP) |
-| `internal/providers/gemini.go` | Create | Gemini `ChatProvider` (large context, no tool use) |
-| `internal/providers/router.go` | Create | `Router`: tier→provider chain selection, fallback logic, role→tier map |
-| `internal/providers/anthropic_test.go` | Create | httptest-based unit tests for Anthropic provider |
-| `internal/providers/openai_test.go` | Create | httptest-based unit tests for OpenAI provider |
-| `internal/providers/gemini_test.go` | Create | httptest-based unit tests for Gemini provider |
-| `internal/providers/router_test.go` | Create | Unit tests for tier routing, fallback, role mapping |
-| `internal/loop/loop.go` | Modify | Add `RunAgentLoop(ctx, AgentProvider, prompt, tools)` alongside existing `RunAgent` |
-| `internal/loop/loop_test.go` | Modify | Add tests for `RunAgentLoop` using stub `AgentProvider` |
-| `cmd/devkit/runner.go` | Replace | Wire `Router` from env keys; implement `Runner` adapter over `AgentProvider`/`ChatProvider` |
-| `cmd/devkit/config.go` | Modify | Add `[providers]` section to `Config` struct |
-| `cmd/devkit/main.go` | Modify | Use `Router.For(tier)` for all commands; map council roles to tiers |
-| `cmd/ci-agent/providers.go` | No change | Already has its own `askWithFallback`; leave as-is |
+| File                                   | Action    | Responsibility                                                                                  |
+| -------------------------------------- | --------- | ----------------------------------------------------------------------------------------------- |
+| `internal/providers/provider.go`       | Create    | `ChatProvider`, `AgentProvider` interfaces; `Tier` constants; `ToolCall`/`Message` shared types |
+| `internal/providers/models.go`         | Create    | Model ID constants per tier per provider                                                        |
+| `internal/providers/anthropic.go`      | Create    | Anthropic `AgentProvider` (wraps SDK)                                                           |
+| `internal/providers/openai.go`         | Create    | OpenAI `AgentProvider` (function-calling loop via raw HTTP)                                     |
+| `internal/providers/gemini.go`         | Create    | Gemini `ChatProvider` (large context, no tool use)                                              |
+| `internal/providers/router.go`         | Create    | `Router`: tier→provider chain selection, fallback logic, role→tier map                          |
+| `internal/providers/anthropic_test.go` | Create    | httptest-based unit tests for Anthropic provider                                                |
+| `internal/providers/openai_test.go`    | Create    | httptest-based unit tests for OpenAI provider                                                   |
+| `internal/providers/gemini_test.go`    | Create    | httptest-based unit tests for Gemini provider                                                   |
+| `internal/providers/router_test.go`    | Create    | Unit tests for tier routing, fallback, role mapping                                             |
+| `internal/loop/loop.go`                | Modify    | Add `RunAgentLoop(ctx, AgentProvider, prompt, tools)` alongside existing `RunAgent`             |
+| `internal/loop/loop_test.go`           | Modify    | Add tests for `RunAgentLoop` using stub `AgentProvider`                                         |
+| `cmd/devkit/runner.go`                 | Replace   | Wire `Router` from env keys; implement `Runner` adapter over `AgentProvider`/`ChatProvider`     |
+| `cmd/devkit/config.go`                 | Modify    | Add `[providers]` section to `Config` struct                                                    |
+| `cmd/devkit/main.go`                   | Modify    | Use `Router.For(tier)` for all commands; map council roles to tiers                             |
+| `cmd/ci-agent/providers.go`            | No change | Already has its own `askWithFallback`; leave as-is                                              |
 
 ---
 
 ## Task 1: Define shared interfaces and types
 
 **Files:**
+
 - Create: `internal/providers/provider.go`
 
 - [ ] **Step 1: Write the failing test (interfaces compile check)**
@@ -75,6 +76,7 @@ func TestInterfacesCompile(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
 ```
+
 Expected: `no Go files in .../internal/providers` or compile error.
 
 - [ ] **Step 3: Implement `provider.go`**
@@ -116,6 +118,7 @@ const (
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -129,6 +132,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 2: Model ID constants
 
 **Files:**
+
 - Create: `internal/providers/models.go`
 
 - [ ] **Step 1: Write the test**
@@ -158,6 +162,7 @@ Add import `"github.com/stretchr/testify/assert"` to the test file.
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
 ```
+
 Expected: compile error — `ModelAnthropicFast` undefined.
 
 - [ ] **Step 3: Implement `models.go`**
@@ -194,6 +199,7 @@ const (
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -207,6 +213,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 3: Anthropic provider
 
 **Files:**
+
 - Create: `internal/providers/anthropic.go`
 - Create: `internal/providers/anthropic_test.go`
 
@@ -284,6 +291,7 @@ func TestAnthropicRunAgent_EndTurn(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestAnthropic
 ```
+
 Expected: compile error — `NewAnthropicProvider` undefined.
 
 - [ ] **Step 3: Implement `anthropic.go`**
@@ -393,6 +401,7 @@ func (p *AnthropicProvider) RunAgent(ctx context.Context, prompt string, ts []to
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestAnthropic -v
 ```
+
 Expected: PASS both tests.
 
 - [ ] **Step 5: Commit**
@@ -406,6 +415,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 4: OpenAI provider
 
 **Files:**
+
 - Create: `internal/providers/openai.go`
 - Create: `internal/providers/openai_test.go`
 
@@ -500,6 +510,7 @@ func TestOpenAIRunAgent_ToolCall(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestOpenAI
 ```
+
 Expected: compile error — `NewOpenAIProvider` undefined.
 
 - [ ] **Step 3: Implement `openai.go`**
@@ -709,6 +720,7 @@ func (p *OpenAIProvider) RunAgent(ctx context.Context, prompt string, ts []tools
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestOpenAI -v
 ```
+
 Expected: PASS both tests.
 
 - [ ] **Step 5: Commit**
@@ -722,6 +734,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 5: Gemini provider
 
 **Files:**
+
 - Create: `internal/providers/gemini.go`
 - Create: `internal/providers/gemini_test.go`
 
@@ -774,6 +787,7 @@ func TestGeminiSatisfiesChatProvider(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestGemini
 ```
+
 Expected: compile error — `NewGeminiProvider` undefined.
 
 - [ ] **Step 3: Implement `gemini.go`**
@@ -870,6 +884,7 @@ func (p *GeminiProvider) Chat(ctx context.Context, prompt string) (string, error
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestGemini -v
 ```
+
 Expected: PASS both tests.
 
 - [ ] **Step 5: Commit**
@@ -883,6 +898,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 6: Router — tier-to-provider chain and role mapping
 
 **Files:**
+
 - Create: `internal/providers/router.go`
 - Create: `internal/providers/router_test.go`
 
@@ -944,6 +960,7 @@ func TestRouterConfigOverride(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter
 ```
+
 Expected: compile error — `NewRouter` undefined.
 
 - [ ] **Step 3: Implement `router.go`**
@@ -1158,6 +1175,7 @@ func joinErrs(errs []string) string {
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter -v
 ```
+
 Expected: PASS all four router tests.
 
 - [ ] **Step 5: Run all provider tests**
@@ -1165,6 +1183,7 @@ Expected: PASS all four router tests.
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -1178,6 +1197,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 ## Task 7: Update `internal/loop` with generic `RunAgentLoop`
 
 **Files:**
+
 - Modify: `internal/loop/loop.go`
 - Modify: `internal/loop/loop_test.go`
 
@@ -1224,6 +1244,7 @@ var _ providers.AgentProvider = stubAgentProvider{}
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/loop/... -run TestRunAgentLoop
 ```
+
 Expected: compile error — `loop.RunAgentLoop` undefined.
 
 - [ ] **Step 3: Add `RunAgentLoop` to `loop.go`**
@@ -1241,6 +1262,7 @@ func RunAgentLoop(ctx context.Context, p interface {
 ```
 
 Also add the import for `tools` if not already present:
+
 ```go
 "github.com/89jobrien/devkit/internal/tools"
 ```
@@ -1250,6 +1272,7 @@ Also add the import for `tools` if not already present:
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/loop/... -v
 ```
+
 Expected: all PASS (existing tests + new test).
 
 - [ ] **Step 5: Commit**
@@ -1263,6 +1286,7 @@ cd /Users/joe/dev/devkit && git add internal/loop/ && git commit -m "feat(loop):
 ## Task 8: Wire `.devkit.toml` provider overrides into Config
 
 **Files:**
+
 - Modify: `cmd/devkit/config.go`
 
 - [ ] **Step 1: Write the failing test**
@@ -1307,6 +1331,7 @@ fast_model = "gemini-3-flash-preview"
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestLoadConfigProviderOverrides
 ```
+
 Expected: compile error — `cfg.Providers` undefined.
 
 - [ ] **Step 3: Add `Providers` section to `Config`**
@@ -1328,6 +1353,7 @@ In `cmd/devkit/config.go`, add after the `Diagnose` struct field:
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestLoadConfigProviderOverrides -v
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1341,6 +1367,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/config.go cmd/devkit/config_test.
 ## Task 9: Replace `cmd/devkit/runner.go` with Router-backed wiring
 
 **Files:**
+
 - Replace: `cmd/devkit/runner.go`
 
 - [ ] **Step 1: Write the failing test**
@@ -1381,6 +1408,7 @@ func TestNewRouterFromConfig_WithOverrides(t *testing.T) {
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestNewRouter
 ```
+
 Expected: compile error — `newRouterFromConfig` undefined.
 
 - [ ] **Step 3: Rewrite `cmd/devkit/runner.go`**
@@ -1422,6 +1450,7 @@ Note: The old `agentRunner`, `openAIRunner`, and `bearerTransport` types are rem
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestNewRouter -v
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1435,6 +1464,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/runner.go cmd/devkit/runner_test.
 ## Task 10: Update `cmd/devkit/main.go` to use Router for all commands
 
 **Files:**
+
 - Modify: `cmd/devkit/main.go`
 
 This task replaces all `newAgentRunner()` and `newOpenAIRunner()` call sites with `router.AgentRunnerFor(providers.TierCoding, ...)` or `router.For(tier)`, and maps council roles to tiers.
@@ -1591,6 +1621,7 @@ Runner: diagnose.RunnerFunc(func(ctx context.Context, prompt string, ts []string
 ```bash
 cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
 ```
+
 Expected: no errors.
 
 - [ ] **Step 6: Run all tests**
@@ -1598,6 +1629,7 @@ Expected: no errors.
 ```bash
 cd /Users/joe/dev/devkit && go test ./...
 ```
+
 Expected: all 37+ tests PASS.
 
 - [ ] **Step 7: Commit**
@@ -1615,6 +1647,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/main.go && git commit -m "feat(ma
 ```bash
 cd /Users/joe/dev/devkit && go test ./... -v 2>&1 | tail -30
 ```
+
 Expected: all tests PASS, no failures.
 
 - [ ] **Step 2: Run go vet**
@@ -1622,6 +1655,7 @@ Expected: all tests PASS, no failures.
 ```bash
 cd /Users/joe/dev/devkit && go vet ./...
 ```
+
 Expected: no output (no issues).
 
 - [ ] **Step 3: Build both binaries**
@@ -1629,6 +1663,7 @@ Expected: no output (no issues).
 ```bash
 cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
 ```
+
 Expected: success.
 
 - [ ] **Step 4: Verify `internal/loop/loop.go` still exports `RunAgent` (no regressions)**
@@ -1636,6 +1671,7 @@ Expected: success.
 ```bash
 cd /Users/joe/dev/devkit && grep -n "^func RunAgent" internal/loop/loop.go
 ```
+
 Expected: line with `func RunAgent(` present.
 
 - [ ] **Step 5: Commit final state**
