@@ -11,13 +11,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/89jobrien/devkit/internal/adr"
 	"github.com/89jobrien/devkit/internal/baml"
 	"github.com/89jobrien/devkit/internal/changelog"
+	"github.com/89jobrien/devkit/internal/docgen"
 	"github.com/89jobrien/devkit/internal/explain"
+	"github.com/89jobrien/devkit/internal/incident"
 	devlog "github.com/89jobrien/devkit/internal/log"
 	"github.com/89jobrien/devkit/internal/lint"
+	"github.com/89jobrien/devkit/internal/logpattern"
+	"github.com/89jobrien/devkit/internal/migrate"
 	"github.com/89jobrien/devkit/internal/pr"
+	"github.com/89jobrien/devkit/internal/profile"
 	"github.com/89jobrien/devkit/internal/providers"
+	"github.com/89jobrien/devkit/internal/scaffold"
 	"github.com/89jobrien/devkit/internal/testgen"
 	"github.com/89jobrien/devkit/internal/ticket"
 	"github.com/spf13/cobra"
@@ -375,6 +382,430 @@ func newTicketCmd(runner ticket.Runner) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&from, "from", "", "Source file to extract TODOs/FIXMEs from")
+	return cmd
+}
+
+// newAdrCmd returns the adr cobra command using the provided runner.
+func newAdrCmd(runner adr.Runner) *cobra.Command {
+	var contextText string
+	cmd := &cobra.Command{
+		Use:   "adr <title>",
+		Short: "Draft an Architecture Decision Record",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = adr.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierFast).Run(ctx, prompt, ts)
+				})
+			}
+
+			ctx := contextText
+			if ctx == "" {
+				info, _ := os.Stdin.Stat()
+				if info.Mode()&os.ModeCharDevice == 0 {
+					raw, readErr := io.ReadAll(os.Stdin)
+					if readErr != nil && readErr != io.EOF {
+						return fmt.Errorf("adr: error reading stdin: %w", readErr)
+					}
+					ctx = strings.TrimSpace(string(raw))
+				}
+			}
+
+			logMeta := map[string]string{"title": args[0]}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("adr", logMeta)
+			start := time.Now()
+
+			result, err := adr.Run(cmd.Context(), adr.Config{
+				Title:   args[0],
+				Context: ctx,
+				Runner:  r,
+			})
+			if err != nil {
+				return fmt.Errorf("adr: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "adr", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "adr", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&contextText, "context", "", "Problem statement or context (or pipe via stdin)")
+	return cmd
+}
+
+// newDocgenCmd returns the docgen cobra command using the provided runner.
+func newDocgenCmd(runner docgen.Runner) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "docgen <file>",
+		Short: "Generate package-level Go docs from code",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = docgen.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierFast).Run(ctx, prompt, ts)
+				})
+			}
+
+			filePath := args[0]
+			content, err := os.ReadFile(filePath)
+			if err != nil {
+				return fmt.Errorf("docgen: cannot read %s: %w", filePath, err)
+			}
+
+			logMeta := map[string]string{"file": filePath}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("docgen", logMeta)
+			start := time.Now()
+
+			result, err := docgen.Run(cmd.Context(), docgen.Config{
+				File:   string(content),
+				Path:   filePath,
+				Runner: r,
+			})
+			if err != nil {
+				return fmt.Errorf("docgen: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "docgen", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "docgen", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	return cmd
+}
+
+// newMigrateCmd returns the migrate cobra command using the provided runner.
+func newMigrateCmd(runner migrate.Runner) *cobra.Command {
+	var oldSig, newSig string
+	cmd := &cobra.Command{
+		Use:   "migrate <file>",
+		Short: "Analyze a breaking API change and suggest callsite updates",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = migrate.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
+				})
+			}
+
+			filePath := args[0]
+			content, err := os.ReadFile(filePath)
+			if err != nil {
+				return fmt.Errorf("migrate: cannot read %s: %w", filePath, err)
+			}
+
+			logMeta := map[string]string{"file": filePath}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("migrate", logMeta)
+			start := time.Now()
+
+			result, err := migrate.Run(cmd.Context(), migrate.Config{
+				Old:    oldSig,
+				New:    newSig,
+				Code:   string(content),
+				Path:   filePath,
+				Runner: r,
+			})
+			if err != nil {
+				return fmt.Errorf("migrate: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "migrate", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "migrate", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&oldSig, "old", "", "Old API signature or description (required)")
+	cmd.Flags().StringVar(&newSig, "new", "", "New API signature or description (required)")
+	return cmd
+}
+
+// newScaffoldCmd returns the scaffold cobra command using the provided runner.
+func newScaffoldCmd(runner scaffold.Runner) *cobra.Command {
+	var purpose string
+	cmd := &cobra.Command{
+		Use:   "scaffold <package-name>",
+		Short: "Generate boilerplate for a new Go package following hexagonal arch",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = scaffold.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierFast).Run(ctx, prompt, ts)
+				})
+			}
+
+			repoCtx := devlog.GatherRepoContext()
+
+			logMeta := map[string]string{"name": args[0]}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("scaffold", logMeta)
+			start := time.Now()
+
+			result, err := scaffold.Run(cmd.Context(), scaffold.Config{
+				Name:        args[0],
+				Purpose:     purpose,
+				RepoContext: repoCtx,
+				Runner:      r,
+			})
+			if err != nil {
+				return fmt.Errorf("scaffold: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "scaffold", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "scaffold", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&purpose, "purpose", "", "One-sentence description of the package purpose")
+	return cmd
+}
+
+// newLogPatternCmd returns the log-pattern cobra command using the provided runner.
+func newLogPatternCmd(runner logpattern.Runner) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "log-pattern [file]",
+		Short: "Find recurring error patterns across a log file",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = logpattern.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierFast).Run(ctx, prompt, ts)
+				})
+			}
+
+			var logs string
+			if len(args) == 1 {
+				content, err := os.ReadFile(args[0])
+				if err != nil {
+					return fmt.Errorf("log-pattern: cannot read %s: %w", args[0], err)
+				}
+				logs = string(content)
+			} else {
+				raw, readErr := io.ReadAll(os.Stdin)
+				if readErr != nil && readErr != io.EOF {
+					return fmt.Errorf("log-pattern: error reading stdin: %w", readErr)
+				}
+				logs = string(raw)
+			}
+
+			logMeta := map[string]string{}
+			if len(args) == 1 {
+				logMeta["file"] = args[0]
+			}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("log-pattern", logMeta)
+			start := time.Now()
+
+			result, err := logpattern.Run(cmd.Context(), logpattern.Config{
+				Logs:   logs,
+				Runner: r,
+			})
+			if err != nil {
+				return fmt.Errorf("log-pattern: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "log-pattern", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "log-pattern", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	return cmd
+}
+
+// newIncidentCmd returns the incident cobra command using the provided runner.
+func newIncidentCmd(runner incident.Runner) *cobra.Command {
+	var description, logsFile string
+	cmd := &cobra.Command{
+		Use:   "incident",
+		Short: "Generate a structured incident report from a description",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = incident.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
+				})
+			}
+
+			var logs string
+			if logsFile != "" {
+				content, err := os.ReadFile(logsFile)
+				if err != nil {
+					return fmt.Errorf("incident: cannot read %s: %w", logsFile, err)
+				}
+				logs = string(content)
+			}
+
+			logMeta := map[string]string{"logs": logsFile}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("incident", logMeta)
+			start := time.Now()
+
+			result, err := incident.Run(cmd.Context(), incident.Config{
+				Description: description,
+				Logs:        logs,
+				Runner:      r,
+			})
+			if err != nil {
+				return fmt.Errorf("incident: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "incident", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "incident", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&description, "description", "", "Incident description (required)")
+	cmd.Flags().StringVar(&logsFile, "logs", "", "Optional log file to include")
+	return cmd
+}
+
+// newProfileCmd returns the profile cobra command using the provided runner.
+func newProfileCmd(runner profile.Runner) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "profile [file]",
+		Short: "Analyze pprof or benchmark output with LLM commentary",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runner
+			if r == nil {
+				cfg, err := LoadConfig()
+				if err != nil {
+					return err
+				}
+				if cfg.Project.Name != "" {
+					os.Setenv("DEVKIT_PROJECT", cfg.Project.Name)
+				}
+				router, err := newRouterFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				r = profile.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
+					return router.For(providers.TierBalanced).Run(ctx, prompt, ts)
+				})
+			}
+
+			var input string
+			if len(args) == 1 {
+				content, err := os.ReadFile(args[0])
+				if err != nil {
+					return fmt.Errorf("profile: cannot read %s: %w", args[0], err)
+				}
+				input = string(content)
+			} else {
+				raw, readErr := io.ReadAll(os.Stdin)
+				if readErr != nil && readErr != io.EOF {
+					return fmt.Errorf("profile: error reading stdin: %w", readErr)
+				}
+				input = string(raw)
+			}
+
+			logMeta := map[string]string{}
+			if len(args) == 1 {
+				logMeta["file"] = args[0]
+			}
+			sha := devlog.GitShortSHA()
+			id := devlog.Start("profile", logMeta)
+			start := time.Now()
+
+			result, err := profile.Run(cmd.Context(), profile.Config{
+				Input:  input,
+				Runner: r,
+			})
+			if err != nil {
+				return fmt.Errorf("profile: %w", err)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), result)
+			devlog.Complete(id, "profile", logMeta, result, time.Since(start))
+			path, _ := devlog.SaveCommitLog(sha, "profile", result, logMeta)
+			fmt.Printf("\nLogged to: %s\n", path)
+			return nil
+		},
+	}
 	return cmd
 }
 

@@ -494,6 +494,13 @@ func main() {
 		newExplainCmd(nil),
 		newTestgenCmd(nil),
 		newTicketCmd(nil),
+		newAdrCmd(nil),
+		newDocgenCmd(nil),
+		newMigrateCmd(nil),
+		newScaffoldCmd(nil),
+		newLogPatternCmd(nil),
+		newIncidentCmd(nil),
+		newProfileCmd(nil),
 	)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
