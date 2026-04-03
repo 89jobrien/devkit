@@ -14,7 +14,7 @@ import (
 )
 
 // newTestgenCmd returns the test-gen cobra command using the provided runner.
-func newTestgenCmd(runner testgen.Runner) *cobra.Command {
+func newTestgenCmd(runner testgen.Runner, resolver devgit.RangeResolver) *cobra.Command {
 	var base string
 	cmd := &cobra.Command{
 		Use:   "test-gen [file]",
@@ -62,7 +62,10 @@ func newTestgenCmd(runner testgen.Runner) *cobra.Command {
 				if err := validateRef(resolvedBase); err != nil {
 					return fmt.Errorf("test-gen: %w", err)
 				}
-				rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+				if resolver == nil {
+					resolver = devgit.ExecRangeResolver{}
+				}
+				rangeResult, err := resolver.ResolveRange(resolvedBase)
 				if err != nil {
 					return fmt.Errorf("test-gen: resolve git range: %w", err)
 				}

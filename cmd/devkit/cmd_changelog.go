@@ -13,7 +13,7 @@ import (
 
 // newChangelogCmd returns the changelog cobra command using the provided runner.
 // Pass nil to have the command build its own runner from config (production path).
-func newChangelogCmd(runner changelog.Runner) *cobra.Command {
+func newChangelogCmd(runner changelog.Runner, resolver devgit.RangeResolver) *cobra.Command {
 	var base, format string
 	cmd := &cobra.Command{
 		Use:   "changelog",
@@ -32,7 +32,10 @@ func newChangelogCmd(runner changelog.Runner) *cobra.Command {
 			if resolvedBase == "" {
 				resolvedBase = resolveChangelogBase()
 			}
-			rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+			if resolver == nil {
+				resolver = devgit.ExecRangeResolver{}
+			}
+			rangeResult, err := resolver.ResolveRange(resolvedBase)
 			if err != nil {
 				return fmt.Errorf("changelog: resolve git range: %w", err)
 			}

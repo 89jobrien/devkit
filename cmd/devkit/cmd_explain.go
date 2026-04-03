@@ -14,7 +14,7 @@ import (
 )
 
 // newExplainCmd returns the explain cobra command using the provided runner.
-func newExplainCmd(runner explain.Runner) *cobra.Command {
+func newExplainCmd(runner explain.Runner, resolver devgit.RangeResolver) *cobra.Command {
 	var base, symbol string
 	cmd := &cobra.Command{
 		Use:   "explain [file]",
@@ -63,7 +63,10 @@ func newExplainCmd(runner explain.Runner) *cobra.Command {
 				if err := validateRef(resolvedBase); err != nil {
 					return fmt.Errorf("explain: %w", err)
 				}
-				rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+				if resolver == nil {
+					resolver = devgit.ExecRangeResolver{}
+				}
+				rangeResult, err := resolver.ResolveRange(resolvedBase)
 				if err != nil {
 					return fmt.Errorf("explain: resolve git range: %w", err)
 				}

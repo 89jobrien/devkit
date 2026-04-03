@@ -497,11 +497,11 @@ func main() {
 	standupCmd.Flags().BoolVar(&standupParallel, "parallel", false, "Summarize repos in parallel then synthesize")
 
 	root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd, standupCmd,
-		newPrCmd(nil),
-		newChangelogCmd(nil),
+		newPrCmd(nil, resolver),
+		newChangelogCmd(nil, resolver),
 		newLintCmd(nil),
-		newExplainCmd(nil),
-		newTestgenCmd(nil),
+		newExplainCmd(nil, resolver),
+		newTestgenCmd(nil, resolver),
 		newTicketCmd(nil),
 		newAdrCmd(nil),
 		newDocgenCmd(nil),

@@ -15,7 +15,7 @@ import (
 )
 
 // newPrCmd returns the pr cobra command using the provided runner.
-func newPrCmd(runner pr.Runner) *cobra.Command {
+func newPrCmd(runner pr.Runner, resolver devgit.RangeResolver) *cobra.Command {
 	var base string
 	cmd := &cobra.Command{
 		Use:   "pr",
@@ -49,7 +49,10 @@ func newPrCmd(runner pr.Runner) *cobra.Command {
 			}
 			fmt.Fprintf(os.Stderr, "devkit: generating PR description from base %q\n", resolvedBase)
 
-			rangeResult, err := devgit.ExecRangeResolver{}.ResolveRange(resolvedBase)
+			if resolver == nil {
+				resolver = devgit.ExecRangeResolver{}
+			}
+			rangeResult, err := resolver.ResolveRange(resolvedBase)
 			if err != nil {
 				return fmt.Errorf("pr: resolve git range: %w", err)
 			}

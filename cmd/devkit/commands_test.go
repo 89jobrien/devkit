@@ -113,14 +113,14 @@ func TestExplainCmd_FileMode(t *testing.T) {
 	require.NoError(t, os.WriteFile(f, []byte("package foo\n\nfunc Add(a, b int) int { return a + b }\n"), 0o644))
 
 	r := explain.RunnerFunc(stubRunner(t))
-	cmd := newExplainCmd(r)
+	cmd := newExplainCmd(r, nil)
 	_, err := runCmd(t, cmd, "explain", f)
 	require.NoError(t, err)
 }
 
 func TestExplainCmd_FileMissing_Error(t *testing.T) {
 	r := explain.RunnerFunc(stubRunner(t))
-	cmd := newExplainCmd(r)
+	cmd := newExplainCmd(r, nil)
 	_, err := runCmd(t, cmd, "explain", "/nonexistent/file.go")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot read")
@@ -128,7 +128,7 @@ func TestExplainCmd_FileMissing_Error(t *testing.T) {
 
 func TestExplainCmd_DiffMode_InvalidRef_Error(t *testing.T) {
 	r := explain.RunnerFunc(stubRunner(t))
-	cmd := newExplainCmd(r)
+	cmd := newExplainCmd(r, nil)
 	// Run in a temp dir with no git repo so validateRef always fails.
 	orig, _ := os.Getwd()
 	require.NoError(t, os.Chdir(t.TempDir()))
@@ -147,14 +147,14 @@ func TestTestgenCmd_FileMode(t *testing.T) {
 	require.NoError(t, os.WriteFile(f, []byte("package calc\n\nfunc Mul(a, b int) int { return a * b }\n"), 0o644))
 
 	r := testgen.RunnerFunc(stubRunner(t))
-	cmd := newTestgenCmd(r)
+	cmd := newTestgenCmd(r, nil)
 	_, err := runCmd(t, cmd, "test-gen", f)
 	require.NoError(t, err)
 }
 
 func TestTestgenCmd_FileMissing_Error(t *testing.T) {
 	r := testgen.RunnerFunc(stubRunner(t))
-	cmd := newTestgenCmd(r)
+	cmd := newTestgenCmd(r, nil)
 	_, err := runCmd(t, cmd, "test-gen", "/nonexistent/calc.go")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot read")
@@ -162,7 +162,7 @@ func TestTestgenCmd_FileMissing_Error(t *testing.T) {
 
 func TestTestgenCmd_DiffMode_InvalidRef_Error(t *testing.T) {
 	r := testgen.RunnerFunc(stubRunner(t))
-	cmd := newTestgenCmd(r)
+	cmd := newTestgenCmd(r, nil)
 	orig, _ := os.Getwd()
 	require.NoError(t, os.Chdir(t.TempDir()))
 	defer os.Chdir(orig)
@@ -177,7 +177,7 @@ func TestTestgenCmd_DiffMode_InvalidRef_Error(t *testing.T) {
 func TestChangelogCmd_WithBase(t *testing.T) {
 	// Use HEAD as the base — always resolvable in the devkit repo.
 	r := changelog.RunnerFunc(stubRunner(t))
-	cmd := newChangelogCmd(r)
+	cmd := newChangelogCmd(r, nil)
 	_, err := runCmd(t, cmd, "changelog", "--base", "HEAD")
 	require.NoError(t, err)
 }
@@ -188,7 +188,7 @@ func TestChangelogCmd_InvalidBase_Fallback(t *testing.T) {
 	r := changelog.RunnerFunc(func(ctx context.Context, prompt string, tools []string) (string, error) {
 		return "", errors.New("runner error")
 	})
-	cmd := newChangelogCmd(r)
+	cmd := newChangelogCmd(r, nil)
 	_, err := runCmd(t, cmd, "changelog", "--base", "HEAD")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "runner error")
@@ -226,7 +226,7 @@ func TestLintCmd_NoArgs_Error(t *testing.T) {
 
 func TestPrCmd_InvalidBase_Error(t *testing.T) {
 	r := pr.RunnerFunc(stubRunner(t))
-	cmd := newPrCmd(r)
+	cmd := newPrCmd(r, nil)
 	orig, _ := os.Getwd()
 	require.NoError(t, os.Chdir(t.TempDir()))
 	defer os.Chdir(orig)
@@ -238,7 +238,7 @@ func TestPrCmd_InvalidBase_Error(t *testing.T) {
 
 func TestPrCmd_ValidBase(t *testing.T) {
 	r := pr.RunnerFunc(stubRunner(t))
-	cmd := newPrCmd(r)
+	cmd := newPrCmd(r, nil)
 	// HEAD is always a valid ref in our repo.
 	_, err := runCmd(t, cmd, "pr", "--base", "HEAD")
 	require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestPrCmd_RunnerError(t *testing.T) {
 	r := pr.RunnerFunc(func(ctx context.Context, prompt string, tools []string) (string, error) {
 		return "", errors.New("model timeout")
 	})
-	cmd := newPrCmd(r)
+	cmd := newPrCmd(r, nil)
 	_, err := runCmd(t, cmd, "pr", "--base", "HEAD")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "model timeout")
@@ -259,11 +259,11 @@ func TestPrCmd_RunnerError(t *testing.T) {
 func TestAllNewCommandsRegistered(t *testing.T) {
 	root := &cobra.Command{Use: "devkit"}
 	root.AddCommand(
-		newPrCmd(nil),
-		newChangelogCmd(nil),
+		newPrCmd(nil, nil),
+		newChangelogCmd(nil, nil),
 		newLintCmd(nil),
-		newExplainCmd(nil),
-		newTestgenCmd(nil),
+		newExplainCmd(nil, nil),
+		newTestgenCmd(nil, nil),
 		newTicketCmd(nil),
 	)
 	names := map[string]bool{}

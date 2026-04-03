@@ -181,11 +181,11 @@ func TestAutomateCmd_UnknownTaskInOutput(t *testing.T) {
 func TestAllCommandsRegistered(t *testing.T) {
 	root := &cobra.Command{Use: "devkit"}
 	root.AddCommand(
-		newPrCmd(nil),
-		newChangelogCmd(nil),
+		newPrCmd(nil, nil),
+		newChangelogCmd(nil, nil),
 		newLintCmd(nil),
-		newExplainCmd(nil),
-		newTestgenCmd(nil),
+		newExplainCmd(nil, nil),
+		newTestgenCmd(nil, nil),
 		newTicketCmd(nil),
 		newCITriageCmd(nil),
 		newRepoReviewCmd(nil),
