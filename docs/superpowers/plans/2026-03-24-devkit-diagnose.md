@@ -32,7 +32,7 @@
 - Modify: `internal/tools/tools.go`
 - Modify: `internal/tools/tools_test.go`
 
-- [ ] **Step 1.1: Write failing tests for BashTool**
+- [x] **Step 1.1: Write failing tests for BashTool**
 
 Add to `internal/tools/tools_test.go`:
 
@@ -71,7 +71,7 @@ func TestBashToolNonZeroExit(t *testing.T) {
 }
 ```
 
-- [ ] **Step 1.2: Verify tests fail**
+- [x] **Step 1.2: Verify tests fail**
 
 ```bash
 cd ~/dev/devkit && go test ./internal/tools/ -run TestBashTool -v
@@ -79,7 +79,7 @@ cd ~/dev/devkit && go test ./internal/tools/ -run TestBashTool -v
 
 Expected: `FAIL` — `BashTool` undefined.
 
-- [ ] **Step 1.3: Implement BashTool**
+- [x] **Step 1.3: Implement BashTool**
 
 Add to `internal/tools/tools.go` after `GrepTool`:
 
@@ -138,7 +138,7 @@ Add missing imports to `tools.go`:
 - `"bytes"`
 - `"os/exec"`
 
-- [ ] **Step 1.4: Verify tests pass**
+- [x] **Step 1.4: Verify tests pass**
 
 ```bash
 cd ~/dev/devkit && go test ./internal/tools/ -v
@@ -146,7 +146,7 @@ cd ~/dev/devkit && go test ./internal/tools/ -v
 
 Expected: all tests PASS including the four new BashTool tests.
 
-- [ ] **Step 1.5: Verify build is clean**
+- [x] **Step 1.5: Verify build is clean**
 
 ```bash
 cd ~/dev/devkit && go build ./...
@@ -170,7 +170,7 @@ git commit -m "feat(tools): add BashTool with output cap and stderr capture"
 - Create: `internal/diagnose/diagnose.go`
 - Create: `internal/diagnose/diagnose_test.go`
 
-- [ ] **Step 2.1: Write failing tests**
+- [x] **Step 2.1: Write failing tests**
 
 Create `internal/diagnose/diagnose_test.go`:
 
@@ -260,7 +260,7 @@ func TestRunNoServiceSkipsTargetedGrep(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2.2: Verify tests fail**
+- [x] **Step 2.2: Verify tests fail**
 
 ```bash
 cd ~/dev/devkit && go test ./internal/diagnose/ -v 2>&1 | head -20
@@ -268,7 +268,7 @@ cd ~/dev/devkit && go test ./internal/diagnose/ -v 2>&1 | head -20
 
 Expected: `FAIL` — package not found.
 
-- [ ] **Step 2.3: Implement diagnose package**
+- [x] **Step 2.3: Implement diagnose package**
 
 Create `internal/diagnose/diagnose.go` with exactly this content:
 
@@ -358,7 +358,7 @@ Report exactly these sections:
 }
 ```
 
-- [ ] **Step 2.4: Verify tests pass**
+- [x] **Step 2.4: Verify tests pass**
 
 ```bash
 cd ~/dev/devkit && go test ./internal/diagnose/ -v
@@ -385,7 +385,7 @@ git commit -m "feat(diagnose): add internal/diagnose package with Runner port an
 
 ### Task 3a: Config
 
-- [ ] **Step 3a.1: Add Diagnose section to Config struct**
+- [x] **Step 3a.1: Add Diagnose section to Config struct**
 
 In `cmd/devkit/config.go`, add to the `Config` struct after the `Components` block:
 
@@ -408,7 +408,7 @@ Components struct {
 } `toml:"components"`
 ```
 
-- [ ] **Step 3a.2: Verify build**
+- [x] **Step 3a.2: Verify build**
 
 ```bash
 cd ~/dev/devkit && go build ./cmd/devkit/
@@ -418,7 +418,7 @@ Expected: no output (success).
 
 ### Task 3b: agentRunner adds BashTool
 
-- [ ] **Step 3b.1: Add BashTool to agentRunner.Run**
+- [x] **Step 3b.1: Add BashTool to agentRunner.Run**
 
 In `cmd/devkit/runner.go`, in the `Run` method, update `allTools` and add a comment documenting the name-resolution assumption:
 
@@ -437,7 +437,7 @@ allTools := []tools.Tool{
 
 BashTool is only activated when requested by name — existing commands (council, review, meta) don't request "Bash", so their behavior is unchanged.
 
-- [ ] **Step 3b.2: Verify build**
+- [x] **Step 3b.2: Verify build**
 
 ```bash
 cd ~/dev/devkit && go build ./cmd/devkit/
@@ -447,7 +447,7 @@ Expected: no output (success).
 
 ### Task 3c: diagnose subcommand
 
-- [ ] **Step 3c.1: Add diagnose subcommand to main.go**
+- [x] **Step 3c.1: Add diagnose subcommand to main.go**
 
 In `cmd/devkit/main.go`, add imports at the top:
 
@@ -515,7 +515,7 @@ Update the `root.AddCommand` line:
 root.AddCommand(councilCmd, reviewCmd, metaCmd, diagnoseCmd)
 ```
 
-- [ ] **Step 3c.2: Verify build**
+- [x] **Step 3c.2: Verify build**
 
 ```bash
 cd ~/dev/devkit && go build ./cmd/devkit/ && ./devkit diagnose --help
@@ -535,7 +535,7 @@ Flags:
       --service string   Service/component to focus on
 ```
 
-- [ ] **Step 3c.3: Run full test suite**
+- [x] **Step 3c.3: Run full test suite**
 
 ```bash
 cd ~/dev/devkit && go test ./...
@@ -543,7 +543,7 @@ cd ~/dev/devkit && go test ./...
 
 Expected: all tests PASS (count should increase from 21 to 33 with 4 new BashTool tests + 8 new diagnose tests).
 
-- [ ] **Step 3c.4: Build both binaries**
+- [x] **Step 3c.4: Build both binaries**
 
 ```bash
 cd ~/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
@@ -567,7 +567,7 @@ cd ~/dev/devkit && git add cmd/devkit/ && git commit -m "feat: add devkit diagno
 
 `install.sh` uses a two-pass component system: a `gum choose` selection, a `case` block (in a subshell), and a `grep` re-derivation (because the subshell doesn't propagate variables). All four locations must be updated together, plus the TOML heredoc.
 
-- [ ] **Step 4.1: Add `diagnose` to the `gum choose` line (line 26)**
+- [x] **Step 4.1: Add `diagnose` to the `gum choose` line (line 26)**
 
 Change:
 
@@ -581,7 +581,7 @@ To:
 components="$(gum choose --no-limit --selected council,review,meta,ci_agent,diagnose council review meta ci_agent diagnose)"
 ```
 
-- [ ] **Step 4.2: Add `has_diagnose=false` to the boolean init block (after line 35)**
+- [x] **Step 4.2: Add `has_diagnose=false` to the boolean init block (after line 35)**
 
 After `has_ci_agent=false`, add:
 
@@ -589,7 +589,7 @@ After `has_ci_agent=false`, add:
 has_diagnose=false
 ```
 
-- [ ] **Step 4.3: Add `diagnose` arm to the `case` block (lines 37–42)**
+- [x] **Step 4.3: Add `diagnose` arm to the `case` block (lines 37–42)**
 
 Add before the `esac`:
 
@@ -597,7 +597,7 @@ Add before the `esac`:
     diagnose)  has_diagnose=true ;;
 ```
 
-- [ ] **Step 4.4: Add grep re-derivation for diagnose (after line 49)**
+- [x] **Step 4.4: Add grep re-derivation for diagnose (after line 49)**
 
 After the `has_ci_agent` grep line, add:
 
@@ -605,7 +605,7 @@ After the `has_ci_agent` grep line, add:
 if echo "$components" | grep -q "diagnose"; then has_diagnose=true; fi
 ```
 
-- [ ] **Step 4.5: Add `diagnose` to the TOML `[components]` block and add `[diagnose]` section**
+- [x] **Step 4.5: Add `diagnose` to the TOML `[components]` block and add `[diagnose]` section**
 
 In the `cat > .devkit.toml` heredoc, update `[components]`:
 
@@ -626,7 +626,7 @@ Add after the `[council]` block:
 # service = ""                                 # focus on a specific service
 ```
 
-- [ ] **Step 4.6: Verify install.sh is valid bash**
+- [x] **Step 4.6: Verify install.sh is valid bash**
 
 ```bash
 bash -n ~/dev/devkit/install.sh
@@ -648,7 +648,7 @@ cd ~/dev/devkit && git add install.sh && git commit -m "feat(install): add diagn
 
 - Modify: `CLAUDE.md`
 
-- [ ] **Step 5.1: Add diagnose to CLAUDE.md development section**
+- [x] **Step 5.1: Add diagnose to CLAUDE.md development section**
 
 In `CLAUDE.md`, under the Development section (after the existing go test/build lines), add:
 
