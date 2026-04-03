@@ -39,7 +39,7 @@
 
 - Create: `internal/providers/provider.go`
 
-- [ ] **Step 1: Write the failing test (interfaces compile check)**
+- [x] **Step 1: Write the failing test (interfaces compile check)**
 
 Create `internal/providers/provider_test.go`:
 
@@ -71,7 +71,7 @@ func TestInterfacesCompile(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
@@ -79,7 +79,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/...
 
 Expected: `no Go files in .../internal/providers` or compile error.
 
-- [ ] **Step 3: Implement `provider.go`**
+- [x] **Step 3: Implement `provider.go`**
 
 ```go
 // internal/providers/provider.go
@@ -113,7 +113,7 @@ const (
 )
 ```
 
-- [ ] **Step 4: Run test to confirm it passes**
+- [x] **Step 4: Run test to confirm it passes**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
@@ -135,7 +135,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 
 - Create: `internal/providers/models.go`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Add to `internal/providers/provider_test.go`:
 
@@ -157,7 +157,7 @@ func TestModelConstants(t *testing.T) {
 
 Add import `"github.com/stretchr/testify/assert"` to the test file.
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
@@ -165,7 +165,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/...
 
 Expected: compile error — `ModelAnthropicFast` undefined.
 
-- [ ] **Step 3: Implement `models.go`**
+- [x] **Step 3: Implement `models.go`**
 
 ```go
 // internal/providers/models.go
@@ -194,7 +194,7 @@ const (
 )
 ```
 
-- [ ] **Step 4: Run test to confirm it passes**
+- [x] **Step 4: Run test to confirm it passes**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/...
@@ -217,7 +217,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 - Create: `internal/providers/anthropic.go`
 - Create: `internal/providers/anthropic_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `internal/providers/anthropic_test.go`:
 
@@ -286,7 +286,7 @@ func TestAnthropicRunAgent_EndTurn(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestAnthropic
@@ -294,7 +294,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestAnthropic
 
 Expected: compile error — `NewAnthropicProvider` undefined.
 
-- [ ] **Step 3: Implement `anthropic.go`**
+- [x] **Step 3: Implement `anthropic.go`**
 
 ```go
 // internal/providers/anthropic.go
@@ -396,7 +396,7 @@ func (p *AnthropicProvider) RunAgent(ctx context.Context, prompt string, ts []to
 }
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestAnthropic -v
@@ -419,7 +419,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 - Create: `internal/providers/openai.go`
 - Create: `internal/providers/openai_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `internal/providers/openai_test.go`:
 
@@ -505,7 +505,7 @@ func TestOpenAIRunAgent_ToolCall(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestOpenAI
@@ -513,7 +513,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestOpenAI
 
 Expected: compile error — `NewOpenAIProvider` undefined.
 
-- [ ] **Step 3: Implement `openai.go`**
+- [x] **Step 3: Implement `openai.go`**
 
 ```go
 // internal/providers/openai.go
@@ -715,7 +715,7 @@ func (p *OpenAIProvider) RunAgent(ctx context.Context, prompt string, ts []tools
 }
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestOpenAI -v
@@ -738,7 +738,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 - Create: `internal/providers/gemini.go`
 - Create: `internal/providers/gemini_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `internal/providers/gemini_test.go`:
 
@@ -782,7 +782,7 @@ func TestGeminiSatisfiesChatProvider(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestGemini
@@ -790,7 +790,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestGemini
 
 Expected: compile error — `NewGeminiProvider` undefined.
 
-- [ ] **Step 3: Implement `gemini.go`**
+- [x] **Step 3: Implement `gemini.go`**
 
 ```go
 // internal/providers/gemini.go
@@ -879,7 +879,7 @@ func (p *GeminiProvider) Chat(ctx context.Context, prompt string) (string, error
 }
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestGemini -v
@@ -902,7 +902,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 - Create: `internal/providers/router.go`
 - Create: `internal/providers/router_test.go`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/providers/router_test.go`:
 
@@ -955,7 +955,7 @@ func TestRouterConfigOverride(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter
@@ -963,7 +963,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter
 
 Expected: compile error — `NewRouter` undefined.
 
-- [ ] **Step 3: Implement `router.go`**
+- [x] **Step 3: Implement `router.go`**
 
 ```go
 // internal/providers/router.go
@@ -1170,7 +1170,7 @@ func joinErrs(errs []string) string {
 }
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter -v
@@ -1178,7 +1178,7 @@ cd /Users/joe/dev/devkit && go test ./internal/providers/... -run TestRouter -v
 
 Expected: PASS all four router tests.
 
-- [ ] **Step 5: Run all provider tests**
+- [x] **Step 5: Run all provider tests**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/providers/... -v
@@ -1201,7 +1201,7 @@ cd /Users/joe/dev/devkit && git add internal/providers/ && git commit -m "feat(p
 - Modify: `internal/loop/loop.go`
 - Modify: `internal/loop/loop_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `internal/loop/loop_test.go`:
 
@@ -1239,7 +1239,7 @@ func TestRunAgentLoop_UsesProvider(t *testing.T) {
 var _ providers.AgentProvider = stubAgentProvider{}
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/loop/... -run TestRunAgentLoop
@@ -1247,7 +1247,7 @@ cd /Users/joe/dev/devkit && go test ./internal/loop/... -run TestRunAgentLoop
 
 Expected: compile error — `loop.RunAgentLoop` undefined.
 
-- [ ] **Step 3: Add `RunAgentLoop` to `loop.go`**
+- [x] **Step 3: Add `RunAgentLoop` to `loop.go`**
 
 Add at the end of `internal/loop/loop.go` (keep existing `RunAgent` intact):
 
@@ -1267,7 +1267,7 @@ Also add the import for `tools` if not already present:
 "github.com/89jobrien/devkit/internal/tools"
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./internal/loop/... -v
@@ -1289,7 +1289,7 @@ cd /Users/joe/dev/devkit && git add internal/loop/ && git commit -m "feat(loop):
 
 - Modify: `cmd/devkit/config.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `cmd/devkit/` a new file `config_test.go`:
 
@@ -1326,7 +1326,7 @@ fast_model = "gemini-3-flash-preview"
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestLoadConfigProviderOverrides
@@ -1334,7 +1334,7 @@ cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestLoadConfigProvider
 
 Expected: compile error — `cfg.Providers` undefined.
 
-- [ ] **Step 3: Add `Providers` section to `Config`**
+- [x] **Step 3: Add `Providers` section to `Config`**
 
 In `cmd/devkit/config.go`, add after the `Diagnose` struct field:
 
@@ -1348,7 +1348,7 @@ In `cmd/devkit/config.go`, add after the `Diagnose` struct field:
 	} `toml:"providers"`
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestLoadConfigProviderOverrides -v
@@ -1370,7 +1370,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/config.go cmd/devkit/config_test.
 
 - Replace: `cmd/devkit/runner.go`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `cmd/devkit/` a new file `runner_test.go`:
 
@@ -1403,7 +1403,7 @@ func TestNewRouterFromConfig_WithOverrides(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to confirm it fails**
+- [x] **Step 2: Run to confirm it fails**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestNewRouter
@@ -1411,7 +1411,7 @@ cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestNewRouter
 
 Expected: compile error — `newRouterFromConfig` undefined.
 
-- [ ] **Step 3: Rewrite `cmd/devkit/runner.go`**
+- [x] **Step 3: Rewrite `cmd/devkit/runner.go`**
 
 Replace the entire file:
 
@@ -1445,7 +1445,7 @@ func newRouterFromConfig(cfg *Config) (*providers.Router, error) {
 
 Note: The old `agentRunner`, `openAIRunner`, and `bearerTransport` types are removed. `main.go` will be updated in the next task to use `newRouterFromConfig`.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./cmd/devkit/... -run TestNewRouter -v
@@ -1469,7 +1469,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/runner.go cmd/devkit/runner_test.
 
 This task replaces all `newAgentRunner()` and `newOpenAIRunner()` call sites with `router.AgentRunnerFor(providers.TierCoding, ...)` or `router.For(tier)`, and maps council roles to tiers.
 
-- [ ] **Step 1: Update `councilCmd` in `main.go`**
+- [x] **Step 1: Update `councilCmd` in `main.go`**
 
 Replace the council runner wiring (lines ~138-158 in the original) with:
 
@@ -1511,7 +1511,7 @@ councilCfg := council.Config{
 
 Also add `"github.com/89jobrien/devkit/internal/providers"` to imports.
 
-- [ ] **Step 2: Update `reviewCmd` in `main.go`**
+- [x] **Step 2: Update `reviewCmd` in `main.go`**
 
 Replace `runner := newAgentRunner()` with:
 
@@ -1542,7 +1542,7 @@ Runner: review.RunnerFunc(func(ctx context.Context, prompt string, ts []string) 
 
 Add `"github.com/89jobrien/devkit/internal/tools"` to imports if not present.
 
-- [ ] **Step 3: Update `metaCmd` in `main.go`**
+- [x] **Step 3: Update `metaCmd` in `main.go`**
 
 Replace `runner := newAgentRunner()` with:
 
@@ -1572,7 +1572,7 @@ meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, e
 }),
 ```
 
-- [ ] **Step 4: Update `diagnoseCmd` in `main.go`**
+- [x] **Step 4: Update `diagnoseCmd` in `main.go`**
 
 Replace `runner := newAgentRunner()` and its `confirmFn` setup with:
 
@@ -1616,7 +1616,7 @@ Runner: diagnose.RunnerFunc(func(ctx context.Context, prompt string, ts []string
 }),
 ```
 
-- [ ] **Step 5: Build to verify compilation**
+- [x] **Step 5: Build to verify compilation**
 
 ```bash
 cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
@@ -1624,7 +1624,7 @@ cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
 
 Expected: no errors.
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./...
@@ -1642,7 +1642,7 @@ cd /Users/joe/dev/devkit && git add cmd/devkit/main.go && git commit -m "feat(ma
 
 ## Task 11: Final verification and cleanup
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 ```bash
 cd /Users/joe/dev/devkit && go test ./... -v 2>&1 | tail -30
@@ -1650,7 +1650,7 @@ cd /Users/joe/dev/devkit && go test ./... -v 2>&1 | tail -30
 
 Expected: all tests PASS, no failures.
 
-- [ ] **Step 2: Run go vet**
+- [x] **Step 2: Run go vet**
 
 ```bash
 cd /Users/joe/dev/devkit && go vet ./...
@@ -1658,7 +1658,7 @@ cd /Users/joe/dev/devkit && go vet ./...
 
 Expected: no output (no issues).
 
-- [ ] **Step 3: Build both binaries**
+- [x] **Step 3: Build both binaries**
 
 ```bash
 cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
@@ -1666,7 +1666,7 @@ cd /Users/joe/dev/devkit && go build ./cmd/devkit ./cmd/ci-agent
 
 Expected: success.
 
-- [ ] **Step 4: Verify `internal/loop/loop.go` still exports `RunAgent` (no regressions)**
+- [x] **Step 4: Verify `internal/loop/loop.go` still exports `RunAgent` (no regressions)**
 
 ```bash
 cd /Users/joe/dev/devkit && grep -n "^func RunAgent" internal/loop/loop.go

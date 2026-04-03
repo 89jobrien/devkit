@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/89jobrien/devkit/internal/infra/tools"
+	"github.com/stretchr/testify/assert"
 )
 
 // Compile-time checks: stub types must satisfy the interfaces.
@@ -27,7 +26,6 @@ func TestInterfacesCompile(t *testing.T) {
 }
 
 func TestModelConstants(t *testing.T) {
-	// Verify non-empty strings only — exact values checked by inspection.
 	assert.NotEmpty(t, providers.ModelAnthropicFast)
 	assert.NotEmpty(t, providers.ModelAnthropicBalanced)
 	assert.NotEmpty(t, providers.ModelAnthropicLargeContext)
