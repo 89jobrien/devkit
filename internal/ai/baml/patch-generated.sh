@@ -52,14 +52,21 @@ for path in all_go:
         write(path, patched)
 
 # --- Stub files: blank all unused imports ---
+# types/enums.go is only a stub when it has no func definitions (empty enum list).
+# When enums are defined, the imports are actually used.
 stub_files = [
-    "types/enums.go",
     "types/type_aliases.go",
     "types/unions.go",
     "stream_types/type_aliases.go",
     "stream_types/unions.go",
     "stream_types/utils.go",
 ]
+enums_path = os.path.join(BASE, "types/enums.go")
+enums_content = read(enums_path)
+if "\nfunc " not in enums_content:
+    # Stub: no functions defined, blank unused imports
+    stub_files.append("types/enums.go")
+
 for rel in stub_files:
     path = os.path.join(BASE, rel)
     c = read(path)
@@ -78,21 +85,25 @@ path = os.path.join(BASE, "types/classes.go")
 c = blank_import(read(path), "encoding/json")
 write(path, c)
 
-# --- stream_types/classes.go: json and types not used ---
+# --- stream_types/classes.go: json not used; types only blanked if not referenced ---
 path = os.path.join(BASE, "stream_types/classes.go")
 c = read(path)
 c = blank_import(c, "encoding/json")
-c = blank_import(c, "baml_devkit/types")
+# Only blank types import if file does not reference the types package via `types.`
+if "types." not in c:
+    c = blank_import(c, "baml_devkit/types")
 write(path, c)
 
-# --- type_builder/enums.go has a single-line import (no parens) ---
+# --- type_builder/enums.go: only blank baml import if file doesn't use it ---
 path = os.path.join(BASE, "type_builder/enums.go")
 c = read(path)
-c = re.sub(
-    r'import \w+ "github\.com/boundaryml/baml/engine/language_client_go/pkg"',
-    'import _ "github.com/boundaryml/baml/engine/language_client_go/pkg"',
-    c,
-)
+# If the file references baml. directly (enum builders etc), keep the import real.
+if "baml." not in c:
+    c = re.sub(
+        r'import \w+ "github\.com/boundaryml/baml/engine/language_client_go/pkg"',
+        'import _ "github.com/boundaryml/baml/engine/language_client_go/pkg"',
+        c,
+    )
 write(path, c)
 
 # --- type_builder/type_builder.go: missing fmt ---

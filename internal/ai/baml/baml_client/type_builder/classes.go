@@ -208,6 +208,46 @@ func (t *DocgenOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type FailingJobClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *FailingJobClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *FailingJobClassView) PropertyName() (ClassPropertyView, error) {
+    return t.inner.Property("name")
+}
+
+func (t *FailingJobClassView) PropertyLog() (ClassPropertyView, error) {
+    return t.inner.Property("log")
+}
+
+
+func (t *TypeBuilder) FailingJob() (*FailingJobClassView, error) {
+	bld, err := t.inner.Class("FailingJob")
+	if err != nil {
+		return nil, err
+	}
+	return &FailingJobClassView{inner: bld}, nil
+}
+
+func (t *FailingJobClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type FindingSeverityClassView struct {
     inner baml.ClassBuilder
 }
@@ -776,6 +816,54 @@ func (t *ProfileOutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type ReproductionStepsClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *ReproductionStepsClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ReproductionStepsClassView) PropertySteps() (ClassPropertyView, error) {
+    return t.inner.Property("steps")
+}
+
+func (t *ReproductionStepsClassView) PropertyContext() (ClassPropertyView, error) {
+    return t.inner.Property("context")
+}
+
+func (t *ReproductionStepsClassView) PropertyEnvironment() (ClassPropertyView, error) {
+    return t.inner.Property("environment")
+}
+
+func (t *ReproductionStepsClassView) PropertyTools() (ClassPropertyView, error) {
+    return t.inner.Property("tools")
+}
+
+
+func (t *TypeBuilder) ReproductionSteps() (*ReproductionStepsClassView, error) {
+	bld, err := t.inner.Class("ReproductionSteps")
+	if err != nil {
+		return nil, err
+	}
+	return &ReproductionStepsClassView{inner: bld}, nil
+}
+
+func (t *ReproductionStepsClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type RoleOutputClassView struct {
     inner baml.ClassBuilder
 }
@@ -817,6 +905,46 @@ func (t *TypeBuilder) RoleOutput() (*RoleOutputClassView, error) {
 }
 
 func (t *RoleOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type RootCauseClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *RootCauseClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *RootCauseClassView) PropertyCategory() (ClassPropertyView, error) {
+    return t.inner.Property("category")
+}
+
+func (t *RootCauseClassView) PropertyDescription() (ClassPropertyView, error) {
+    return t.inner.Property("description")
+}
+
+
+func (t *TypeBuilder) RootCause() (*RootCauseClassView, error) {
+	bld, err := t.inner.Class("RootCause")
+	if err != nil {
+		return nil, err
+	}
+	return &RootCauseClassView{inner: bld}, nil
+}
+
+func (t *RootCauseClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
@@ -953,5 +1081,45 @@ func (t *TypeBuilder) StrictCriticOutput() (*StrictCriticOutputClassView, error)
 }
 
 func (t *StrictCriticOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type SuggestedFixClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *SuggestedFixClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *SuggestedFixClassView) PropertyKind() (ClassPropertyView, error) {
+    return t.inner.Property("kind")
+}
+
+func (t *SuggestedFixClassView) PropertyDescription() (ClassPropertyView, error) {
+    return t.inner.Property("description")
+}
+
+
+func (t *TypeBuilder) SuggestedFix() (*SuggestedFixClassView, error) {
+	bld, err := t.inner.Class("SuggestedFix")
+	if err != nil {
+		return nil, err
+	}
+	return &SuggestedFixClassView{inner: bld}, nil
+}
+
+func (t *SuggestedFixClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }

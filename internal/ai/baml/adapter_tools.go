@@ -362,9 +362,19 @@ func formatCITriage(r *types.CITriageReport) string {
 	fmt.Fprintf(&sb, "**Root cause:** %s\n\n", r.Root_cause)
 	fmt.Fprintf(&sb, "**Suggested fix:** %s\n\n", r.Suggested_fix)
 	fmt.Fprintf(&sb, "**Confidence:** %s\n\n", r.Confidence)
-	if len(r.Reproduction_steps) > 0 {
+	steps := r.Reproduction_steps
+	if steps.Context != "" {
+		fmt.Fprintf(&sb, "**Context:** %s\n\n", steps.Context)
+	}
+	if steps.Environment != "" {
+		fmt.Fprintf(&sb, "**Environment:** %s\n\n", steps.Environment)
+	}
+	if len(steps.Tools) > 0 {
+		fmt.Fprintf(&sb, "**Tools:** %s\n\n", strings.Join(steps.Tools, ", "))
+	}
+	if len(steps.Steps) > 0 {
 		sb.WriteString("**Reproduction steps:**\n")
-		for i, s := range r.Reproduction_steps {
+		for i, s := range steps.Steps {
 			fmt.Fprintf(&sb, "%d. %s\n", i+1, s)
 		}
 	}

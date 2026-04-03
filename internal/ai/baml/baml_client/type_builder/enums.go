@@ -13,5 +13,101 @@
 
 package type_builder
 
-import _ "github.com/boundaryml/baml/engine/language_client_go/pkg"
+import baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 
+
+type ConfidenceEnumView struct {
+    inner baml.EnumBuilder
+}
+
+func (t *ConfidenceEnumView) ListValues() ([]EnumValueView, error) {
+    result, err := t.inner.ListValues()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]EnumValueView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *ConfidenceEnumView) ValueHigh() (EnumValueView, error) {
+    return t.inner.Value("High")
+}
+
+func (t *ConfidenceEnumView) ValueMedium() (EnumValueView, error) {
+    return t.inner.Value("Medium")
+}
+
+func (t *ConfidenceEnumView) ValueLow() (EnumValueView, error) {
+    return t.inner.Value("Low")
+}
+
+
+func (t *TypeBuilder) Confidence() (*ConfidenceEnumView, error) {
+	bld, err := t.inner.Enum("Confidence")
+	if err != nil {
+		return nil, err
+	}
+	return &ConfidenceEnumView{inner: bld}, nil
+}
+
+func (t *ConfidenceEnumView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type LogPatternSeverityEnumView struct {
+    inner baml.EnumBuilder
+}
+
+func (t *LogPatternSeverityEnumView) ListValues() ([]EnumValueView, error) {
+    result, err := t.inner.ListValues()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]EnumValueView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *LogPatternSeverityEnumView) ValueCritical() (EnumValueView, error) {
+    return t.inner.Value("Critical")
+}
+
+func (t *LogPatternSeverityEnumView) ValueHigh() (EnumValueView, error) {
+    return t.inner.Value("High")
+}
+
+func (t *LogPatternSeverityEnumView) ValueMedium() (EnumValueView, error) {
+    return t.inner.Value("Medium")
+}
+
+func (t *LogPatternSeverityEnumView) ValueLow() (EnumValueView, error) {
+    return t.inner.Value("Low")
+}
+
+func (t *LogPatternSeverityEnumView) ValueInfo() (EnumValueView, error) {
+    return t.inner.Value("Info")
+}
+
+
+func (t *TypeBuilder) LogPatternSeverity() (*LogPatternSeverityEnumView, error) {
+	bld, err := t.inner.Enum("LogPatternSeverity")
+	if err != nil {
+		return nil, err
+	}
+	return &LogPatternSeverityEnumView{inner: bld}, nil
+}
+
+func (t *LogPatternSeverityEnumView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}

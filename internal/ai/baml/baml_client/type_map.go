@@ -30,6 +30,8 @@ var typeMap = map[string]reflect.Type{
     "STREAM_TYPES.CreativeExplorerOutput": reflect.TypeOf(stream_types.CreativeExplorerOutput{}),
 "TYPES.DocgenOutput": reflect.TypeOf(types.DocgenOutput{}),
     "STREAM_TYPES.DocgenOutput": reflect.TypeOf(stream_types.DocgenOutput{}),
+"TYPES.FailingJob": reflect.TypeOf(types.FailingJob{}),
+    "STREAM_TYPES.FailingJob": reflect.TypeOf(stream_types.FailingJob{}),
 "TYPES.FindingSeverity": reflect.TypeOf(types.FindingSeverity{}),
     "STREAM_TYPES.FindingSeverity": reflect.TypeOf(stream_types.FindingSeverity{}),
 "TYPES.GeneralAnalystOutput": reflect.TypeOf(types.GeneralAnalystOutput{}),
@@ -54,15 +56,23 @@ var typeMap = map[string]reflect.Type{
     "STREAM_TYPES.ProfileHotspot": reflect.TypeOf(stream_types.ProfileHotspot{}),
 "TYPES.ProfileOutput": reflect.TypeOf(types.ProfileOutput{}),
     "STREAM_TYPES.ProfileOutput": reflect.TypeOf(stream_types.ProfileOutput{}),
+"TYPES.ReproductionSteps": reflect.TypeOf(types.ReproductionSteps{}),
+    "STREAM_TYPES.ReproductionSteps": reflect.TypeOf(stream_types.ReproductionSteps{}),
 "TYPES.RoleOutput": reflect.TypeOf(types.RoleOutput{}),
     "STREAM_TYPES.RoleOutput": reflect.TypeOf(stream_types.RoleOutput{}),
+"TYPES.RootCause": reflect.TypeOf(types.RootCause{}),
+    "STREAM_TYPES.RootCause": reflect.TypeOf(stream_types.RootCause{}),
 "TYPES.ScaffoldOutput": reflect.TypeOf(types.ScaffoldOutput{}),
     "STREAM_TYPES.ScaffoldOutput": reflect.TypeOf(stream_types.ScaffoldOutput{}),
 "TYPES.SecurityReviewerOutput": reflect.TypeOf(types.SecurityReviewerOutput{}),
     "STREAM_TYPES.SecurityReviewerOutput": reflect.TypeOf(stream_types.SecurityReviewerOutput{}),
 "TYPES.StrictCriticOutput": reflect.TypeOf(types.StrictCriticOutput{}),
     "STREAM_TYPES.StrictCriticOutput": reflect.TypeOf(stream_types.StrictCriticOutput{}),
+"TYPES.SuggestedFix": reflect.TypeOf(types.SuggestedFix{}),
+    "STREAM_TYPES.SuggestedFix": reflect.TypeOf(stream_types.SuggestedFix{}),
 
+"TYPES.Confidence": reflect.TypeOf(types.Confidence("")),
+"TYPES.LogPatternSeverity": reflect.TypeOf(types.LogPatternSeverity("")),
 
 
 

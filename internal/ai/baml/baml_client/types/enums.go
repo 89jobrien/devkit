@@ -14,11 +14,153 @@
 package types
 
 import (
-    _ "encoding/json"
-    _ "fmt"
+    "encoding/json"
+    "fmt"
 
-    _ "github.com/boundaryml/baml/engine/language_client_go/pkg"
-    _ "github.com/boundaryml/baml/engine/language_client_go/pkg/cffi"
+    baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
+    "github.com/boundaryml/baml/engine/language_client_go/pkg/cffi"
 )
+
+
+type Confidence string
+
+const (
+    
+    ConfidenceHigh Confidence = "High"
+    ConfidenceMedium Confidence = "Medium"
+    ConfidenceLow Confidence = "Low"
+)
+
+// Values returns all allowed values for the Confidence type.
+func (Confidence) Values() []Confidence {
+    return []Confidence{
+        ConfidenceHigh,
+        ConfidenceMedium,
+        ConfidenceLow,
+    }
+}
+
+// IsValid checks whether the given Confidence value is valid.
+func (e Confidence) IsValid() bool {
+  
+  for _, v := range e.Values() {
+      if e == v {
+          return true
+      }
+  }
+  return false
+  
+}
+
+// MarshalJSON customizes JSON marshaling for Confidence.
+func (e Confidence) MarshalJSON() ([]byte, error) {
+    if !e.IsValid() {
+        return nil, fmt.Errorf("invalid Confidence: %q", e)
+    }
+    return json.Marshal(string(e))
+}
+
+// UnmarshalJSON customizes JSON unmarshaling for Confidence.
+func (e *Confidence) UnmarshalJSON(data []byte) error {
+    var s string
+    if err := json.Unmarshal(data, &s); err != nil {
+        return err
+    }
+    *e = Confidence(s)
+    if !e.IsValid() {
+        return fmt.Errorf("invalid Confidence: %q", s)
+    }
+    return nil
+}
+
+func (e *Confidence) Decode(holder *cffi.CFFIValueEnum, typeMap baml.TypeMap) {
+    name := holder.Name
+    if name.Name != "Confidence" && name.Namespace != cffi.CFFITypeNamespace_TYPES {
+        panic(fmt.Sprintf("expected types.Confidence, got %s.%s", string(name.Namespace.String()), string(name.Name)))
+    }
+    value := holder.Value
+    *e = Confidence(value)
+}
+
+func (e Confidence) Encode() (*cffi.HostValue, error) {
+    return baml.EncodeEnum("Confidence", string(e), false)
+}
+
+func (e Confidence) BamlTypeName() string {
+    return "Confidence"
+}
+
+
+type LogPatternSeverity string
+
+const (
+    
+    LogPatternSeverityCritical LogPatternSeverity = "Critical"
+    LogPatternSeverityHigh LogPatternSeverity = "High"
+    LogPatternSeverityMedium LogPatternSeverity = "Medium"
+    LogPatternSeverityLow LogPatternSeverity = "Low"
+    LogPatternSeverityInfo LogPatternSeverity = "Info"
+)
+
+// Values returns all allowed values for the LogPatternSeverity type.
+func (LogPatternSeverity) Values() []LogPatternSeverity {
+    return []LogPatternSeverity{
+        LogPatternSeverityCritical,
+        LogPatternSeverityHigh,
+        LogPatternSeverityMedium,
+        LogPatternSeverityLow,
+        LogPatternSeverityInfo,
+    }
+}
+
+// IsValid checks whether the given LogPatternSeverity value is valid.
+func (e LogPatternSeverity) IsValid() bool {
+  
+  for _, v := range e.Values() {
+      if e == v {
+          return true
+      }
+  }
+  return false
+  
+}
+
+// MarshalJSON customizes JSON marshaling for LogPatternSeverity.
+func (e LogPatternSeverity) MarshalJSON() ([]byte, error) {
+    if !e.IsValid() {
+        return nil, fmt.Errorf("invalid LogPatternSeverity: %q", e)
+    }
+    return json.Marshal(string(e))
+}
+
+// UnmarshalJSON customizes JSON unmarshaling for LogPatternSeverity.
+func (e *LogPatternSeverity) UnmarshalJSON(data []byte) error {
+    var s string
+    if err := json.Unmarshal(data, &s); err != nil {
+        return err
+    }
+    *e = LogPatternSeverity(s)
+    if !e.IsValid() {
+        return fmt.Errorf("invalid LogPatternSeverity: %q", s)
+    }
+    return nil
+}
+
+func (e *LogPatternSeverity) Decode(holder *cffi.CFFIValueEnum, typeMap baml.TypeMap) {
+    name := holder.Name
+    if name.Name != "LogPatternSeverity" && name.Namespace != cffi.CFFITypeNamespace_TYPES {
+        panic(fmt.Sprintf("expected types.LogPatternSeverity, got %s.%s", string(name.Namespace.String()), string(name.Name)))
+    }
+    value := holder.Value
+    *e = LogPatternSeverity(value)
+}
+
+func (e LogPatternSeverity) Encode() (*cffi.HostValue, error) {
+    return baml.EncodeEnum("LogPatternSeverity", string(e), false)
+}
+
+func (e LogPatternSeverity) BamlTypeName() string {
+    return "LogPatternSeverity"
+}
 
 
