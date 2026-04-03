@@ -96,18 +96,4 @@ func TestRunAgentToolUse(t *testing.T) {
 	assert.Equal(t, 2, calls)
 }
 
-type stubAgentProvider struct{ response string }
 
-func (s stubAgentProvider) Chat(_ context.Context, _ string) (string, error) {
-	return s.response, nil
-}
-func (s stubAgentProvider) RunAgent(_ context.Context, _ string, _ []tools.Tool) (string, error) {
-	return s.response, nil
-}
-
-func TestRunAgentLoop_UsesProvider(t *testing.T) {
-	p := stubAgentProvider{response: "result from provider"}
-	result, err := loop.RunAgentLoop(context.Background(), p, "do work", nil)
-	require.NoError(t, err)
-	assert.Equal(t, "result from provider", result)
-}

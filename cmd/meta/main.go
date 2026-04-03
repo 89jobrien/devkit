@@ -68,7 +68,10 @@ func main() {
 	id := devlog.Start("meta", map[string]string{"task": taskPreview})
 	start := time.Now()
 
-	result, err := meta.Run(context.Background(), task, devlog.GatherRepoContext(), "",
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	result, err := meta.Run(ctx, task, devlog.GatherRepoContext(), "",
 		meta.RunnerFunc(func(ctx context.Context, prompt string, ts []string) (string, error) {
 			return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 		}))

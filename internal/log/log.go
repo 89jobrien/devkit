@@ -69,7 +69,10 @@ func appendJSONL(record map[string]any) {
 // CLAUDE.md/AGENTS.md/README.md previews, recent commits, working tree, and file structure.
 func GatherRepoContext() string {
 	run := func(args ...string) string {
-		out, _ := exec.Command(args[0], args[1:]...).Output()
+		out, err := exec.Command(args[0], args[1:]...).Output()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "devkit: GatherRepoContext: %s: %v\n", strings.Join(args, " "), err)
+		}
 		return string(out)
 	}
 	var sb strings.Builder
