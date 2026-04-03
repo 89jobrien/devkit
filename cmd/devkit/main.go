@@ -505,6 +505,10 @@ func main() {
 		newLogPatternCmd(nil),
 		newIncidentCmd(nil),
 		newProfileCmd(nil),
+		newHealthCmd(nil),
+		newAutomateCmd(nil),
+		newCITriageCmd(nil),
+		newRepoReviewCmd(nil),
 	)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)

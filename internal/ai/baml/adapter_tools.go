@@ -283,6 +283,94 @@ func formatIncident(r *types.IncidentOutput) string {
 	return sb.String()
 }
 
+// ─── HEALTH ─────────────────────────────────────────────────────────────────
+
+// RunHealth scores a repo health report using BAML structured output.
+func RunHealth(ctx context.Context, repoContext, checkResults string) (string, error) {
+	ch, err := baml_client.Stream.AnalyzeRepoHealth(ctx, repoContext, checkResults)
+	if err != nil {
+		return "", fmt.Errorf("baml health: %w", err)
+	}
+	return drainHealth(ch)
+}
+
+func drainHealth(ch <-chan baml_client.StreamValue[stream_types.HealthReport, types.HealthReport]) (string, error) {
+	var final *types.HealthReport
+	for v := range ch {
+		if v.IsError {
+			return "", v.Error
+		}
+		if v.IsFinal {
+			final = v.Final()
+		}
+	}
+	if final == nil {
+		return "", fmt.Errorf("no final value received from BAML health")
+	}
+	return formatHealth(final), nil
+}
+
+func formatHealth(r *types.HealthReport) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "## Repo Health: %s\n\n", r.Repo)
+	fmt.Fprintf(&sb, "**Score:** %d/100\n\n", r.Score)
+	fmt.Fprintf(&sb, "**Summary:** %s\n\n", r.Summary)
+	if len(r.Checks) > 0 {
+		sb.WriteString("### Checks\n\n")
+		for _, c := range r.Checks {
+			fmt.Fprintf(&sb, "- [%s] **%s** (%s): %s", c.Status, c.Name, c.Severity, c.Detail)
+			if c.Suggestion != "" {
+				fmt.Fprintf(&sb, " — *%s*", c.Suggestion)
+			}
+			sb.WriteString("\n")
+		}
+	}
+	return sb.String()
+}
+
+// ─── CI TRIAGE ───────────────────────────────────────────────────────────────
+
+// RunCITriage diagnoses a CI failure log using BAML structured output.
+func RunCITriage(ctx context.Context, log, repoContext string) (string, error) {
+	ch, err := baml_client.Stream.TriageCIFailure(ctx, log, repoContext)
+	if err != nil {
+		return "", fmt.Errorf("baml ci-triage: %w", err)
+	}
+	return drainCITriage(ch)
+}
+
+func drainCITriage(ch <-chan baml_client.StreamValue[stream_types.CITriageReport, types.CITriageReport]) (string, error) {
+	var final *types.CITriageReport
+	for v := range ch {
+		if v.IsError {
+			return "", v.Error
+		}
+		if v.IsFinal {
+			final = v.Final()
+		}
+	}
+	if final == nil {
+		return "", fmt.Errorf("no final value received from BAML ci-triage")
+	}
+	return formatCITriage(final), nil
+}
+
+func formatCITriage(r *types.CITriageReport) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "## CI Triage\n\n")
+	fmt.Fprintf(&sb, "**Failing job:** %s\n\n", r.Failing_job)
+	fmt.Fprintf(&sb, "**Root cause:** %s\n\n", r.Root_cause)
+	fmt.Fprintf(&sb, "**Suggested fix:** %s\n\n", r.Suggested_fix)
+	fmt.Fprintf(&sb, "**Confidence:** %s\n\n", r.Confidence)
+	if len(r.Reproduction_steps) > 0 {
+		sb.WriteString("**Reproduction steps:**\n")
+		for i, s := range r.Reproduction_steps {
+			fmt.Fprintf(&sb, "%d. %s\n", i+1, s)
+		}
+	}
+	return sb.String()
+}
+
 // ─── PROFILE ────────────────────────────────────────────────────────────────
 
 func drainProfile(ch <-chan baml_client.StreamValue[stream_types.ProfileOutput, types.ProfileOutput]) (string, error) {
