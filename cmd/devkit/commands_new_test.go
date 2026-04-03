@@ -29,25 +29,20 @@ func TestCITriageCmd_Registration(t *testing.T) {
 	assert.True(t, names["ci-triage"], "ci-triage not registered")
 }
 
-func TestCITriageCmd_StdinFlag(t *testing.T) {
-	// Provide a pre-loaded log via the runner (bypass actual gh calls).
-	// We inject a runner and pass --stdin with piped stdin via a temp file trick.
-	// Since runCmd doesn't wire stdin, we test the --repo flag path instead.
-	var capturedLog string
+func TestCITriageCmd_RunnerNotCalledWithoutLog(t *testing.T) {
+	// Without a valid --run ID and no --stdin, fetchLog cannot produce a log.
+	// The runner must NOT be called in that case.
+	runnerCalled := false
 	r := citriage.RunnerFunc(func(ctx context.Context, log, repoCtx string) (string, error) {
-		capturedLog = log
+		runnerCalled = true
 		return "triage result", nil
 	})
 	cmd := newCITriageCmd(r)
-
-	// Supply a pre-loaded log by piping through Config.Log — tested via citriage package.
-	// Here we verify the command wires --repo through to Config.RepoPath.
 	dir := t.TempDir()
-	_, err := runCmd(t, cmd, "ci-triage", "--repo", dir, "--run", "")
-	// Without a real gh binary or run ID, citriage.fetchLog will error.
-	// We just confirm the runner was never called (gh failed before it).
-	_ = err
-	_ = capturedLog
+	_, _ = runCmd(t, cmd, "ci-triage", "--repo", dir, "--run", "")
+	if runnerCalled {
+		t.Error("runner was called but should not be: log fetch should have failed first")
+	}
 }
 
 func TestCITriageCmd_RunnerError(t *testing.T) {
