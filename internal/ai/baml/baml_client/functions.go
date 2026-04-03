@@ -623,6 +623,81 @@ func AnalyzeProfile(ctx context.Context, input string, opts ...CallOptionFunc) (
 }
 
 
+func AnalyzeRepoHealth(ctx context.Context, repo_context string, check_results string, opts ...CallOptionFunc) (types.HealthReport, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "repo_context": repo_context,"check_results": check_results, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        panic(err)
+    }
+
+    if callOpts.onTick == nil {
+        result, err := bamlRuntime.CallFunction(ctx, "AnalyzeRepoHealth", encoded, callOpts.onTick)
+        if err != nil {
+            return types.HealthReport{}, err
+        }
+
+        if result.Error != nil {
+            return types.HealthReport{}, result.Error
+        }
+
+        casted := (result.Data).(types.HealthReport)
+
+        return casted, nil
+    } else {
+        channel, err := bamlRuntime.CallFunctionStream(ctx, "AnalyzeRepoHealth", encoded, callOpts.onTick)
+        if err != nil {
+            return types.HealthReport{}, err
+        }
+
+        for result := range channel {
+            if result.Error != nil {
+                return types.HealthReport{}, result.Error
+            }
+
+            if result.HasData {
+                return result.Data.(types.HealthReport), nil
+            }
+        }
+
+        return types.HealthReport{}, fmt.Errorf("No data returned from stream")
+    }
+}
+
+
 func DraftADR(ctx context.Context, title string, ctx_text string, opts ...CallOptionFunc) (types.ADROutput, error) {
 
     var callOpts callOption
@@ -994,5 +1069,80 @@ func GenerateScaffold(ctx context.Context, package_name string, purpose string, 
         }
 
         return types.ScaffoldOutput{}, fmt.Errorf("No data returned from stream")
+    }
+}
+
+
+func TriageCIFailure(ctx context.Context, log string, repo_context string, opts ...CallOptionFunc) (types.CITriageReport, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "log": log,"repo_context": repo_context, },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        panic(err)
+    }
+
+    if callOpts.onTick == nil {
+        result, err := bamlRuntime.CallFunction(ctx, "TriageCIFailure", encoded, callOpts.onTick)
+        if err != nil {
+            return types.CITriageReport{}, err
+        }
+
+        if result.Error != nil {
+            return types.CITriageReport{}, result.Error
+        }
+
+        casted := (result.Data).(types.CITriageReport)
+
+        return casted, nil
+    } else {
+        channel, err := bamlRuntime.CallFunctionStream(ctx, "TriageCIFailure", encoded, callOpts.onTick)
+        if err != nil {
+            return types.CITriageReport{}, err
+        }
+
+        for result := range channel {
+            if result.Error != nil {
+                return types.CITriageReport{}, result.Error
+            }
+
+            if result.HasData {
+                return result.Data.(types.CITriageReport), nil
+            }
+        }
+
+        return types.CITriageReport{}, fmt.Errorf("No data returned from stream")
     }
 }

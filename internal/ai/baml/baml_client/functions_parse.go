@@ -402,6 +402,53 @@ func (*parse) AnalyzeProfile(text string, opts ...CallOptionFunc) (types.Profile
     return casted, nil
 }
 
+/// Parse version of AnalyzeRepoHealth (Takes in string and returns types.HealthReport)
+func (*parse) AnalyzeRepoHealth(text string, opts ...CallOptionFunc) (types.HealthReport, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeRepoHealth: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "AnalyzeRepoHealth", encoded)
+    if err != nil {
+        return types.HealthReport{}, err
+    }
+
+    casted := (result).(types.HealthReport)
+
+    return casted, nil
+}
+
 /// Parse version of DraftADR (Takes in string and returns types.ADROutput)
 func (*parse) DraftADR(text string, opts ...CallOptionFunc) (types.ADROutput, error) {
 
@@ -633,6 +680,53 @@ func (*parse) GenerateScaffold(text string, opts ...CallOptionFunc) (types.Scaff
     }
 
     casted := (result).(types.ScaffoldOutput)
+
+    return casted, nil
+}
+
+/// Parse version of TriageCIFailure (Takes in string and returns types.CITriageReport)
+func (*parse) TriageCIFailure(text string, opts ...CallOptionFunc) (types.CITriageReport, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "text": text, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        // This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+        // and include the type of the args you're passing in.
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: TriageCIFailure: %w", err)
+        panic(wrapped_err)
+    }
+
+    result, err := bamlRuntime.CallFunctionParse(context.Background(), "TriageCIFailure", encoded)
+    if err != nil {
+        return types.CITriageReport{}, err
+    }
+
+    casted := (result).(types.CITriageReport)
 
     return casted, nil
 }

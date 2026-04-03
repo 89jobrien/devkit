@@ -393,6 +393,52 @@ func (*build_request) AnalyzeProfile(input string, opts ...CallOptionFunc) (baml
     return bamlRuntime.BuildRequest(context.Background(), "AnalyzeProfile", encoded)
 }
 
+// Build HTTP request for AnalyzeRepoHealth (returns baml.HTTPRequest)
+func (*build_request) AnalyzeRepoHealth(repo_context string,check_results string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "repo_context": repo_context, "check_results": check_results, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AnalyzeRepoHealth: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "AnalyzeRepoHealth", encoded)
+}
+
 // Build HTTP request for DraftADR (returns baml.HTTPRequest)
 func (*build_request) DraftADR(title string,ctx_text string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
@@ -621,4 +667,50 @@ func (*build_request) GenerateScaffold(package_name string,purpose string,repo_c
     }
 
     return bamlRuntime.BuildRequest(context.Background(), "GenerateScaffold", encoded)
+}
+
+// Build HTTP request for TriageCIFailure (returns baml.HTTPRequest)
+func (*build_request) TriageCIFailure(log string,repo_context string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
+
+    var callOpts callOption
+    for _, opt := range opts {
+        opt(&callOpts)
+    }
+
+    // Resolve client option to clientRegistry (client takes precedence)
+    if callOpts.client != nil {
+        if callOpts.clientRegistry == nil {
+            callOpts.clientRegistry = baml.NewClientRegistry()
+        }
+        callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+    }
+
+    args := baml.BamlFunctionArguments{
+        Kwargs: map[string]any{ "log": log, "repo_context": repo_context, "stream": false },
+        Env: getEnvVars(callOpts.env),
+    }
+
+    if callOpts.clientRegistry != nil {
+        args.ClientRegistry = callOpts.clientRegistry
+    }
+
+    if callOpts.collectors != nil {
+        args.Collectors = callOpts.collectors
+    }
+
+    if callOpts.typeBuilder != nil {
+        args.TypeBuilder = callOpts.typeBuilder
+    }
+
+    if callOpts.tags != nil {
+        args.Tags = callOpts.tags
+    }
+
+    encoded, err := args.Encode()
+    if err != nil {
+        wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: TriageCIFailure: %w", err)
+        panic(wrapped_err)
+    }
+
+    return bamlRuntime.BuildRequest(context.Background(), "TriageCIFailure", encoded)
 }

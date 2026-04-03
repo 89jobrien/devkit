@@ -1,7 +1,15 @@
+enum LogPatternSeverity {
+  Critical
+  High
+  Medium
+  Low
+  Info
+}
+
 class LogPatternEntry {
   pattern     string @description("The recurring error pattern or signature")
   count       int    @description("Approximate occurrence count")
-  severity    string @description("critical|high|medium|low|info")
+  severity    LogPatternSeverity @description("Severity level of the pattern")
   first_seen  string @description("Timestamp or context of first occurrence")
   last_seen   string @description("Timestamp or context of last occurrence")
   suggestion  string @description("Actionable suggestion to address this pattern")

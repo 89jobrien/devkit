@@ -87,6 +87,77 @@ func (c ADROutput) BamlTypeName() string {
     return "ADROutput"
 }
 
+type CITriageReport struct {
+    
+Failing_job string `json:"failing_job"`
+Root_cause string `json:"root_cause"`
+Suggested_fix string `json:"suggested_fix"`
+Reproduction_steps []string `json:"reproduction_steps"`
+Confidence string `json:"confidence"`
+    
+}
+
+func (c *CITriageReport) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_TYPES, got %s", string(typeName.Namespace.String())))
+	}
+	if typeName.Name != "CITriageReport" {
+		panic(fmt.Sprintf("expected CITriageReport, got %s", typeName.Name))
+	}
+
+   
+
+	
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+			switch key {
+				
+				case "failing_job":
+					c.Failing_job = baml.Decode(valueHolder).Interface().(string)
+				
+				case "root_cause":
+					c.Root_cause = baml.Decode(valueHolder).Interface().(string)
+				
+				case "suggested_fix":
+					c.Suggested_fix = baml.Decode(valueHolder).Interface().(string)
+				
+				case "reproduction_steps":
+					c.Reproduction_steps = baml.Decode(valueHolder).Interface().([]string)
+				
+				case "confidence":
+					c.Confidence = baml.Decode(valueHolder).Interface().(string)
+				
+		default:
+			
+			panic(fmt.Sprintf("unexpected field: %s in class CITriageReport", key))
+			
+		}
+	}
+
+}
+
+func (c CITriageReport) Encode() (*cffi.HostValue, error) {
+    fields := map[string]any{}
+    
+    fields["failing_job"] = c.Failing_job
+    
+    fields["root_cause"] = c.Root_cause
+    
+    fields["suggested_fix"] = c.Suggested_fix
+    
+    fields["reproduction_steps"] = c.Reproduction_steps
+    
+    fields["confidence"] = c.Confidence
+    
+    return baml.EncodeClass("CITriageReport", fields, nil)
+}
+
+func (c CITriageReport) BamlTypeName() string {
+    return "CITriageReport"
+}
+
 type CreativeExplorerOutput struct {
     
 Health_score float64 `json:"health_score"`
@@ -333,6 +404,142 @@ func (c GeneralAnalystOutput) Encode() (*cffi.HostValue, error) {
 
 func (c GeneralAnalystOutput) BamlTypeName() string {
     return "GeneralAnalystOutput"
+}
+
+type HealthCheck struct {
+    
+Name string `json:"name"`
+Status string `json:"status"`
+Severity string `json:"severity"`
+Detail string `json:"detail"`
+Suggestion string `json:"suggestion"`
+    
+}
+
+func (c *HealthCheck) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_TYPES, got %s", string(typeName.Namespace.String())))
+	}
+	if typeName.Name != "HealthCheck" {
+		panic(fmt.Sprintf("expected HealthCheck, got %s", typeName.Name))
+	}
+
+   
+
+	
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+			switch key {
+				
+				case "name":
+					c.Name = baml.Decode(valueHolder).Interface().(string)
+				
+				case "status":
+					c.Status = baml.Decode(valueHolder).Interface().(string)
+				
+				case "severity":
+					c.Severity = baml.Decode(valueHolder).Interface().(string)
+				
+				case "detail":
+					c.Detail = baml.Decode(valueHolder).Interface().(string)
+				
+				case "suggestion":
+					c.Suggestion = baml.Decode(valueHolder).Interface().(string)
+				
+		default:
+			
+			panic(fmt.Sprintf("unexpected field: %s in class HealthCheck", key))
+			
+		}
+	}
+
+}
+
+func (c HealthCheck) Encode() (*cffi.HostValue, error) {
+    fields := map[string]any{}
+    
+    fields["name"] = c.Name
+    
+    fields["status"] = c.Status
+    
+    fields["severity"] = c.Severity
+    
+    fields["detail"] = c.Detail
+    
+    fields["suggestion"] = c.Suggestion
+    
+    return baml.EncodeClass("HealthCheck", fields, nil)
+}
+
+func (c HealthCheck) BamlTypeName() string {
+    return "HealthCheck"
+}
+
+type HealthReport struct {
+    
+Repo string `json:"repo"`
+Score int64 `json:"score"`
+Summary string `json:"summary"`
+Checks []HealthCheck `json:"checks"`
+    
+}
+
+func (c *HealthReport) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_TYPES, got %s", string(typeName.Namespace.String())))
+	}
+	if typeName.Name != "HealthReport" {
+		panic(fmt.Sprintf("expected HealthReport, got %s", typeName.Name))
+	}
+
+   
+
+	
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+			switch key {
+				
+				case "repo":
+					c.Repo = baml.Decode(valueHolder).Interface().(string)
+				
+				case "score":
+					c.Score = baml.Decode(valueHolder).Int()
+				
+				case "summary":
+					c.Summary = baml.Decode(valueHolder).Interface().(string)
+				
+				case "checks":
+					c.Checks = baml.Decode(valueHolder).Interface().([]HealthCheck)
+				
+		default:
+			
+			panic(fmt.Sprintf("unexpected field: %s in class HealthReport", key))
+			
+		}
+	}
+
+}
+
+func (c HealthReport) Encode() (*cffi.HostValue, error) {
+    fields := map[string]any{}
+    
+    fields["repo"] = c.Repo
+    
+    fields["score"] = c.Score
+    
+    fields["summary"] = c.Summary
+    
+    fields["checks"] = c.Checks
+    
+    return baml.EncodeClass("HealthReport", fields, nil)
+}
+
+func (c HealthReport) BamlTypeName() string {
+    return "HealthReport"
 }
 
 type IncidentAction struct {

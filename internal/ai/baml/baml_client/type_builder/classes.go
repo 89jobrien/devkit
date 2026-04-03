@@ -64,6 +64,58 @@ func (t *ADROutputClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type CITriageReportClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *CITriageReportClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *CITriageReportClassView) PropertyFailing_job() (ClassPropertyView, error) {
+    return t.inner.Property("failing_job")
+}
+
+func (t *CITriageReportClassView) PropertyRoot_cause() (ClassPropertyView, error) {
+    return t.inner.Property("root_cause")
+}
+
+func (t *CITriageReportClassView) PropertySuggested_fix() (ClassPropertyView, error) {
+    return t.inner.Property("suggested_fix")
+}
+
+func (t *CITriageReportClassView) PropertyReproduction_steps() (ClassPropertyView, error) {
+    return t.inner.Property("reproduction_steps")
+}
+
+func (t *CITriageReportClassView) PropertyConfidence() (ClassPropertyView, error) {
+    return t.inner.Property("confidence")
+}
+
+
+func (t *TypeBuilder) CITriageReport() (*CITriageReportClassView, error) {
+	bld, err := t.inner.Class("CITriageReport")
+	if err != nil {
+		return nil, err
+	}
+	return &CITriageReportClassView{inner: bld}, nil
+}
+
+func (t *CITriageReportClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type CreativeExplorerOutputClassView struct {
     inner baml.ClassBuilder
 }
@@ -245,6 +297,106 @@ func (t *TypeBuilder) GeneralAnalystOutput() (*GeneralAnalystOutputClassView, er
 }
 
 func (t *GeneralAnalystOutputClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type HealthCheckClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *HealthCheckClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *HealthCheckClassView) PropertyName() (ClassPropertyView, error) {
+    return t.inner.Property("name")
+}
+
+func (t *HealthCheckClassView) PropertyStatus() (ClassPropertyView, error) {
+    return t.inner.Property("status")
+}
+
+func (t *HealthCheckClassView) PropertySeverity() (ClassPropertyView, error) {
+    return t.inner.Property("severity")
+}
+
+func (t *HealthCheckClassView) PropertyDetail() (ClassPropertyView, error) {
+    return t.inner.Property("detail")
+}
+
+func (t *HealthCheckClassView) PropertySuggestion() (ClassPropertyView, error) {
+    return t.inner.Property("suggestion")
+}
+
+
+func (t *TypeBuilder) HealthCheck() (*HealthCheckClassView, error) {
+	bld, err := t.inner.Class("HealthCheck")
+	if err != nil {
+		return nil, err
+	}
+	return &HealthCheckClassView{inner: bld}, nil
+}
+
+func (t *HealthCheckClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type HealthReportClassView struct {
+    inner baml.ClassBuilder
+}
+
+func (t *HealthReportClassView) ListProperties() ([]ClassPropertyView, error) {
+    result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+
+
+
+func (t *HealthReportClassView) PropertyRepo() (ClassPropertyView, error) {
+    return t.inner.Property("repo")
+}
+
+func (t *HealthReportClassView) PropertyScore() (ClassPropertyView, error) {
+    return t.inner.Property("score")
+}
+
+func (t *HealthReportClassView) PropertySummary() (ClassPropertyView, error) {
+    return t.inner.Property("summary")
+}
+
+func (t *HealthReportClassView) PropertyChecks() (ClassPropertyView, error) {
+    return t.inner.Property("checks")
+}
+
+
+func (t *TypeBuilder) HealthReport() (*HealthReportClassView, error) {
+	bld, err := t.inner.Class("HealthReport")
+	if err != nil {
+		return nil, err
+	}
+	return &HealthReportClassView{inner: bld}, nil
+}
+
+func (t *HealthReportClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
