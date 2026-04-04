@@ -68,7 +68,7 @@ items:
   doob_uuid: e748de28-71f9-4421-955d-5b4c1f1cfa5d
   name: shared-repo-context-helper
   priority: P1
-  status: open
+  status: done
   title: Extract shared repo-context gathering helper
   description: |
     reporeview, health, and ci-triage each independently collect repo name, README, CLAUDE notes, and git history. Extract a shared helper.
@@ -77,6 +77,7 @@ items:
   - internal/ops/health/health.go
   - internal/ops/citriage/citriage.go
   extra: []
+  completed: 2026-04-03
 - id: devkit-8
   doob_uuid: bd686500-df40-4974-baa8-5bdf82ee970b
   name: command-wiring-tests
@@ -198,6 +199,8 @@ items:
   files: []
   extra: []
 log:
+- date: 2026-04-03
+  summary: 'Closed devkit-7 as stale — health/citriage only pass repo name string, no actual duplication with reporeview.gatherContext exists.'
 - date: 2026-04-03
   summary: 'Implemented devkit-14/15: new internal/infra/git package (RangeResolver port, ExecRangeResolver adapter, Diff/Log/Stat helpers, 4 real-repo tests); wired into council/review/pr/changelog/explain/testgen; deleted onMainAtBase/gitDiff/gitLog/gitStat. Sentinel follow-up: injected RangeResolver into 4 cmd constructors (was hardcoded). 235 tests passing.'
   commits:
