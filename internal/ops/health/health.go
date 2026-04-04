@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/89jobrien/devkit/internal/repocontext"
 )
 
 // Runner is the port for the BAML health scoring call.
@@ -41,19 +43,14 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("health: runner is required")
 	}
 
-	repoPath := cfg.RepoPath
-	if repoPath == "" {
-		var err error
-		repoPath, err = os.Getwd()
-		if err != nil {
-			return "", fmt.Errorf("health: getwd: %w", err)
-		}
+	rc, err := repocontext.Gather(cfg.RepoPath)
+	if err != nil {
+		return "", fmt.Errorf("health: %w", err)
 	}
 
-	checks := gatherChecks(repoPath)
+	checks := gatherChecks(rc.RepoPath)
 	checkStr := formatChecks(checks)
-	repoCtx := fmt.Sprintf("repo: %s", filepath.Base(repoPath))
-	return cfg.Runner.Run(ctx, repoCtx, checkStr)
+	return cfg.Runner.Run(ctx, rc.Summary(), checkStr)
 }
 
 func gatherChecks(repoPath string) []CheckResult {

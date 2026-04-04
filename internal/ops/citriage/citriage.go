@@ -4,10 +4,10 @@ package citriage
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
+
+	"github.com/89jobrien/devkit/internal/repocontext"
 )
 
 const maxLogBytes = 64 * 1024 // 64KB
@@ -38,19 +38,14 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("citriage: runner is required")
 	}
 
-	repoPath := cfg.RepoPath
-	if repoPath == "" {
-		var err error
-		repoPath, err = os.Getwd()
-		if err != nil {
-			return "", fmt.Errorf("citriage: getwd: %w", err)
-		}
+	rc, err := repocontext.Gather(cfg.RepoPath)
+	if err != nil {
+		return "", fmt.Errorf("citriage: %w", err)
 	}
 
 	log := cfg.Log
 	if log == "" {
-		var err error
-		log, err = fetchLog(repoPath, cfg.RunID)
+		log, err = fetchLog(rc.RepoPath, cfg.RunID)
 		if err != nil {
 			return "", err
 		}
@@ -61,8 +56,7 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		log = log[:maxLogBytes] + "\n[truncated]"
 	}
 
-	repoCtx := fmt.Sprintf("repo: %s", filepath.Base(repoPath))
-	return cfg.Runner.Run(ctx, log, repoCtx)
+	return cfg.Runner.Run(ctx, log, rc.Summary())
 }
 
 // fetchLog shells out to gh to get the failure log for the given run ID,

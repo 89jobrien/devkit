@@ -5,11 +5,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/89jobrien/devkit/internal/ai/council"
+	"github.com/89jobrien/devkit/internal/repocontext"
 )
 
 // Config holds inputs for a repo-review run.
@@ -24,50 +24,15 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("reporeview: runner is required")
 	}
 
-	repoPath := cfg.RepoPath
-	if repoPath == "" {
-		var err error
-		repoPath, err = os.Getwd()
-		if err != nil {
-			return "", fmt.Errorf("reporeview: getwd: %w", err)
-		}
+	rc, err := repocontext.Gather(cfg.RepoPath)
+	if err != nil {
+		return "", fmt.Errorf("reporeview: %w", err)
 	}
 
-	repoCtx := gatherContext(repoPath)
-	prompt := buildPrompt(repoCtx)
+	prompt := buildPrompt(rc)
 	return cfg.Runner.Run(ctx, prompt, nil)
 }
 
-type repoContext struct {
-	name    string
-	claude  string
-	readme  string
-	gitLog  string
-	dirTree string
-}
-
-func gatherContext(repoPath string) repoContext {
-	ctx := repoContext{name: filepath.Base(repoPath)}
-
-	if data, err := os.ReadFile(filepath.Join(repoPath, "CLAUDE.md")); err == nil {
-		ctx.claude = string(data)
-	}
-
-	if data, err := os.ReadFile(filepath.Join(repoPath, "README.md")); err == nil {
-		s := string(data)
-		if len(s) > 2048 {
-			s = s[:2048]
-		}
-		ctx.readme = s
-	}
-
-	if out, err := exec.Command("git", "-C", repoPath, "log", "--oneline", "-20").Output(); err == nil {
-		ctx.gitLog = string(out)
-	}
-
-	ctx.dirTree = dirTree(repoPath, 2)
-	return ctx
-}
 
 func dirTree(root string, depth int) string {
 	var sb strings.Builder
@@ -99,22 +64,13 @@ func walkDir(root, path string, current, max int, sb *strings.Builder) error {
 	return nil
 }
 
-func buildPrompt(ctx repoContext) string {
+func buildPrompt(rc repocontext.Context) string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "You are reviewing the repository %q as a senior engineer.\n\n", ctx.name)
+	fmt.Fprintf(&sb, "You are reviewing the repository %q as a senior engineer.\n\n", rc.Name)
 	sb.WriteString("Identify the top issues by priority. What needs attention in this repo?\n\n")
-
-	if ctx.claude != "" {
-		fmt.Fprintf(&sb, "## CLAUDE.md\n\n%s\n\n", ctx.claude)
-	}
-	if ctx.readme != "" {
-		fmt.Fprintf(&sb, "## README.md (first 2KB)\n\n%s\n\n", ctx.readme)
-	}
-	if ctx.gitLog != "" {
-		fmt.Fprintf(&sb, "## Recent commits\n\n%s\n\n", ctx.gitLog)
-	}
-	if ctx.dirTree != "" {
-		fmt.Fprintf(&sb, "## Directory structure\n\n%s\n\n", ctx.dirTree)
+	sb.WriteString(rc.MarkdownSections())
+	if tree := dirTree(rc.RepoPath, 2); tree != "" {
+		fmt.Fprintf(&sb, "## Directory structure\n\n%s\n\n", tree)
 	}
 	sb.WriteString("Provide a prioritized list of issues with actionable recommendations.\n")
 	return sb.String()
