@@ -14,7 +14,7 @@ Current version in `VERSION` file. CI bumps minor on push to main (`0.N.0`). Pat
 `.github/workflows/devkit.yml` runs `devkit council` on PRs (posts as comment); requires `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` secrets in repo settings. Council uses provider fallback chain (Anthropic → OpenAI → Gemini) configured via `.devkit.toml` `[providers]`.
 
 ## Development
-- `go test ./...` — 215 tests across 31 packages, no real API calls (httptest + stub runners)
+- `go test ./...` — 235 tests across 32 packages, no real API calls (httptest + stub runners)
 - `go build ./cmd/devkit ./cmd/ci-agent ./cmd/meta` — verify all three binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
 - Pre-commit hook runs `go build ./cmd/devkit ./cmd/ci-agent && go test ./...`; pre-push hook runs `devkit council --base <merge-base>`; bypass both with `DEVKIT_SKIP_HOOKS=1`
