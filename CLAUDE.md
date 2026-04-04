@@ -3,6 +3,11 @@
 ## Architecture
 Hexagonal Go: each `internal/` package defines its own `Runner` interface + `RunnerFunc` adapter. `cmd/` wires concrete types. No package imports another's concrete type.
 
+Key directories:
+- `cmd/devkit`, `cmd/ci-agent`, `cmd/meta` — binary entry points
+- `internal/<feature>/` — one package per command domain
+- `ci/` — CI template files copied to target projects by `install.sh`
+
 ## Anthropic SDK
 `anthropic.NewClient()` returns `anthropic.Client` (value type, not pointer). Use `client anthropic.Client`, never `*anthropic.Client`.
 
@@ -13,8 +18,15 @@ Current version in `VERSION` file. CI bumps minor on push to main (`0.N.0`). Pat
 `ci/github.yml` and `ci/gitea.yml` — install.sh copies these into the target project. The `diagnose` job uses `ci-agent@<tag>` pinned to the current version.
 `.github/workflows/devkit.yml` runs `devkit council` on PRs (posts as comment); requires `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` secrets in repo settings. Council uses provider fallback chain (Anthropic → OpenAI → Gemini) configured via `.devkit.toml` `[providers]`.
 
+Minimal `.devkit.toml`:
+```toml
+[providers]
+primary = "anthropic"  # or "openai"
+```
+
 ## Development
 - `go test ./...` — 235 tests across 32 packages, no real API calls (httptest + stub runners)
+- `go test ./internal/<pkg>/...` — run a single package's tests
 - `go build ./cmd/devkit ./cmd/ci-agent ./cmd/meta` — verify all three binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
 - Pre-commit hook runs `go build ./cmd/devkit ./cmd/ci-agent && go test ./...`; pre-push hook runs `devkit council --base <merge-base>`; bypass both with `DEVKIT_SKIP_HOOKS=1`
