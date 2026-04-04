@@ -197,6 +197,8 @@ items:
   completed: 2026-04-03
 log:
 - date: 2026-04-04
+  summary: Improved CLAUDE.md — added directory map, single-package test command, and .devkit.toml example.
+- date: 2026-04-04
   summary: Session housekeeping — marked devkit-5 done (all idea commands already live), updated CLAUDE.md with doob handoff gotchas and complete command list, pruned done items to bottom.
   commits:
   - ce27d9d
