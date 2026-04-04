@@ -126,7 +126,7 @@ items:
   doob_uuid: e748de28-71f9-4421-955d-5b4c1f1cfa5d
   name: shared-repo-context-helper
   priority: P1
-  status: open
+  status: done
   title: Extract shared repo-context gathering helper
   description: |
     reporeview, health, and ci-triage each independently collect repo name, README, CLAUDE notes, and git history. Extract a shared helper.
@@ -134,8 +134,9 @@ items:
   - internal/dev/reporeview/reporeview.go
   - internal/ops/health/health.go
   - internal/ops/citriage/citriage.go
+  - internal/repocontext/repocontext.go
   extra: []
-  completed: 2026-04-03
+  completed: 2026-04-04
 - id: devkit-8
   doob_uuid: bd686500-df40-4974-baa8-5bdf82ee970b
   name: command-wiring-tests
@@ -201,6 +202,12 @@ items:
   extra: []
   completed: 2026-04-03
 log:
+- date: 2026-04-04
+  summary: |
+    EOD: devkit-7 done — internal/repocontext extracted; .ctx/ gitignored; CLAUDE.md dir map + .devkit.toml added; pushed bb27ab6. All P1s closed. 235 tests.
+  commits:
+  - 5dd75af
+  - bb27ab6
 - date: 2026-04-04
   summary: |
     Standup + handoff. Council HEAD~1 scored 94%. No new code. Open: devkit-3,4,7 (P1/P2), devkit-9/10/12/13 (P3). 235 tests, build clean.
