@@ -56,7 +56,8 @@ meta, migrate, pr, profile, review, scaffold, standup, test-gen, ticket.
 
 ## doob / Handoff
 - `doob todo complete` does not accept `devkit-N` IDs or UUIDs with hyphens — use
-  `doob handoff sync --file HANDOFF.*.yaml` to push status changes instead.
+  `doob handoff update-status <handoff-id> <status>` (e.g. `devkit-7 done`) instead.
+  When doob wins sync conflicts, `sync` alone won't fix it — run `update-status` first, then sync.
 - After editing HANDOFF.yaml, re-read before a second edit — doob sync rewrites it in place.
 
 ## tools package
