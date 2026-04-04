@@ -38,6 +38,15 @@ Regeneration workflow (run from `internal/ai/baml/`):
 
 Schema changes that alter struct shapes (e.g. `[]string` → `struct`) require updating `adapter_tools.go` callers — check `formatCITriage` and similar formatter functions.
 
+## Implemented Commands
+All commands are live: adr, changelog, council, diagnose, docgen, explain, incident, lint, log-pattern,
+meta, migrate, pr, profile, review, scaffold, standup, test-gen, ticket.
+
+## doob / Handoff
+- `doob todo complete` does not accept `devkit-N` IDs or UUIDs with hyphens — use
+  `doob handoff sync --file HANDOFF.*.yaml` to push status changes instead.
+- After editing HANDOFF.yaml, re-read before a second edit — doob sync rewrites it in place.
+
 ## tools package
 `GlobTool` shells out to `fd`; `GrepTool` shells out to `rg` — both must be installed on the host. `BashTool(maxBytes)` runs `sh -c`; output capped at maxBytes with `[truncated]` suffix, non-zero exit appended as `(exit: ...)` rather than returned as a Go error.
 
