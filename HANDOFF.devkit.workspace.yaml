@@ -68,7 +68,7 @@ items:
   doob_uuid: e748de28-71f9-4421-955d-5b4c1f1cfa5d
   name: shared-repo-context-helper
   priority: P1
-  status: done
+  status: open
   title: Extract shared repo-context gathering helper
   description: |
     reporeview, health, and ci-triage each independently collect repo name, README, CLAUDE notes, and git history. Extract a shared helper.
@@ -198,9 +198,12 @@ items:
     Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint. None blocked, none urgent. Revisit when core is stable.
   files: []
   extra: []
+  completed: 2026-04-03
 log:
 - date: 2026-04-03
-  summary: 'Closed devkit-7 as stale — health/citriage only pass repo name string, no actual duplication with reporeview.gatherContext exists.'
+  summary: Marked devkit-5 done — all idea backlog commands are already implemented (adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint).
+- date: 2026-04-03
+  summary: Closed devkit-7 as stale — health/citriage only pass repo name string, no actual duplication with reporeview.gatherContext exists.
 - date: 2026-04-03
   summary: 'Implemented devkit-14/15: new internal/infra/git package (RangeResolver port, ExecRangeResolver adapter, Diff/Log/Stat helpers, 4 real-repo tests); wired into council/review/pr/changelog/explain/testgen; deleted onMainAtBase/gitDiff/gitLog/gitStat. Sentinel follow-up: injected RangeResolver into 4 cmd constructors (was hardcoded). 235 tests passing.'
   commits:
