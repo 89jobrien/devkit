@@ -1,12 +1,75 @@
 project: devkit
 id: devkit
-updated: 2026-04-03
+updated: 2026-04-04
 branch: main
-state:
-  tests: 235 passing (32 packages)
-  build: clean
-  notes: null
 items:
+- id: devkit-3
+  doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
+  name: provider-fallback-smoke-test
+  priority: P2
+  status: open
+  title: Smoke-test provider fallback routing end-to-end
+  description: |
+    Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY to confirm Router wiring works in production. (doob #31)
+  files: []
+  extra: []
+- id: devkit-4
+  doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
+  name: gather-repo-context-ownership
+  priority: P2
+  status: open
+  title: Clarify package ownership for GatherRepoContext
+  description: |
+    Move GatherRepoContext to a more cohesive package or redefine internal/log as a broader runtime/ops utility package. (doob #35)
+  files:
+  - internal/log/
+  extra: []
+- id: devkit-9
+  doob_uuid: de30cbbd-d0e9-4099-b564-7dab2399f03a
+  name: automate-failure-semantics
+  priority: P3
+  status: open
+  title: Harden automate failure semantics
+  description: |
+    Unknown tasks and delegated task failures embedded in output text instead of returning non-zero error — automation consumers report success on partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
+  files:
+  - internal/ops/automate/automate.go
+  extra: []
+- id: devkit-10
+  doob_uuid: db81858a-0e93-44a0-93f6-036fa43907d7
+  name: citriage-repo-scoping
+  priority: P3
+  status: open
+  title: 'Fix ci-triage repo-scoping: gh run list missing cmd.Dir'
+  description: |
+    'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view' has it. In multi-repo environments this selects the wrong run.
+  files:
+  - internal/ops/citriage/citriage.go
+  extra: []
+- id: devkit-12
+  doob_uuid: b976b730-a380-4aa4-b01f-40241240db34
+  name: repo-review-format-flag
+  priority: P3
+  status: open
+  title: Fix non-functional --format flag on repo-review command
+  description: |
+    Flag exposed but reporeview.Config has no Format field — machine-readable output callers silently get wrong behavior.
+  files:
+  - cmd/devkit/cmd_reporeview.go
+  - internal/dev/reporeview/reporeview.go
+  extra: []
+- id: devkit-13
+  doob_uuid: 3f7a14bb-faac-4faa-a0d4-eaf1695d8052
+  name: health-format-flag
+  priority: P3
+  status: open
+  title: Fix non-functional --format flag on health command
+  description: |
+    Flag is parsed and logged but never passed into health.Run or used to vary output shape — CLI contract violation.
+  files:
+  - cmd/devkit/cmd_health.go
+  - internal/ops/health/health.go
+  extra: []
 - id: devkit-1
   doob_uuid: 3c8ee38f-382d-4268-a221-fc46b044347f
   name: baml-uncommitted-changes
@@ -31,27 +94,17 @@ items:
   - internal/ai/baml/baml_client.tmp/
   extra: []
   completed: 2026-04-03
-- id: devkit-3
-  doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
-  name: provider-fallback-smoke-test
+- id: devkit-5
+  doob_uuid: 70731e49-e3b4-43f2-ac87-c1612dd2d94e
+  name: ideas-backlog
   priority: P2
-  status: open
-  title: Smoke-test provider fallback routing end-to-end
+  status: parked
+  title: Unimplemented command ideas
   description: |
-    Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY to confirm Router wiring works in production. (doob #31)
+    Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint. None blocked, none urgent. Revisit when core is stable.
   files: []
   extra: []
-- id: devkit-4
-  doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
-  name: gather-repo-context-ownership
-  priority: P2
-  status: open
-  title: Clarify package ownership for GatherRepoContext
-  description: |
-    Move GatherRepoContext to a more cohesive package or redefine internal/log as a broader runtime/ops utility package. (doob #35)
-  files:
-  - internal/log/
-  extra: []
+  completed: 2026-04-04
 - id: devkit-6
   doob_uuid: 1ad5d2ec-4b39-4ba2-a56c-f1268dd769ee
   name: automate-task-registry
@@ -92,28 +145,6 @@ items:
   - internal/dev/reporeview/reporeview.go
   extra: []
   completed: 2026-04-03
-- id: devkit-9
-  doob_uuid: de30cbbd-d0e9-4099-b564-7dab2399f03a
-  name: automate-failure-semantics
-  priority: P3
-  status: open
-  title: Harden automate failure semantics
-  description: |
-    Unknown tasks and delegated task failures embedded in output text instead of returning non-zero error — automation consumers report success on partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
-  files:
-  - internal/ops/automate/automate.go
-  extra: []
-- id: devkit-10
-  doob_uuid: db81858a-0e93-44a0-93f6-036fa43907d7
-  name: citriage-repo-scoping
-  priority: P3
-  status: open
-  title: 'Fix ci-triage repo-scoping: gh run list missing cmd.Dir'
-  description: |
-    'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view' has it. In multi-repo environments this selects the wrong run.
-  files:
-  - internal/ops/citriage/citriage.go
-  extra: []
 - id: devkit-11
   doob_uuid: 8a4c9a66-f128-4c5d-8174-f213ee32bce2
   name: citriage-baml-schema-drift
@@ -128,30 +159,6 @@ items:
   - internal/ai/baml/baml_client/baml_source_map.go
   extra: []
   completed: 2026-04-03
-- id: devkit-12
-  doob_uuid: b976b730-a380-4aa4-b01f-40241240db34
-  name: repo-review-format-flag
-  priority: P3
-  status: open
-  title: Fix non-functional --format flag on repo-review command
-  description: |
-    Flag exposed but reporeview.Config has no Format field — machine-readable output callers silently get wrong behavior.
-  files:
-  - cmd/devkit/cmd_reporeview.go
-  - internal/dev/reporeview/reporeview.go
-  extra: []
-- id: devkit-13
-  doob_uuid: 3f7a14bb-faac-4faa-a0d4-eaf1695d8052
-  name: health-format-flag
-  priority: P3
-  status: open
-  title: Fix non-functional --format flag on health command
-  description: |
-    Flag is parsed and logged but never passed into health.Run or used to vary output shape — CLI contract violation.
-  files:
-  - cmd/devkit/cmd_health.go
-  - internal/ops/health/health.go
-  extra: []
 - id: devkit-14
   doob_uuid: d98a0241-66b1-4c24-a002-597e88a4bba5
   name: council-range-resolver
@@ -171,7 +178,7 @@ items:
   status: done
   title: Handle HEAD~1 invalidity and surface git errors in fallback paths
   description: |
-    onMainAtBase collapses all errors to false; gitDiff/gitLog/gitStat ignore command errors in the HEAD~1...HEAD fallback and return empty string. On single-commit or shallow-clone repos this silently produces misleading empty output. Add parent-commit existence check and surface/log failures. Also add tests: normal branch, main-at-base, single-commit, detached HEAD.
+    onMainAtBase collapses all errors to false; gitDiff/gitLog/gitStat ignore command errors in the HEAD~1...HEAD fallback and return empty string. On single-commit or shallow-clone repos this silently produces misleading empty output. Add parent-commit existence check and surface/log failures.
   files:
   - cmd/devkit/main.go
   extra: []
@@ -188,24 +195,17 @@ items:
   - cmd/devkit/commands_new_test.go
   extra: []
   completed: 2026-04-03
-- id: devkit-5
-  doob_uuid: 70731e49-e3b4-43f2-ac87-c1612dd2d94e
-  name: ideas-backlog
-  priority: P2
-  status: parked
-  title: Unimplemented command ideas
-  description: |
-    Parked idea backlog (all doob priority 0): adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint. None blocked, none urgent. Revisit when core is stable.
-  files: []
-  extra: []
-  completed: 2026-04-03
 log:
+- date: 2026-04-04
+  summary: Session housekeeping — marked devkit-5 done (all idea commands already live), updated CLAUDE.md with doob handoff gotchas and complete command list, pruned done items to bottom.
+  commits:
+  - ce27d9d
+  - dcce209
+  - cea81a1
 - date: 2026-04-03
-  summary: Marked devkit-5 done — all idea backlog commands are already implemented (adr, docgen, migrate, scaffold, log-pattern, incident, profile, ticket, standup, changelog, test-gen, explain, lint).
+  summary: Marked devkit-5 done — all idea backlog commands are already implemented.
 - date: 2026-04-03
-  summary: Closed devkit-7 as stale — health/citriage only pass repo name string, no actual duplication with reporeview.gatherContext exists.
-- date: 2026-04-03
-  summary: 'Implemented devkit-14/15: new internal/infra/git package (RangeResolver port, ExecRangeResolver adapter, Diff/Log/Stat helpers, 4 real-repo tests); wired into council/review/pr/changelog/explain/testgen; deleted onMainAtBase/gitDiff/gitLog/gitStat. Sentinel follow-up: injected RangeResolver into 4 cmd constructors (was hardcoded). 235 tests passing.'
+  summary: 'Implemented devkit-14/15: RangeResolver in internal/infra/git; wired into council/review/pr/changelog/explain/testgen. 235 tests passing.'
   commits:
   - 5bc0ecb
   - fc7d297
@@ -214,25 +214,11 @@ log:
   - 23f8821
   - b7bcf42
 - date: 2026-04-03
-  summary: 'Merged diverged remote (12 commits) + local (5 commits); sentinel inspect: replaced no-op ci-triage test with real runner-not-called assertion (devkit-16 already done); false-positive automate panic confirmed not a real bug. 230 tests passing.'
+  summary: Merged diverged remote + local; replaced no-op ci-triage test (devkit-16). 230 tests passing.
   commits:
   - 3cd3b4d
   - c11feea
 - date: 2026-04-03
-  summary: 'council run: health 75% on onMainAtBase fallback — added devkit-14/15 for range-resolver refactor and error handling; devkit-2,16 done.'
-  commits:
-  - e968de7
-- date: 2026-04-03
   summary: automate registry refactor (devkit-6) + command wiring tests (devkit-8) done; 230 tests passing.
   commits:
   - 837824f
-- date: 2026-04-03
-  summary: Updated CLAUDE.md with BAML regeneration workflow docs; marked devkit-11 done.
-  commits:
-  - a63c356
-- date: 2026-04-03
-  summary: 'Sentinel review: diff was HANDOFF.yaml rename only — no code changes, no findings.'
-- date: 2026-04-03
-  summary: Regenerated baml_client for new schema fields; fixed patch-generated.sh guard logic; updated adapter_tools.go for ReproductionSteps struct. 215 tests passing.
-- date: 2026-04-03
-  summary: Bootstrapped HANDOFF.yaml from git state and doob todos.
