@@ -44,11 +44,11 @@ func TestRunUnknownTask(t *testing.T) {
 		RepoPath: t.TempDir(),
 		Runner:   &stubRunner{},
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if err == nil {
+		t.Fatal("expected error for unknown task, got nil")
 	}
 	if !strings.Contains(result, "unknown task") {
-		t.Errorf("expected unknown task message, got: %s", result)
+		t.Errorf("expected unknown task message in output, got: %s", result)
 	}
 }
 

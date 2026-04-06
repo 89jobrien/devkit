@@ -75,11 +75,13 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 	}
 
 	var sb strings.Builder
+	var failures []string
 	for _, task := range cfg.Tasks {
 		name := strings.TrimSpace(task)
 		fn, ok := registry[name]
 		if !ok {
 			fmt.Fprintf(&sb, "## %s\n\nunknown task: %q\n\n", name, name)
+			failures = append(failures, fmt.Sprintf("unknown task %q", name))
 			continue
 		}
 		heading := strings.ToUpper(name[:1]) + name[1:]
@@ -87,10 +89,14 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		result, err := fn(ctx, repoPath, cfg.Runner)
 		if err != nil {
 			fmt.Fprintf(&sb, "error: %v\n\n", err)
+			failures = append(failures, fmt.Sprintf("task %q: %v", name, err))
 		} else {
 			sb.WriteString(result)
 			sb.WriteString("\n\n")
 		}
+	}
+	if len(failures) > 0 {
+		return sb.String(), fmt.Errorf("automate: %s", strings.Join(failures, "; "))
 	}
 	return sb.String(), nil
 }

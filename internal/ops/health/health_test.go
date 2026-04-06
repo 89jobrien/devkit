@@ -36,6 +36,25 @@ func TestRunCallsRunner(t *testing.T) {
 	}
 }
 
+func TestRunJSONFormat(t *testing.T) {
+	dir := t.TempDir()
+	runner := &stubRunner{response: "score:90"}
+	result, err := health.Run(context.Background(), health.Config{
+		RepoPath: dir,
+		Runner:   runner,
+		Format:   "json",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.HasPrefix(result, "{") {
+		t.Errorf("expected JSON output, got: %s", result)
+	}
+	if !strings.Contains(result, `"output"`) {
+		t.Errorf("expected output key in JSON, got: %s", result)
+	}
+}
+
 func TestRunnerFuncAdapter(t *testing.T) {
 	called := false
 	runner := health.RunnerFunc(func(_ context.Context, repoCtx, checks string) (string, error) {

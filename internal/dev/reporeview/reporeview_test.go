@@ -8,6 +8,7 @@ import (
 	"github.com/89jobrien/devkit/internal/dev/reporeview"
 )
 
+
 type stubRunner struct{ response string }
 
 func (s *stubRunner) Run(_ context.Context, prompt string, _ []string) (string, error) {
@@ -48,6 +49,24 @@ func TestRunPromptContainsRepoName(t *testing.T) {
 	})
 	if !strings.Contains(capturedPrompt, "reviewing the repository") {
 		t.Errorf("expected review framing in prompt, got: %s", capturedPrompt)
+	}
+}
+
+func TestRunJSONFormat(t *testing.T) {
+	runner := &stubRunner{response: "top issue: no tests"}
+	result, err := reporeview.Run(context.Background(), reporeview.Config{
+		RepoPath: t.TempDir(),
+		Runner:   runner,
+		Format:   "json",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.HasPrefix(result, "{") {
+		t.Errorf("expected JSON output, got: %s", result)
+	}
+	if !strings.Contains(result, `"output"`) {
+		t.Errorf("expected output key in JSON, got: %s", result)
 	}
 }
 

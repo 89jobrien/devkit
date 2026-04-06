@@ -3,6 +3,7 @@ package health
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ func (f RunnerFunc) Run(ctx context.Context, repoContext, checkResults string) (
 type Config struct {
 	RepoPath string
 	Runner   Runner
+	Format   string // "markdown" (default) or "json"
 }
 
 // CheckResult is a single local check outcome.
@@ -50,7 +52,18 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 
 	checks := gatherChecks(rc.RepoPath)
 	checkStr := formatChecks(checks)
-	return cfg.Runner.Run(ctx, rc.Summary(), checkStr)
+	output, err := cfg.Runner.Run(ctx, rc.Summary(), checkStr)
+	if err != nil {
+		return "", err
+	}
+	if cfg.Format == "json" {
+		b, jerr := json.Marshal(map[string]string{"output": output})
+		if jerr != nil {
+			return "", fmt.Errorf("health: json marshal: %w", jerr)
+		}
+		return string(b), nil
+	}
+	return output, nil
 }
 
 func gatherChecks(repoPath string) []CheckResult {

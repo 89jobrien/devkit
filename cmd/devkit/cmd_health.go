@@ -31,6 +31,7 @@ func newHealthCmd(runner health.Runner) *cobra.Command {
 			result, err := health.Run(cmd.Context(), health.Config{
 				RepoPath: repo,
 				Runner:   r,
+				Format:   format,
 			})
 			if err != nil {
 				return err

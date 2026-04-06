@@ -33,6 +33,7 @@ func newRepoReviewCmd(runner council.Runner) *cobra.Command {
 			result, err := reporeview.Run(cmd.Context(), reporeview.Config{
 				RepoPath: repo,
 				Runner:   r,
+				Format:   format,
 			})
 			if err != nil {
 				return err

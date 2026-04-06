@@ -3,6 +3,7 @@ package reporeview
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 type Config struct {
 	RepoPath string
 	Runner   council.Runner
+	Format   string // "markdown" (default) or "json"
 }
 
 // Run gathers repo context and runs a council review against it.
@@ -30,7 +32,18 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 	}
 
 	prompt := buildPrompt(rc)
-	return cfg.Runner.Run(ctx, prompt, nil)
+	output, err := cfg.Runner.Run(ctx, prompt, nil)
+	if err != nil {
+		return "", err
+	}
+	if cfg.Format == "json" {
+		b, jerr := json.Marshal(map[string]string{"output": output})
+		if jerr != nil {
+			return "", fmt.Errorf("reporeview: json marshal: %w", jerr)
+		}
+		return string(b), nil
+	}
+	return output, nil
 }
 
 
