@@ -12,6 +12,17 @@ import (
 
 const maxLogBytes = 64 * 1024 // 64KB
 
+// ghBinary is the path to the gh CLI binary. Overridable in tests via SetGhBinary.
+var ghBinary = "gh"
+
+// SetGhBinary overrides the gh binary path used by fetchLog and returns a
+// restore function that resets it to the previous value. Intended for tests only.
+func SetGhBinary(path string) func() {
+	prev := ghBinary
+	ghBinary = path
+	return func() { ghBinary = prev }
+}
+
 // Runner is the port for the BAML triage call.
 type Runner interface {
 	Run(ctx context.Context, log, repoContext string) (string, error)
@@ -63,8 +74,10 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 // or attempts to find the most recent failed run if runID is empty.
 func fetchLog(repoPath, runID string) (string, error) {
 	if runID == "" {
-		// Find most recent failed run
-		out, err := exec.Command("gh", "run", "list", "--status", "failure", "--limit", "1", "--json", "databaseId", "-q", ".[0].databaseId").Output()
+		// Find most recent failed run — cmd.Dir ensures we query the correct repo.
+		cmd := exec.Command(ghBinary, "run", "list", "--status", "failure", "--limit", "1", "--json", "databaseId", "-q", ".[0].databaseId")
+		cmd.Dir = repoPath
+		out, err := cmd.Output()
 		if err != nil {
 			return "", fmt.Errorf("citriage: gh run list: %w", err)
 		}
@@ -74,7 +87,7 @@ func fetchLog(repoPath, runID string) (string, error) {
 		}
 	}
 
-	cmd := exec.Command("gh", "run", "view", runID, "--log-failed")
+	cmd := exec.Command(ghBinary, "run", "view", runID, "--log-failed")
 	cmd.Dir = repoPath
 	out, err := cmd.Output()
 	if err != nil {
