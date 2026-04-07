@@ -1,20 +1,19 @@
 project: devkit
 id: devkit
-updated: 2026-04-06
+updated: 2026-04-07
 branch: main
 state:
   tests: 238 passing (32 packages)
   build: clean
   notes: |
-    devkit-9/12/13 done — --format flag wired for repo-review and health; automate returns error on
-    failure/unknown task. Open: devkit-3 (provider smoke-test), devkit-4 (GatherRepoContext
-    ownership), devkit-10 (ci-triage repo scoping). No P0s.
+    devkit-3 done — provider smoke-test passed (council + diagnose, Anthropic primary). Open:
+    devkit-4 (GatherRepoContext ownership), devkit-10 (ci-triage repo scoping). No P0s.
 items:
 - id: devkit-3
   doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
   name: provider-fallback-smoke-test
   priority: P2
-  status: open
+  status: done
   title: Smoke-test provider fallback routing end-to-end
   description: |
     Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY to confirm Router wiring works in production. (doob #31)
@@ -23,6 +22,7 @@ items:
   - date: 2026-04-06
     type: note
     note: "captured in doob — todo id tgz6xmvf3t13jg248n9b"
+  completed: 2026-04-07
 - id: devkit-4
   doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
   name: gather-repo-context-ownership
@@ -225,6 +225,10 @@ items:
   extra: []
   completed: 2026-04-03
 log:
+- date: 2026-04-07
+  summary: |
+    devkit-3 done — smoke-tested council and diagnose with real ANTHROPIC_API_KEY; Router wiring
+    confirmed, Anthropic primary, no fallback needed.
 - date: 2026-04-06
   summary: |
     devkit-9/12/13 done — wired --format flag (markdown/json) for repo-review and health;
