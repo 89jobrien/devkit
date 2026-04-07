@@ -1,12 +1,14 @@
 project: devkit
 id: devkit
-updated: 2026-04-04
+updated: 2026-04-06
 branch: main
 state:
-  tests: 235 passing (32 packages)
+  tests: 238 passing (32 packages)
   build: clean
   notes: |
-    Council on HEAD~1 scored 94% (good). Open: devkit-3 (provider smoke-test), devkit-4 (GatherRepoContext ownership), devkit-7 (shared repo-context helper), devkit-9/10/12/13 (P3 backlog). No P0s.
+    devkit-9/12/13 done — --format flag wired for repo-review and health; automate returns error on
+    failure/unknown task. Open: devkit-3 (provider smoke-test), devkit-4 (GatherRepoContext
+    ownership), devkit-10 (ci-triage repo scoping). No P0s.
 items:
 - id: devkit-3
   doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
@@ -17,7 +19,10 @@ items:
   description: |
     Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY to confirm Router wiring works in production. (doob #31)
   files: []
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id tgz6xmvf3t13jg248n9b"
 - id: devkit-4
   doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
   name: gather-repo-context-ownership
@@ -28,18 +33,25 @@ items:
     Move GatherRepoContext to a more cohesive package or redefine internal/log as a broader runtime/ops utility package. (doob #35)
   files:
   - internal/log/
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id od0oyb4h9t1w41j99x60"
 - id: devkit-9
   doob_uuid: de30cbbd-d0e9-4099-b564-7dab2399f03a
   name: automate-failure-semantics
   priority: P3
-  status: open
+  status: done
   title: Harden automate failure semantics
   description: |
     Unknown tasks and delegated task failures embedded in output text instead of returning non-zero error — automation consumers report success on partial failure. File: internal/ops/automate/automate.go:42,54,68,82,89.
   files:
   - internal/ops/automate/automate.go
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id etl0tr13zwbbcuas6wds"
+  completed: 2026-04-06
 - id: devkit-10
   doob_uuid: db81858a-0e93-44a0-93f6-036fa43907d7
   name: citriage-repo-scoping
@@ -50,31 +62,42 @@ items:
     'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view' has it. In multi-repo environments this selects the wrong run.
   files:
   - internal/ops/citriage/citriage.go
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id yyhnc58fx2wzujseysn3"
 - id: devkit-12
   doob_uuid: b976b730-a380-4aa4-b01f-40241240db34
   name: repo-review-format-flag
   priority: P3
-  status: open
+  status: done
   title: Fix non-functional --format flag on repo-review command
   description: |
     Flag exposed but reporeview.Config has no Format field — machine-readable output callers silently get wrong behavior.
   files:
   - cmd/devkit/cmd_reporeview.go
   - internal/dev/reporeview/reporeview.go
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id 0mvplt1gtjbwkdw721uu"
+  completed: 2026-04-06
 - id: devkit-13
   doob_uuid: 3f7a14bb-faac-4faa-a0d4-eaf1695d8052
   name: health-format-flag
   priority: P3
-  status: open
+  status: done
   title: Fix non-functional --format flag on health command
   description: |
     Flag is parsed and logged but never passed into health.Run or used to vary output shape — CLI contract violation.
   files:
   - cmd/devkit/cmd_health.go
   - internal/ops/health/health.go
-  extra: []
+  extra:
+  - date: 2026-04-06
+    type: note
+    note: "captured in doob — todo id w0jodm7zk4l2wyw771to"
+  completed: 2026-04-06
 - id: devkit-1
   doob_uuid: 3c8ee38f-382d-4268-a221-fc46b044347f
   name: baml-uncommitted-changes
@@ -202,6 +225,13 @@ items:
   extra: []
   completed: 2026-04-03
 log:
+- date: 2026-04-06
+  summary: |
+    devkit-9/12/13 done — wired --format flag (markdown/json) for repo-review and health;
+    automate now returns non-zero error on unknown task or task failure. 238 tests passing.
+  commits:
+  - 9752b27
+  - 4738f38
 - date: 2026-04-04
   summary: |
     EOD: devkit-7 done — internal/repocontext extracted; .ctx/ gitignored; CLAUDE.md dir map + .devkit.toml added; pushed bb27ab6. All P1s closed. 235 tests.
