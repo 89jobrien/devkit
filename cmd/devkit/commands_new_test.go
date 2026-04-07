@@ -5,7 +5,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/89jobrien/devkit/internal/ai/council"
@@ -170,10 +169,8 @@ func TestAutomateCmd_UnknownTaskInOutput(t *testing.T) {
 		return "ok", nil
 	})
 	cmd := newAutomateCmd(r)
-	out, err := runCmd(t, cmd, "automate", "--tasks", "nonexistent-task", "--repo", t.TempDir())
-	require.NoError(t, err)
-	assert.True(t, strings.Contains(out, "unknown task") || strings.Contains(out, "nonexistent-task"),
-		"expected unknown task message in output, got: %s", out)
+	_, err := runCmd(t, cmd, "automate", "--tasks", "nonexistent-task", "--repo", t.TempDir())
+	assert.Error(t, err, "expected error for unknown task")
 }
 
 // --- registration completeness ---
