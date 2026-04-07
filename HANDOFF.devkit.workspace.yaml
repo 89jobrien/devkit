@@ -3,11 +3,12 @@ id: devkit
 updated: 2026-04-07
 branch: main
 state:
-  tests: 238 passing (32 packages)
+  tests: 240 passing (32 packages)
   build: clean
   notes: |
-    devkit-3 done — provider smoke-test passed (council + diagnose, Anthropic primary). Open:
-    devkit-4 (GatherRepoContext ownership), devkit-10 (ci-triage repo scoping). No P0s.
+    All open items closed. devkit-4 already complete (repocontext well-tested).
+    devkit-10 fixed — gh run list now sets cmd.Dir=repoPath; 2 new tests added.
+    No open items remaining.
 items:
 - id: devkit-3
   doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
