@@ -19,6 +19,7 @@ import (
 	devgit "github.com/89jobrien/devkit/internal/infra/git"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/ai/meta"
+	"github.com/89jobrien/devkit/internal/repocontext"
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/89jobrien/devkit/internal/dev/review"
 	"github.com/89jobrien/devkit/internal/ops/standup"
@@ -335,7 +336,7 @@ func main() {
 				return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 			})
 
-			res, err := meta.Exec(cmd.Context(), task, devlog.GatherRepoContext(), fetchSDKDocs(metaRefreshDocs), runner, cmd.OutOrStdout(), metaNoSynth)
+			res, err := meta.Exec(cmd.Context(), task, repocontext.GatherRepoContext(), fetchSDKDocs(metaRefreshDocs), runner, cmd.OutOrStdout(), metaNoSynth)
 			if err != nil {
 				return err
 			}

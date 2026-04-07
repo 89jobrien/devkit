@@ -56,6 +56,39 @@ func Gather(repoPath string) (Context, error) {
 	return ctx, nil
 }
 
+// GatherRepoContext returns a markdown snapshot of the current repo state:
+// CLAUDE.md/AGENTS.md/README.md previews, recent commits, working tree, and file structure.
+// It operates on the current working directory and never returns an error — failures are
+// surfaced as empty sections.
+func GatherRepoContext() string {
+	run := func(args ...string) string {
+		out, err := exec.Command(args[0], args[1:]...).Output()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "devkit: GatherRepoContext: %s: %v\n", strings.Join(args, " "), err)
+		}
+		return string(out)
+	}
+	var sb strings.Builder
+	for _, f := range []string{"CLAUDE.md", "AGENTS.md", "README.md"} {
+		if data, err := os.ReadFile(f); err == nil {
+			preview := data
+			if len(preview) > 2000 {
+				preview = preview[:2000]
+			}
+			sb.WriteString(fmt.Sprintf("### %s\n%s\n\n", f, string(preview)))
+		}
+	}
+	sb.WriteString("## Recent commits\n" + run("git", "log", "--oneline", "-20"))
+	sb.WriteString("\n## Working tree\n" + run("git", "status", "--short"))
+	allFiles := run("git", "ls-files")
+	lines := strings.Split(strings.TrimSpace(allFiles), "\n")
+	if len(lines) > 150 {
+		lines = lines[:150]
+	}
+	sb.WriteString("\n## Structure (first 150 paths)\n" + strings.Join(lines, "\n"))
+	return sb.String()
+}
+
 // Summary returns a single-line repo description suitable for use in prompts.
 // Format: "repo: <name>"
 func (c Context) Summary() string {
