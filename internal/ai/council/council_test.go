@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/89jobrien/devkit/internal/ai/council"
@@ -18,10 +19,15 @@ func (s stubRunner) Run(_ context.Context, prompt string, _ []string) (string, e
 	return s.response, nil
 }
 
-type captureRunner struct{ prompts []string }
+type captureRunner struct {
+	mu      sync.Mutex
+	prompts []string
+}
 
 func (c *captureRunner) Run(_ context.Context, prompt string, _ []string) (string, error) {
+	c.mu.Lock()
 	c.prompts = append(c.prompts, prompt)
+	c.mu.Unlock()
 	return "**Health Score:** 0.75\n**Summary**\nok", nil
 }
 
