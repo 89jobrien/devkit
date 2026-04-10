@@ -27,3 +27,7 @@ mode = "core"   # "core" (3 roles) | "extensive" (5 roles)
 # balanced_model      = ""            # override model for balanced tier
 # large_context_model = ""            # override model for large-context tier
 # coding_model        = ""            # override model for coding tier (no Gemini)
+
+[spec]
+# role_model      = "gpt-5.4-mini"   # model for the six role agents
+# synthesis_model = "gpt-5.4"        # model for synthesis
