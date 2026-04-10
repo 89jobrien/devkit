@@ -274,8 +274,9 @@ func LatestSpecFile(dir string) (string, error) {
 		if err != nil {
 			continue
 		}
-		if info.ModTime().After(latestMod) {
-			latestMod = info.ModTime()
+		mt := info.ModTime()
+		if mt.After(latestMod) || (mt.Equal(latestMod) && e.Name() < filepath.Base(latest)) {
+			latestMod = mt
 			latest = filepath.Join(dir, e.Name())
 		}
 	}

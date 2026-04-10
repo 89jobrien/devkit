@@ -86,8 +86,13 @@ func newSpecCmd(roleRunner spec.Runner, synthRunner spec.Runner) *cobra.Command 
 				return err
 			}
 
+			roleOrder := []string{"completeness", "ambiguity", "scope", "critic", "creative", "generalist"}
 			var allOutput strings.Builder
-			for key, out := range result.RoleOutputs {
+			for _, key := range roleOrder {
+				out, ok := result.RoleOutputs[key]
+				if !ok {
+					continue
+				}
 				fmt.Fprintf(w, "\n---- %s ----\n%s\n", key, out)
 				allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", key, out))
 			}
