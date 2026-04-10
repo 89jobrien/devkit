@@ -43,6 +43,10 @@ type Config struct {
 		CodingModel       string `toml:"coding_model"`
 		UseBAML           bool   `toml:"use_baml"`
 	} `toml:"providers"`
+	Spec struct {
+		RoleModel      string `toml:"role_model"`
+		SynthesisModel string `toml:"synthesis_model"`
+	} `toml:"spec"`
 }
 
 // LoadConfig finds and parses the nearest .devkit.toml walking up from cwd.
