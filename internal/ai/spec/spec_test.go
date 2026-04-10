@@ -106,3 +106,51 @@ func TestRunPerRoleOverride(t *testing.T) {
 	assert.Len(t, capture.prompts, 1, "critic should use override runner")
 	assert.NotEmpty(t, result.RoleOutputs["critic"])
 }
+
+func TestParseHealthScore(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected float64
+	}{
+		{"**Health Score:** 0.72", 0.72},
+		{"**Health Score:** 1.0", 1.0},
+		{"**Health Score:** 0.0", 0.0},
+		{"no score here", 0.5},           // default
+		{"**health score:** 0.88", 0.88}, // case-insensitive
+	}
+	for _, c := range cases {
+		got := spec.ParseHealthScore(c.input)
+		assert.InDelta(t, c.expected, got, 0.001, "input: %q", c.input)
+	}
+}
+
+func TestMetaScore(t *testing.T) {
+	outputs := map[string]string{
+		"completeness": "**Health Score:** 0.6",
+		"ambiguity":    "**Health Score:** 0.9",
+		"scope":        "**Health Score:** 0.8",
+		"critic":       "**Health Score:** 0.7",
+		"creative":     "**Health Score:** 0.85",
+		"generalist":   "**Health Score:** 0.75",
+	}
+	score := spec.MetaScore(outputs)
+	// average: (0.6+0.9+0.8+0.7+0.85+0.75)/6 = 0.7667
+	assert.InDelta(t, 0.7667, score, 0.01)
+}
+
+func TestSynthesize(t *testing.T) {
+	capture := &captureRunner{}
+	outputs := map[string]string{
+		"completeness": "**Health Score:** 0.6\n**Summary**\nMissing sections.",
+		"critic":       "**Health Score:** 0.5\n**Summary**\nCritical gaps.",
+	}
+	result, err := spec.Synthesize(context.Background(), outputs, "docs/specs/test.md", capture)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result)
+	require.Len(t, capture.prompts, 1)
+	p := capture.prompts[0]
+	assert.Contains(t, p, "Completeness Checker")
+	assert.Contains(t, p, "Strict Critic")
+	assert.Contains(t, p, "**Health Scores**")
+	assert.Contains(t, p, "**Spec Health**")
+}
