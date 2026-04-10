@@ -4,10 +4,13 @@ package spec
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -250,4 +253,35 @@ Role findings:
 %s`, path, councilText)
 
 	return runner.Run(ctx, prompt, nil)
+}
+
+// LatestSpecFile returns the path of the most recently modified .md file in dir.
+// Returns an error if dir contains no .md files.
+func LatestSpecFile(dir string) (string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("reading spec dir %s: %w", dir, err)
+	}
+
+	var latest string
+	var latestMod time.Time
+
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".md" {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().After(latestMod) {
+			latestMod = info.ModTime()
+			latest = filepath.Join(dir, e.Name())
+		}
+	}
+
+	if latest == "" {
+		return "", fmt.Errorf("no .md files found in %s", dir)
+	}
+	return latest, nil
 }

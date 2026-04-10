@@ -3,8 +3,11 @@ package spec_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/89jobrien/devkit/internal/ai/spec"
 	"github.com/stretchr/testify/assert"
@@ -64,6 +67,29 @@ func TestRunRoleErrorPropagates(t *testing.T) {
 	})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "provider down")
+}
+
+func TestLatestSpecFile(t *testing.T) {
+	dir := t.TempDir()
+
+	// Write three files with staggered mtimes.
+	files := []string{"a.md", "b.md", "c.md"}
+	for i, name := range files {
+		path := filepath.Join(dir, name)
+		require.NoError(t, os.WriteFile(path, []byte("# "+name), 0o644))
+		mtime := time.Now().Add(time.Duration(i) * time.Second)
+		require.NoError(t, os.Chtimes(path, mtime, mtime))
+	}
+
+	got, err := spec.LatestSpecFile(dir)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(dir, "c.md"), got)
+}
+
+func TestLatestSpecFileEmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	_, err := spec.LatestSpecFile(dir)
+	assert.Error(t, err)
 }
 
 func TestRunPerRoleOverride(t *testing.T) {
