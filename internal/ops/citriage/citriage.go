@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/89jobrien/devkit/internal/repocontext"
@@ -62,12 +63,108 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		}
 	}
 
+	log = filterLog(log)
+
 	// Cap log at maxLogBytes
 	if len(log) > maxLogBytes {
 		log = log[:maxLogBytes] + "\n[truncated]"
 	}
 
 	return cfg.Runner.Run(ctx, log, rc.Summary())
+}
+
+// Compiled once at package init for filterLog.
+var (
+	// reANSI matches ANSI escape sequences.
+	reANSI = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	// reTimestamp matches ISO-8601 timestamps optionally preceded by a BOM.
+	reTimestamp = regexp.MustCompile(`[\xef\xbb\xbf]*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z `)
+	// reJobPrefix matches "<job>\t<step>\t" prefixes emitted by gh run view --log-failed.
+	reJobPrefix = regexp.MustCompile(`^[^\t]+\t[^\t]*\t`)
+)
+
+// boilerplatePatterns are substrings that identify GHA runner setup noise.
+// Lines containing any of these are dropped wholesale.
+var boilerplatePatterns = []string{
+	"##[group]",
+	"##[endgroup]",
+	"##[debug]",
+	"Runner Image Provisioner",
+	"Hosted Compute Agent",
+	"Azure Region",
+	"Worker ID",
+	"Runner Image",
+	"Included Software:",
+	"Image Release:",
+	"GITHUB_TOKEN Permissions",
+	"Secret source:",
+	"Prepare workflow directory",
+	"Prepare all required actions",
+	"Getting action download info",
+	"Download action repository",
+	"Complete job name:",
+	"Temporarily overriding HOME=",
+	"Adding repository directory to the temporary git global config",
+	"Deleting the contents of",
+	"Initializing the repository",
+	"Disabling automatic garbage collection",
+	"Setting up auth",
+	"hint: Using 'master' as the name",
+	"hint: will change to",
+	"hint: to use in all of your new repositories",
+	"hint: call:",
+	"hint: \tgit config",
+	"hint: Names commonly chosen",
+	"hint: \tgit branch",
+	"hint: Disable this message",
+	"Fetching the repository",
+	"Determining the checkout info",
+	"Checking out the ref",
+	"[command]/usr/bin/git config",
+	"[command]/usr/bin/git submodule",
+	"[command]/usr/bin/git remote",
+	"[command]/usr/bin/git init",
+	"[command]/usr/bin/git version",
+	"[command]/usr/bin/git -c",
+	"[command]/usr/bin/git fetch",
+	"[command]/usr/bin/git checkout",
+}
+
+// filterLog strips timestamps, ANSI codes, job/step prefixes, and GHA runner
+// boilerplate to reduce token count before sending to the LLM.
+func filterLog(raw string) string {
+	lines := strings.Split(raw, "\n")
+	out := make([]string, 0, len(lines))
+	prevBlank := false
+	for _, line := range lines {
+		// Strip ANSI codes and timestamps first.
+		line = reANSI.ReplaceAllString(line, "")
+		line = reTimestamp.ReplaceAllString(line, "")
+		// Strip "<job>\t<step>\t" prefix.
+		line = reJobPrefix.ReplaceAllString(line, "")
+		line = strings.TrimRight(line, " \t\r")
+
+		// Drop boilerplate.
+		drop := false
+		for _, pat := range boilerplatePatterns {
+			if strings.Contains(line, pat) {
+				drop = true
+				break
+			}
+		}
+		if drop {
+			continue
+		}
+
+		// Collapse consecutive blank lines.
+		blank := line == ""
+		if blank && prevBlank {
+			continue
+		}
+		prevBlank = blank
+		out = append(out, line)
+	}
+	return strings.Join(out, "\n")
 }
 
 // fetchLog shells out to gh to get the failure log for the given run ID,
