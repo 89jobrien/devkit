@@ -78,3 +78,115 @@ council	build	2026-03-24T03:32:01.1234568Z ./citriage.go:42:3: undefined: filter
 		t.Errorf("filter did not reduce size: before=%d after=%d", len(raw), len(got))
 	}
 }
+
+// --- Negative / preservation tests ---
+
+func TestFilterLogPreservesGHAErrorAnnotation(t *testing.T) {
+	// ##[error] is a GHA annotation that carries actionable info; it must not
+	// be dropped by the ##[group]/##[endgroup]/##[debug] prefix rules.
+	raw := "##[error]Process completed with exit code 1."
+	got := filterLog(raw)
+	if !strings.Contains(got, "##[error]") {
+		t.Errorf("##[error] annotation was incorrectly dropped: %q", got)
+	}
+}
+
+func TestFilterLogPreservesGHAWarningAnnotation(t *testing.T) {
+	raw := "##[warning]Node.js 16 actions are deprecated."
+	got := filterLog(raw)
+	if !strings.Contains(got, "##[warning]") {
+		t.Errorf("##[warning] annotation was incorrectly dropped: %q", got)
+	}
+}
+
+func TestFilterLogPreservesErrorMentioningGitConfig(t *testing.T) {
+	// An error message that mentions "git config" should NOT be dropped,
+	// even though "[command]/usr/bin/git config" is boilerplate.
+	raw := `fatal: unable to read config file '/home/runner/.gitconfig': No such file or directory
+error: could not set 'git config user.email' — check your git config`
+	got := filterLog(raw)
+	if !strings.Contains(got, "fatal: unable to read config") {
+		t.Errorf("legitimate git config error was dropped: %q", got)
+	}
+	if !strings.Contains(got, "could not set") {
+		t.Errorf("legitimate git config error was dropped: %q", got)
+	}
+}
+
+func TestFilterLogPreservesTabDelimitedTestOutput(t *testing.T) {
+	// Tab-delimited lines that aren't GHA job prefixes must survive.
+	// The tightened reJobPrefix requires the first field to be a slug.
+	raw := "\t\tgot:  map[string]int{\"a\": 1}\n\t\twant: map[string]int{\"a\": 2}"
+	got := filterLog(raw)
+	if !strings.Contains(got, "got:") || !strings.Contains(got, "want:") {
+		t.Errorf("tab-indented test diff was incorrectly stripped: %q", got)
+	}
+}
+
+func TestFilterLogPreservesGoTestFAILWithTabs(t *testing.T) {
+	// go test outputs FAIL lines with a tab; they must not be eaten.
+	raw := "FAIL\tgithub.com/89jobrien/devkit/internal/ops/citriage\t0.042s"
+	got := filterLog(raw)
+	if !strings.Contains(got, "FAIL") {
+		t.Errorf("go test FAIL line was dropped: %q", got)
+	}
+}
+
+func TestFilterLogPreservesHintLikeErrorContent(t *testing.T) {
+	// The word "hint" inside a compiler error should not trigger the
+	// "hint: " prefix rule because the line doesn't start with "hint: ".
+	raw := "error[E0277]: the trait bound is not satisfied; hint: consider adding #[derive(Clone)]"
+	got := filterLog(raw)
+	if !strings.Contains(got, "error[E0277]") {
+		t.Errorf("error line containing 'hint' was incorrectly dropped: %q", got)
+	}
+}
+
+// --- BOM-prefixed timestamp test ---
+
+func TestFilterLogStripsBOMPrefixedTimestamp(t *testing.T) {
+	// BOM (\xef\xbb\xbf) can appear before timestamps in some GHA log formats.
+	raw := "\xef\xbb\xbf2026-03-24T03:31:16.4894510Z real error here"
+	got := filterLog(raw)
+	if strings.Contains(got, "2026-03-24") {
+		t.Errorf("BOM-prefixed timestamp not stripped: %q", got)
+	}
+	if strings.Contains(got, "\xef\xbb\xbf") {
+		t.Errorf("BOM not stripped: %q", got)
+	}
+	if !strings.Contains(got, "real error here") {
+		t.Errorf("content after BOM timestamp lost: %q", got)
+	}
+}
+
+// --- Size reduction verification ---
+
+func TestFilterLogSizeReduction(t *testing.T) {
+	// Build a realistic GHA log with a known ratio of noise to signal.
+	var b strings.Builder
+	for i := 0; i < 50; i++ {
+		// Noise lines (runner setup, git commands, hints)
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z ##[group]Run actions/checkout@v4\n")
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z Runner Image Provisioner v1.2.3\n")
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z ##[endgroup]\n")
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z [command]/usr/bin/git version\n")
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z hint: Using 'master' as the name\n")
+	}
+	// Signal lines (actual errors)
+	for i := 0; i < 10; i++ {
+		b.WriteString("build\tBuild\t2026-01-01T00:00:01.0000000Z error: cannot find type `Foo` in this scope\n")
+		b.WriteString("build\tBuild\t2026-01-01T00:00:01.0000000Z   --> src/main.rs:42:5\n")
+	}
+	raw := b.String()
+	got := filterLog(raw)
+
+	// The 250 noise lines should be almost entirely removed.
+	reduction := 1.0 - float64(len(got))/float64(len(raw))
+	if reduction < 0.50 {
+		t.Errorf("insufficient size reduction: %.1f%% (want >= 50%%); before=%d after=%d",
+			reduction*100, len(raw), len(got))
+	}
+	if !strings.Contains(got, "cannot find type") {
+		t.Errorf("error content lost after filtering")
+	}
+}

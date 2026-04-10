@@ -77,18 +77,29 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 var (
 	// reANSI matches ANSI escape sequences.
 	reANSI = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
-	// reTimestamp matches ISO-8601 timestamps optionally preceded by a BOM.
-	reTimestamp = regexp.MustCompile(`[\xef\xbb\xbf]*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z `)
+	// reTimestamp matches ISO-8601 timestamps optionally preceded by a UTF-8 BOM.
+	reTimestamp = regexp.MustCompile(`\x{FEFF}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z `)
 	// reJobPrefix matches "<job>\t<step>\t" prefixes emitted by gh run view --log-failed.
-	reJobPrefix = regexp.MustCompile(`^[^\t]+\t[^\t]*\t`)
+	// The job name must be a slug (alphanumeric, dash, underscore, space) to avoid
+	// matching arbitrary tab-delimited content.
+	reJobPrefix = regexp.MustCompile(`^[a-zA-Z0-9_/ -]+\t[a-zA-Z0-9_ -]*\t`)
 )
 
-// boilerplatePatterns are substrings that identify GHA runner setup noise.
-// Lines containing any of these are dropped wholesale.
-var boilerplatePatterns = []string{
+// boilerplatePrefix patterns are matched against the start of a line.
+// They are more precise than substring matching and avoid false positives
+// when error messages happen to contain similar text.
+var boilerplatePrefixes = []string{
 	"##[group]",
 	"##[endgroup]",
 	"##[debug]",
+	"[command]/usr/bin/git ",
+	"hint: ",
+}
+
+// boilerplateExact patterns are matched as full substrings, but only against
+// lines that are clearly GHA runner infrastructure noise (unlikely to appear
+// in real compiler/test output).
+var boilerplateSubstrings = []string{
 	"Runner Image Provisioner",
 	"Hosted Compute Agent",
 	"Azure Region",
@@ -109,25 +120,24 @@ var boilerplatePatterns = []string{
 	"Initializing the repository",
 	"Disabling automatic garbage collection",
 	"Setting up auth",
-	"hint: Using 'master' as the name",
-	"hint: will change to",
-	"hint: to use in all of your new repositories",
-	"hint: call:",
-	"hint: \tgit config",
-	"hint: Names commonly chosen",
-	"hint: \tgit branch",
-	"hint: Disable this message",
 	"Fetching the repository",
 	"Determining the checkout info",
 	"Checking out the ref",
-	"[command]/usr/bin/git config",
-	"[command]/usr/bin/git submodule",
-	"[command]/usr/bin/git remote",
-	"[command]/usr/bin/git init",
-	"[command]/usr/bin/git version",
-	"[command]/usr/bin/git -c",
-	"[command]/usr/bin/git fetch",
-	"[command]/usr/bin/git checkout",
+}
+
+// isBoilerplate returns true if the line matches a known GHA noise pattern.
+func isBoilerplate(line string) bool {
+	for _, p := range boilerplatePrefixes {
+		if strings.HasPrefix(line, p) {
+			return true
+		}
+	}
+	for _, s := range boilerplateSubstrings {
+		if strings.Contains(line, s) {
+			return true
+		}
+	}
+	return false
 }
 
 // filterLog strips timestamps, ANSI codes, job/step prefixes, and GHA runner
@@ -144,15 +154,8 @@ func filterLog(raw string) string {
 		line = reJobPrefix.ReplaceAllString(line, "")
 		line = strings.TrimRight(line, " \t\r")
 
-		// Drop boilerplate.
-		drop := false
-		for _, pat := range boilerplatePatterns {
-			if strings.Contains(line, pat) {
-				drop = true
-				break
-			}
-		}
-		if drop {
+		// Drop boilerplate: prefix-anchored first, then substring.
+		if isBoilerplate(line) {
 			continue
 		}
 
