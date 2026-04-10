@@ -29,8 +29,7 @@ type Config struct {
 	Content         string            // full spec file content
 	Path            string            // source path (for display)
 	Runner          Runner            // default runner for all six roles
-	Runners         map[string]Runner // per-role overrides
-	SynthesisRunner Runner            // runner for the synthesis pass
+	Runners map[string]Runner // per-role overrides
 }
 
 // Result holds all role outputs.
