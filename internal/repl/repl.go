@@ -3,6 +3,7 @@ package repl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,6 +13,10 @@ import (
 	"github.com/89jobrien/devkit/internal/chain"
 	"github.com/chzyer/readline"
 )
+
+// ErrExit is returned by DispatchCommand when the user requests exit/quit.
+// The Run loop treats this as a clean shutdown, not an error.
+var ErrExit = errors.New("repl: exit requested")
 
 // DispatchConfig holds the runtime config for dispatching REPL commands.
 // StageRunners and SynthesisRunner are injected by the cmd layer.
@@ -45,8 +50,7 @@ func ParseCommand(line string) (cmd string, args []string, noContext bool) {
 func DispatchCommand(cmd string, args []string, noContext bool, s *Session, cfg DispatchConfig) (string, error) {
 	switch cmd {
 	case "exit", "quit":
-		os.Exit(0)
-		return "", nil
+		return "", ErrExit
 	case "clear":
 		s.Clear()
 		return "session cleared.", nil
@@ -135,13 +139,12 @@ func Run(s *Session, cfg DispatchConfig) error {
 	}
 	defer rl.Close()
 
-	// Handle Ctrl-C gracefully.
+	// Handle Ctrl-C gracefully: close readline so the read loop exits cleanly.
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sig
 		rl.Close()
-		os.Exit(0)
 	}()
 
 	fmt.Println("devkit repl — type 'help' for commands, 'exit' to quit")
@@ -156,6 +159,9 @@ func Run(s *Session, cfg DispatchConfig) error {
 			continue
 		}
 		out, dispErr := DispatchCommand(cmd, args, noCtx, s, cfg)
+		if errors.Is(dispErr, ErrExit) {
+			break
+		}
 		if dispErr != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", dispErr)
 			continue

@@ -2,6 +2,7 @@
 package repl_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/89jobrien/devkit/internal/chain"
@@ -32,6 +33,15 @@ func TestParseCommand_Empty(t *testing.T) {
 func TestParseCommand_Exit(t *testing.T) {
 	cmd, _, _ := repl.ParseCommand("exit")
 	assert.Equal(t, "exit", cmd)
+}
+
+func TestDispatchExitReturnsErrExit(t *testing.T) {
+	s := repl.NewSession()
+	for _, cmd := range []string{"exit", "quit"} {
+		_, err := repl.DispatchCommand(cmd, nil, false, s, repl.DispatchConfig{})
+		require.Error(t, err, "cmd=%s", cmd)
+		assert.True(t, errors.Is(err, repl.ErrExit), "cmd=%s: expected ErrExit, got %v", cmd, err)
+	}
 }
 
 func TestDispatchUnknownCommand(t *testing.T) {
