@@ -37,11 +37,12 @@ func newAutomateCmd(runner automate.Runner) *cobra.Command {
 				RepoPath: repo,
 				Runner:   r,
 			})
+			if result != "" {
+				fmt.Fprintln(cmd.OutOrStdout(), result)
+			}
 			if err != nil {
 				return err
 			}
-
-			fmt.Fprintln(cmd.OutOrStdout(), result)
 
 			devlog.Complete(id, "automate", map[string]string{"tasks": tasks}, result, time.Since(start))
 			_, _ = devlog.SaveCommitLog(sha, "automate", result, map[string]string{"tasks": tasks})

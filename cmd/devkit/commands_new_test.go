@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/89jobrien/devkit/internal/ai/council"
@@ -110,6 +111,19 @@ func TestRepoReviewCmd_RunnerError(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRepoReviewCmd_JSONFormat(t *testing.T) {
+	dir := t.TempDir()
+	r := council.RunnerFunc(func(ctx context.Context, prompt string, tools []string) (string, error) {
+		return "review output", nil
+	})
+	cmd := newRepoReviewCmd(r)
+	out, err := runCmd(t, cmd, "repo-review", "--repo", dir, "--format", "json")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(strings.TrimSpace(out), "{"), "expected JSON output, got: %s", out)
+	assert.Contains(t, out, `"output"`, "expected output key in JSON")
+	assert.Contains(t, out, "review output", "runner response missing from JSON")
+}
+
 // --- health ---
 
 func TestHealthCmd_Registration(t *testing.T) {
@@ -146,6 +160,19 @@ func TestHealthCmd_RunsChecks(t *testing.T) {
 	assert.Contains(t, capturedChecks, "pass", "expected at least one passing check")
 }
 
+func TestHealthCmd_JSONFormat(t *testing.T) {
+	dir := t.TempDir()
+	r := health.RunnerFunc(func(ctx context.Context, repoCtx, checks string) (string, error) {
+		return "health output", nil
+	})
+	cmd := newHealthCmd(r)
+	out, err := runCmd(t, cmd, "health", "--repo", dir, "--format", "json")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(strings.TrimSpace(out), "{"), "expected JSON output, got: %s", out)
+	assert.Contains(t, out, `"output"`, "expected output key in JSON")
+	assert.Contains(t, out, "health output", "runner response missing from JSON")
+}
+
 // --- automate ---
 
 func TestAutomateCmd_Registration(t *testing.T) {
@@ -171,6 +198,32 @@ func TestAutomateCmd_UnknownTaskInOutput(t *testing.T) {
 	cmd := newAutomateCmd(r)
 	_, err := runCmd(t, cmd, "automate", "--tasks", "nonexistent-task", "--repo", t.TempDir())
 	assert.Error(t, err, "expected error for unknown task")
+}
+
+func TestAutomateCmd_PartialOutputOnTaskFailure(t *testing.T) {
+	// When one task fails, automate must still return output for completed tasks
+	// and return a non-nil error naming the failing task.
+	r := automate.RunnerFunc(func(ctx context.Context, prompt string, tools []string) (string, error) {
+		return "stub output", nil
+	})
+	cmd := newAutomateCmd(r)
+	// "changelog" succeeds (registered), "nonexistent" fails.
+	out, err := runCmd(t, cmd, "automate", "--tasks", "changelog,nonexistent", "--repo", t.TempDir())
+	require.Error(t, err, "expected error when a task fails")
+	assert.Contains(t, err.Error(), "nonexistent", "error must name the failing task")
+	assert.Contains(t, out, "## Changelog", "output for completed tasks must be present")
+}
+
+func TestAutomateCmd_ErrorMessageNamesAllFailures(t *testing.T) {
+	// When multiple tasks fail, the error must mention each one.
+	r := automate.RunnerFunc(func(ctx context.Context, prompt string, tools []string) (string, error) {
+		return "ok", nil
+	})
+	cmd := newAutomateCmd(r)
+	_, err := runCmd(t, cmd, "automate", "--tasks", "bad1,bad2", "--repo", t.TempDir())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "bad1")
+	assert.Contains(t, err.Error(), "bad2")
 }
 
 // --- registration completeness ---

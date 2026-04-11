@@ -1,4 +1,17 @@
 // Package citriage diagnoses CI failure logs via BAML structured output.
+//
+// Log preprocessing (filterLog) targets output from `gh run view --log-failed`,
+// which emits lines in the form:
+//
+//	<job>\t<step>\t<timestamp> <payload>
+//
+// The filter strips ANSI escape codes, ISO-8601 fractional-second UTC timestamps
+// (including optional UTF-8 BOM prefix), and GHA job/step prefixes before the
+// log is truncated to maxLogBytes and forwarded to the runner. Boilerplate
+// suppression uses two tiers: boilerplatePrefixes (anchored to line start) and
+// boilerplateSubstrings (strings.Contains against GHA infrastructure phrases
+// unlikely to appear in real compiler or test output). Lines beginning with
+// ##[error] or ##[warning] are intentionally preserved.
 package citriage
 
 import (
