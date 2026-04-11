@@ -25,7 +25,7 @@ primary = "anthropic"  # or "openai"
 ```
 
 ## Development
-- `go test ./...` — 235 tests across 32 packages, no real API calls (httptest + stub runners)
+- `go test ./...` — 249+ tests across 35 packages, no real API calls (httptest + stub runners)
 - `go test ./internal/<pkg>/...` — run a single package's tests
 - `go build ./cmd/devkit ./cmd/ci-agent ./cmd/meta` — verify all three binaries compile
 - `devkit diagnose [--service <name>] [--log-cmd <cmd>]` — run LLM diagnosis on local service logs
@@ -51,8 +51,26 @@ Regeneration workflow (run from `internal/ai/baml/`):
 Schema changes that alter struct shapes (e.g. `[]string` → `struct`) require updating `adapter_tools.go` callers — check `formatCITriage` and similar formatter functions.
 
 ## Implemented Commands
-All commands are live: adr, changelog, council, diagnose, docgen, explain, incident, lint, log-pattern,
-meta, migrate, pr, profile, review, scaffold, standup, test-gen, ticket.
+All commands are live: adr, chain, changelog, council, diagnose, docgen, explain, incident, lint,
+log-pattern, meta, migrate, pr, profile, repl, review, scaffold, standup, test-gen, ticket.
+
+## chain / repl packages
+`internal/chain/` — Result envelope, stage registry, preflight validator, pipeline runner, synthesis.
+`chain.Result{Stage, Output, Payload any, Err, Meta}` — universal pipeline envelope. `IsSkipped()` true on
+zero value. `SelectStages([]string) ([]StageSlot, error)` validates names and positions in canonical order.
+`RunPipeline(ctx, slots, synthesis)` — results[0]=preflight, results[1..N]=slots, results[N+1]=synthesis.
+Pipeline never aborts on stage error; synthesis always runs. `SynthesisRunner` uses `gpt-5.4` directly.
+`Preflight(PreflightConfig) []error` — reports ALL failures at once (never stops at first).
+
+`internal/repl/` — readline session loop and context store.
+`Session` accumulates `[]Result`; `AppendIfContext(r, useContext bool)` respects `--no-context` flag.
+`DispatchConfig{StageRunners, SynthesisRunner, RepoPath}` — injected by cmd layer.
+`ParseCommand(line) (cmd, args, noContext)` — splits input, strips `--no-context` flag.
+
+`devkit chain <stage>...` — runs selected stages in canonical order + synthesis. Flags: `--repo`, `--run`.
+`devkit repl` — interactive readline REPL, persists auth and accumulates session context. Flag: `--repo`.
+Canonical stage order: council → ci-triage → log-pattern → diagnose → ticket → pr → meta.
+`OPENAI_API_KEY` required (synthesis always uses gpt-5.4); `ANTHROPIC_API_KEY` optional.
 
 ## doob / Handoff
 - `doob todo complete` does not accept `devkit-N` IDs or UUIDs with hyphens — use
