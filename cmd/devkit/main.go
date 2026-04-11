@@ -516,6 +516,8 @@ func main() {
 		newCITriageCmd(nil),
 		newRepoReviewCmd(nil),
 		newSpecCmd(nil, nil),
+		newChainCmd(nil, nil),
+		newReplCmd(),
 	)
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)

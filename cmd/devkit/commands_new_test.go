@@ -251,6 +251,23 @@ func TestChainCmd_UnknownStageErrors(t *testing.T) {
 	assert.Contains(t, err.Error(), "nonexistent-stage")
 }
 
+// --- repl ---
+
+func TestReplCmd_Registration(t *testing.T) {
+	root := &cobra.Command{Use: "devkit"}
+	root.AddCommand(newReplCmd())
+	names := map[string]bool{}
+	for _, c := range root.Commands() {
+		names[c.Name()] = true
+	}
+	assert.True(t, names["repl"], "repl not registered")
+}
+
+func TestReplCmd_HasExpectedFlags(t *testing.T) {
+	cmd := newReplCmd()
+	assert.NotNil(t, cmd.Flags().Lookup("repo"), "missing --repo flag")
+}
+
 // --- registration completeness ---
 
 func TestAllCommandsRegistered(t *testing.T) {
