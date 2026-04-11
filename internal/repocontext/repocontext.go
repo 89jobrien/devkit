@@ -60,6 +60,12 @@ func Gather(repoPath string) (Context, error) {
 // CLAUDE.md/AGENTS.md/README.md previews, recent commits, working tree, and file structure.
 // It operates on the current working directory and never returns an error — failures are
 // surfaced as empty sections.
+//
+// Package ownership note: GatherRepoContext lives here alongside Gather because both
+// concern repo metadata collection. Unlike Gather (which takes an explicit path and
+// returns a structured Context), GatherRepoContext targets the cwd, never errors, and
+// returns a flat markdown string for use in prompts. If this package grows further,
+// consider splitting into repocontext (structured) and repocontext/snapshot (markdown).
 func GatherRepoContext() string {
 	run := func(args ...string) string {
 		out, err := exec.Command(args[0], args[1:]...).Output()

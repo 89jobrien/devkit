@@ -147,6 +147,61 @@ func TestRouterCodingTierExcludesGemini(t *testing.T) {
 	assert.Contains(t, err.Error(), "no provider available")
 }
 
+func TestRouterThreeProviderFallback(t *testing.T) {
+	// Anthropic and OpenAI both fail; Gemini (third in chain) succeeds.
+	antSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "down", http.StatusServiceUnavailable)
+	}))
+	defer antSrv.Close()
+	oaiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "down", http.StatusServiceUnavailable)
+	}))
+	defer oaiSrv.Close()
+	gemSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"candidates": []map[string]any{{
+				"content": map[string]any{
+					"parts": []map[string]any{{"text": "from gemini fallback"}},
+				},
+			}},
+		})
+	}))
+	defer gemSrv.Close()
+
+	r := providers.NewRouter(providers.RouterConfig{
+		AnthropicKey: "ant-key",
+		OpenAIKey:    "oai-key",
+		GeminiKey:    "gem-key",
+		AnthropicURL: antSrv.URL,
+		OpenAIURL:    oaiSrv.URL,
+		GeminiURL:    gemSrv.URL,
+	})
+	result, err := r.For(providers.TierBalanced).Run(context.Background(), "hello", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "from gemini fallback", result)
+}
+
+func TestRouterAgentRunnerFallback(t *testing.T) {
+	// Anthropic (agent-capable) fails; OpenAI (agent-capable) succeeds.
+	antSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "down", http.StatusServiceUnavailable)
+	}))
+	defer antSrv.Close()
+	oaiSrv := openAISimpleServer(t, "from openai agent")
+	defer oaiSrv.Close()
+
+	r := providers.NewRouter(providers.RouterConfig{
+		AnthropicKey: "ant-key",
+		OpenAIKey:    "oai-key",
+		AnthropicURL: antSrv.URL,
+		OpenAIURL:    oaiSrv.URL,
+	})
+	result, err := r.AgentRunnerFor(providers.TierBalanced, nil).Run(context.Background(), "hello", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "from openai agent", result)
+}
+
 func TestRouterAgentRunnerForSkipsNonAgentProviders(t *testing.T) {
 	// Gemini is ChatProvider only; with only Gemini key, AgentRunnerFor should fail.
 	gemSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
