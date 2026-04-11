@@ -268,6 +268,25 @@ func TestReplCmd_HasExpectedFlags(t *testing.T) {
 	assert.NotNil(t, cmd.Flags().Lookup("repo"), "missing --repo flag")
 }
 
+func TestReplCmd_MissingOpenAIKeyErrors(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	cmd := newReplCmd()
+	_, err := runCmd(t, cmd, "repl")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "OPENAI_API_KEY")
+}
+
+func TestReplCmd_AnthropicOnlyAlsoErrors(t *testing.T) {
+	// Anthropic alone is not enough — OpenAI is required for synthesis.
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("ANTHROPIC_API_KEY", "ant-key")
+	cmd := newReplCmd()
+	_, err := runCmd(t, cmd, "repl")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "OPENAI_API_KEY")
+}
+
 // --- registration completeness ---
 
 func TestAllCommandsRegistered(t *testing.T) {
@@ -283,6 +302,8 @@ func TestAllCommandsRegistered(t *testing.T) {
 		newRepoReviewCmd(nil),
 		newHealthCmd(nil),
 		newAutomateCmd(nil),
+		newChainCmd(nil, nil),
+		newReplCmd(),
 	)
 	names := map[string]bool{}
 	for _, c := range root.Commands() {
@@ -290,7 +311,7 @@ func TestAllCommandsRegistered(t *testing.T) {
 	}
 	for _, want := range []string{
 		"pr", "changelog", "lint", "explain", "test-gen", "ticket",
-		"ci-triage", "repo-review", "health", "automate",
+		"ci-triage", "repo-review", "health", "automate", "chain", "repl",
 	} {
 		assert.True(t, names[want], "command %q not registered", want)
 	}

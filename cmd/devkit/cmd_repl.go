@@ -10,6 +10,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// resolveRepo returns repoPath if non-empty, otherwise the current working directory.
+func resolveRepo(repoPath string) string {
+	if repoPath != "" {
+		return repoPath
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return cwd
+}
+
 func newReplCmd() *cobra.Command {
 	var repo string
 	cmd := &cobra.Command{
@@ -20,15 +32,15 @@ func newReplCmd() *cobra.Command {
 			oaiKey := os.Getenv("OPENAI_API_KEY")
 			gemKey := os.Getenv("GEMINI_API_KEY")
 
-			if antKey == "" && oaiKey == "" {
-				return fmt.Errorf("repl: ANTHROPIC_API_KEY or OPENAI_API_KEY required")
-			}
+			// OPENAI_API_KEY is required: synthesis always uses gpt-5.4 via OpenAI.
+			// ANTHROPIC_API_KEY is optional (used for non-synthesis stages).
 			if oaiKey == "" {
-				return fmt.Errorf("repl: OPENAI_API_KEY required for synthesis stage")
+				return fmt.Errorf("repl: OPENAI_API_KEY required (synthesis stage always uses gpt-5.4)")
 			}
 
+			repoPath := resolveRepo(repo)
 			runners := chain.BuildStageRunners(chain.StageWiringConfig{
-				RepoPath:     repo,
+				RepoPath:     repoPath,
 				AnthropicKey: antKey,
 				OpenAIKey:    oaiKey,
 				GeminiKey:    gemKey,
@@ -39,7 +51,7 @@ func newReplCmd() *cobra.Command {
 			cfg := repl.DispatchConfig{
 				StageRunners:    runners,
 				SynthesisRunner: synth,
-				RepoPath:        repo,
+				RepoPath:        repoPath,
 			}
 			return repl.Run(session, cfg)
 		},
