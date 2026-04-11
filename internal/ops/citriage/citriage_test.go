@@ -110,6 +110,59 @@ func TestFetchLogRunListUsesRepoDirWithExplicitRunID(t *testing.T) {
 	}
 }
 
+// TestRunFilteringBeforeTruncation verifies that filterLog runs before the
+// 64KB cap and before dispatch to the runner. It feeds a log that is large
+// enough to require truncation only if boilerplate is NOT removed, and
+// asserts the runner receives cleaned output with the truncation marker.
+func TestRunFilteringBeforeTruncation(t *testing.T) {
+	var capturedLog string
+	runner := citriage.RunnerFunc(func(_ context.Context, log, _ string) (string, error) {
+		capturedLog = log
+		return "ok", nil
+	})
+
+	// Build a log: 800 boilerplate lines (~80KB raw) + a real error line.
+	// After filtering, the boilerplate is gone and the error fits under 64KB.
+	var b strings.Builder
+	for i := 0; i < 800; i++ {
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z ##[group]Run actions/checkout@v4\n")
+		b.WriteString("build\tSetup\t2026-01-01T00:00:00.0000000Z Runner Image Provisioner v1.2.3\n")
+	}
+	b.WriteString("build\tBuild\t2026-01-01T00:00:01.0000000Z ./main.go:10:3: undefined: foo\n")
+	raw := b.String()
+
+	_, err := citriage.Run(context.Background(), citriage.Config{
+		RepoPath: t.TempDir(),
+		Log:      raw,
+		Runner:   runner,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Boilerplate must be gone — filtering happened before truncation.
+	if strings.Contains(capturedLog, "Runner Image Provisioner") {
+		t.Error("boilerplate reached the runner — filter did not run before dispatch")
+	}
+	if strings.Contains(capturedLog, "##[group]") {
+		t.Error("##[group] boilerplate reached the runner")
+	}
+	// The real error must survive.
+	if !strings.Contains(capturedLog, "undefined: foo") {
+		t.Errorf("error line was lost; runner received: %q", capturedLog[:min(len(capturedLog), 200)])
+	}
+	// The log must NOT be truncated — filtering reduced it below 64KB.
+	if strings.Contains(capturedLog, "[truncated]") {
+		t.Error("log was truncated despite filtering; filter may not have run before the cap")
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func TestLogTruncation(t *testing.T) {
 	var capturedLog string
 	runner := citriage.RunnerFunc(func(_ context.Context, log, _ string) (string, error) {

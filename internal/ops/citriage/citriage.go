@@ -80,9 +80,10 @@ var (
 	// reTimestamp matches ISO-8601 timestamps optionally preceded by a UTF-8 BOM.
 	reTimestamp = regexp.MustCompile(`\x{FEFF}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z `)
 	// reJobPrefix matches "<job>\t<step>\t" prefixes emitted by gh run view --log-failed.
-	// The job name must be a slug (alphanumeric, dash, underscore, space) to avoid
-	// matching arbitrary tab-delimited content.
-	reJobPrefix = regexp.MustCompile(`^[a-zA-Z0-9_/ -]+\t[a-zA-Z0-9_ -]*\t`)
+	// The job name character class covers all characters GitHub Actions permits in job
+	// and matrix names: alphanumeric, dash, underscore, slash, space, dot, and parens.
+	// This avoids stripping arbitrary tab-delimited content (e.g. go test output).
+	reJobPrefix = regexp.MustCompile(`^[a-zA-Z0-9_./()\- ]+\t[a-zA-Z0-9_()\- ]*\t`)
 )
 
 // boilerplatePrefix patterns are matched against the start of a line.
@@ -96,9 +97,10 @@ var boilerplatePrefixes = []string{
 	"hint: ",
 }
 
-// boilerplateExact patterns are matched as full substrings, but only against
-// lines that are clearly GHA runner infrastructure noise (unlikely to appear
-// in real compiler/test output).
+// boilerplateSubstrings are matched via strings.Contains anywhere in the line.
+// Each pattern is scoped to GHA runner infrastructure phrases unlikely to appear
+// in real compiler/test output. Prefer boilerplatePrefixes for patterns where
+// anchoring to the start of line is possible.
 var boilerplateSubstrings = []string{
 	"Runner Image Provisioner",
 	"Hosted Compute Agent",
