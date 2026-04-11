@@ -7,7 +7,7 @@ import (
 	"github.com/89jobrien/devkit/internal/ai/baml"
 	devlog "github.com/89jobrien/devkit/internal/infra/log"
 	"github.com/89jobrien/devkit/internal/dev/scaffold"
-	"github.com/89jobrien/devkit/internal/repocontext"
+	"github.com/89jobrien/devkit/internal/repometa"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func newScaffoldCmd(runner scaffold.Runner) *cobra.Command {
 		Short: "Generate boilerplate for a new Go package following hexagonal arch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			repoCtx := repocontext.GatherRepoContext()
+			repoCtx := repometa.GatherSnapshot()
 
 			logMeta := map[string]string{"name": args[0]}
 			sha := devlog.GitShortSHA()

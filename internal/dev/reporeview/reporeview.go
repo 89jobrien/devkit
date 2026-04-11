@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/89jobrien/devkit/internal/ai/council"
-	"github.com/89jobrien/devkit/internal/repocontext"
+	"github.com/89jobrien/devkit/internal/repometa"
 )
 
 // Config holds inputs for a repo-review run.
@@ -26,7 +26,7 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("reporeview: runner is required")
 	}
 
-	rc, err := repocontext.Gather(cfg.RepoPath)
+	rc, err := repometa.Gather(cfg.RepoPath)
 	if err != nil {
 		return "", fmt.Errorf("reporeview: %w", err)
 	}
@@ -77,7 +77,7 @@ func walkDir(root, path string, current, max int, sb *strings.Builder) error {
 	return nil
 }
 
-func buildPrompt(rc repocontext.Context) string {
+func buildPrompt(rc repometa.Context) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "You are reviewing the repository %q as a senior engineer.\n\n", rc.Name)
 	sb.WriteString("Identify the top issues by priority. What needs attention in this repo?\n\n")

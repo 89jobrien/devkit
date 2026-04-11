@@ -21,7 +21,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/89jobrien/devkit/internal/repocontext"
+	"github.com/89jobrien/devkit/internal/repometa"
 )
 
 const maxLogBytes = 64 * 1024 // 64KB
@@ -63,7 +63,7 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("citriage: runner is required")
 	}
 
-	rc, err := repocontext.Gather(cfg.RepoPath)
+	rc, err := repometa.Gather(cfg.RepoPath)
 	if err != nil {
 		return "", fmt.Errorf("citriage: %w", err)
 	}

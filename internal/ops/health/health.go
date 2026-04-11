@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/89jobrien/devkit/internal/repocontext"
+	"github.com/89jobrien/devkit/internal/repometa"
 )
 
 // Runner is the port for the BAML health scoring call.
@@ -45,7 +45,7 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 		return "", fmt.Errorf("health: runner is required")
 	}
 
-	rc, err := repocontext.Gather(cfg.RepoPath)
+	rc, err := repometa.Gather(cfg.RepoPath)
 	if err != nil {
 		return "", fmt.Errorf("health: %w", err)
 	}

@@ -1,4 +1,4 @@
-package repocontext_test
+package repometa_test
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/89jobrien/devkit/internal/repocontext"
+	"github.com/89jobrien/devkit/internal/repometa"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +36,7 @@ func initGitRepo(t *testing.T, dir string) {
 	run("git", "commit", "-m", "initial commit")
 }
 
-func TestGatherRepoContextSections(t *testing.T) {
+func TestGatherSnapshotSections(t *testing.T) {
 	dir := t.TempDir()
 	initGitRepo(t, dir)
 
@@ -45,7 +45,7 @@ func TestGatherRepoContextSections(t *testing.T) {
 	require.NoError(t, os.Chdir(dir))
 	t.Cleanup(func() { os.Chdir(orig) })
 
-	result := repocontext.GatherRepoContext()
+	result := repometa.GatherSnapshot()
 
 	assert.Contains(t, result, "## Recent commits")
 	assert.Contains(t, result, "## Working tree")
@@ -54,7 +54,7 @@ func TestGatherRepoContextSections(t *testing.T) {
 	assert.Contains(t, result, "Hello world.")
 }
 
-func TestGatherRepoContextTruncatesLargeReadme(t *testing.T) {
+func TestGatherSnapshotTruncatesLargeReadme(t *testing.T) {
 	dir := t.TempDir()
 	initGitRepo(t, dir)
 
@@ -66,13 +66,13 @@ func TestGatherRepoContextTruncatesLargeReadme(t *testing.T) {
 	require.NoError(t, os.Chdir(dir))
 	t.Cleanup(func() { os.Chdir(orig) })
 
-	result := repocontext.GatherRepoContext()
+	result := repometa.GatherSnapshot()
 
 	assert.Contains(t, result, "### README.md")
 	assert.NotContains(t, result, strings.Repeat("x", 2001))
 }
 
-func TestGatherRepoContextNoGit(t *testing.T) {
+func TestGatherSnapshotNoGit(t *testing.T) {
 	dir := t.TempDir()
 
 	orig, err := os.Getwd()
@@ -80,7 +80,7 @@ func TestGatherRepoContextNoGit(t *testing.T) {
 	require.NoError(t, os.Chdir(dir))
 	t.Cleanup(func() { os.Chdir(orig) })
 
-	result := repocontext.GatherRepoContext()
+	result := repometa.GatherSnapshot()
 	assert.Contains(t, result, "## Recent commits")
 	assert.Contains(t, result, "## Working tree")
 }

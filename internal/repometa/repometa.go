@@ -1,6 +1,6 @@
-// Package repocontext gathers common repo metadata (name, CLAUDE.md, README, git log)
+// Package repometa gathers common repo metadata (name, CLAUDE.md, README, git log)
 // used by multiple commands as prompt context for AI calls.
-package repocontext
+package repometa
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func Gather(repoPath string) (Context, error) {
 		var err error
 		repoPath, err = os.Getwd()
 		if err != nil {
-			return Context{}, fmt.Errorf("repocontext: getwd: %w", err)
+			return Context{}, fmt.Errorf("repometa: getwd: %w", err)
 		}
 	}
 
@@ -56,21 +56,15 @@ func Gather(repoPath string) (Context, error) {
 	return ctx, nil
 }
 
-// GatherRepoContext returns a markdown snapshot of the current repo state:
+// GatherSnapshot returns a markdown snapshot of the current repo state:
 // CLAUDE.md/AGENTS.md/README.md previews, recent commits, working tree, and file structure.
 // It operates on the current working directory and never returns an error — failures are
 // surfaced as empty sections.
-//
-// Package ownership note: GatherRepoContext lives here alongside Gather because both
-// concern repo metadata collection. Unlike Gather (which takes an explicit path and
-// returns a structured Context), GatherRepoContext targets the cwd, never errors, and
-// returns a flat markdown string for use in prompts. If this package grows further,
-// consider splitting into repocontext (structured) and repocontext/snapshot (markdown).
-func GatherRepoContext() string {
+func GatherSnapshot() string {
 	run := func(args ...string) string {
 		out, err := exec.Command(args[0], args[1:]...).Output()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "devkit: GatherRepoContext: %s: %v\n", strings.Join(args, " "), err)
+			fmt.Fprintf(os.Stderr, "devkit: repometa: %s: %v\n", strings.Join(args, " "), err)
 		}
 		return string(out)
 	}
