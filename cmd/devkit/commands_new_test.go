@@ -226,6 +226,31 @@ func TestAutomateCmd_ErrorMessageNamesAllFailures(t *testing.T) {
 	assert.Contains(t, err.Error(), "bad2")
 }
 
+// --- chain ---
+
+func TestChainCmd_Registration(t *testing.T) {
+	root := &cobra.Command{Use: "devkit"}
+	root.AddCommand(newChainCmd(nil, nil))
+	names := map[string]bool{}
+	for _, c := range root.Commands() {
+		names[c.Name()] = true
+	}
+	assert.True(t, names["chain"], "chain not registered")
+}
+
+func TestChainCmd_HasExpectedFlags(t *testing.T) {
+	cmd := newChainCmd(nil, nil)
+	assert.NotNil(t, cmd.Flags().Lookup("repo"), "missing --repo flag")
+	assert.NotNil(t, cmd.Flags().Lookup("run"), "missing --run flag")
+}
+
+func TestChainCmd_UnknownStageErrors(t *testing.T) {
+	cmd := newChainCmd(nil, nil)
+	_, err := runCmd(t, cmd, "chain", "nonexistent-stage")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "nonexistent-stage")
+}
+
 // --- registration completeness ---
 
 func TestAllCommandsRegistered(t *testing.T) {
