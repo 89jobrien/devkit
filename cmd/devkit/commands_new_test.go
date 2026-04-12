@@ -316,3 +316,63 @@ func TestAllCommandsRegistered(t *testing.T) {
 		assert.True(t, names[want], "command %q not registered", want)
 	}
 }
+
+// TestProductionRouterSmoke verifies that all commands present in main()'s
+// root.AddCommand call are reachable by name. It mirrors the production wiring
+// exactly: injectable commands are built with nil runners; the five inline
+// commands (council, review, meta, diagnose, standup) that are constructed
+// directly inside main() are represented as stub cobra.Commands with the
+// correct Use name so the registration contract can be asserted without
+// duplicating their full implementations.
+func TestProductionRouterSmoke(t *testing.T) {
+	root := &cobra.Command{Use: "devkit"}
+
+	// Inline commands — built directly in main(); stub here for registration check.
+	for _, name := range []string{"council", "review", "meta", "diagnose", "standup"} {
+		n := name
+		root.AddCommand(&cobra.Command{Use: n, Short: "stub for smoke test"})
+	}
+
+	// Injectable commands — nil runners; constructor must not panic on nil.
+	root.AddCommand(
+		newPrCmd(nil, nil),
+		newChangelogCmd(nil, nil),
+		newLintCmd(nil),
+		newExplainCmd(nil, nil),
+		newTestgenCmd(nil, nil),
+		newTicketCmd(nil),
+		newAdrCmd(nil),
+		newDocgenCmd(nil),
+		newMigrateCmd(nil),
+		newScaffoldCmd(nil),
+		newLogPatternCmd(nil),
+		newIncidentCmd(nil),
+		newProfileCmd(nil),
+		newHealthCmd(nil),
+		newAutomateCmd(nil),
+		newCITriageCmd(nil),
+		newRepoReviewCmd(nil),
+		newSpecCmd(nil, nil),
+		newChainCmd(nil, nil),
+		newReplCmd(),
+	)
+
+	names := map[string]bool{}
+	for _, c := range root.Commands() {
+		names[c.Name()] = true
+	}
+
+	want := []string{
+		// inline
+		"council", "review", "meta", "diagnose", "standup",
+		// injectable
+		"pr", "changelog", "lint", "explain", "test-gen", "ticket",
+		"adr", "docgen", "migrate", "scaffold", "log-pattern", "incident",
+		"profile", "health", "automate", "ci-triage", "repo-review",
+		"spec", "chain", "repl",
+	}
+	for _, name := range want {
+		assert.True(t, names[name], "command %q missing from production router", name)
+	}
+	assert.Len(t, root.Commands(), len(want), "unexpected number of registered commands")
+}

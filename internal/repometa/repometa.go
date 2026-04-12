@@ -1,5 +1,18 @@
-// Package repometa gathers common repo metadata (name, CLAUDE.md, README, git log)
-// used by multiple commands as prompt context for AI calls.
+// Package repometa owns all repo-metadata gathering for devkit commands.
+//
+// There are two entry points:
+//
+//   - [GatherSnapshot] — the primary entry point for AI prompt context. Returns a
+//     markdown string snapshot (CLAUDE.md, README, recent commits, working tree,
+//     file structure) suitable for embedding directly in LLM prompts. Used by meta,
+//     chain, repl, and any command that needs broad repo context.
+//
+//   - [Gather] — structured lower-level API that populates a [Context] value. Use
+//     this when callers need programmatic access to individual fields (e.g. repo
+//     name, CLAUDE.md text) rather than a pre-rendered markdown blob.
+//
+// All gathering is best-effort: missing files and git errors are silently ignored
+// so that commands work correctly outside git repositories.
 package repometa
 
 import (
