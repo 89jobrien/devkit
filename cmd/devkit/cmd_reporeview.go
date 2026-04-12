@@ -35,15 +35,15 @@ func newRepoReviewCmd(runner council.Runner) *cobra.Command {
 				Runner:   r,
 				Format:   format,
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Fprintln(cmd.OutOrStdout(), result)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "repo-review", map[string]string{"repo": repo, "format": format}, result, time.Since(start))
 			_, _ = devlog.SaveCommitLog(sha, "repo-review", result, map[string]string{"repo": repo})
-			return nil
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&repo, "repo", "", "Repo path (default: cwd)")

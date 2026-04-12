@@ -33,15 +33,15 @@ func newHealthCmd(runner health.Runner) *cobra.Command {
 				Runner:   r,
 				Format:   format,
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Fprintln(cmd.OutOrStdout(), result)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "health", map[string]string{"repo": repo, "format": format}, result, time.Since(start))
 			_, _ = devlog.SaveCommitLog(sha, "health", result, map[string]string{"repo": repo})
-			return nil
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&repo, "repo", "", "Repo path (default: cwd)")

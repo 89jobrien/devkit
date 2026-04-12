@@ -46,15 +46,15 @@ func newCITriageCmd(runner citriage.Runner) *cobra.Command {
 				Log:      preloadedLog,
 				Runner:   r,
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Fprintln(cmd.OutOrStdout(), result)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), result)
-
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "ci-triage", map[string]string{"run": runID}, result, time.Since(start))
 			_, _ = devlog.SaveCommitLog(sha, "ci-triage", result, map[string]string{"run": runID})
-			return nil
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&repo, "repo", "", "Repo path (default: cwd)")

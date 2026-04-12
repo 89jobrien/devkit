@@ -189,10 +189,7 @@ func main() {
 			id := devlog.Start("council", map[string]string{"base": councilBase, "mode": councilMode})
 			start := time.Now()
 
-			result, err := council.Run(cmd.Context(), councilCfg)
-			if err != nil {
-				return err
-			}
+			result, runErr := council.Run(cmd.Context(), councilCfg)
 
 			var allOutput strings.Builder
 			for key, out := range result.RoleOutputs {
@@ -200,27 +197,37 @@ func main() {
 				allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", key, out))
 			}
 
-			if !councilNoSynth {
-				synthesis, err := council.Synthesize(cmd.Context(), result.RoleOutputs, council.Config{
+			var synthErr error
+			if runErr == nil && !councilNoSynth {
+				var synthesis string
+				synthesis, synthErr = council.Synthesize(cmd.Context(), result.RoleOutputs, council.Config{
 					Base: councilBase, Diff: diff, Commits: commits,
 				}, router.For(providers.TierBalanced))
-				if err != nil {
-					return err
+				if synthErr == nil {
+					fmt.Printf("\n---- SYNTHESIS ----\n%s\n", synthesis)
+					allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", synthesis))
 				}
-				fmt.Printf("\n---- SYNTHESIS ----\n%s\n", synthesis)
-				allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", synthesis))
 			}
 
-			score := council.MetaScore(result.RoleOutputs)
-			fmt.Printf("\nMeta Health Score: %.0f%%\n", score*100)
+			if runErr == nil {
+				score := council.MetaScore(result.RoleOutputs)
+				fmt.Printf("\nMeta Health Score: %.0f%%\n", score*100)
+			}
 
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "council", map[string]string{"base": councilBase, "mode": councilMode},
 				allOutput.String(), time.Since(start))
 			path, _ := devlog.SaveCommitLog(sha, "council", allOutput.String(), map[string]string{
 				"base": councilBase, "mode": councilMode,
 			})
-			fmt.Printf("\nLogged to: %s\n", path)
-			return nil
+			if path != "" {
+				fmt.Printf("\nLogged to: %s\n", path)
+			}
+			if runErr != nil {
+				return runErr
+			}
+			return synthErr
 		},
 	}
 	councilCmd.Flags().StringVar(&councilBase, "base", "main", "Base branch/ref")
@@ -273,15 +280,18 @@ func main() {
 					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 				}),
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Println(result)
 			}
 
-			fmt.Println(result)
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "review", map[string]string{"base": reviewBase}, result, time.Since(start))
 			path, _ := devlog.SaveCommitLog(sha, "review", result, map[string]string{"base": reviewBase})
-			fmt.Printf("\nLogged to: %s\n", path)
-			return nil
+			if path != "" {
+				fmt.Printf("\nLogged to: %s\n", path)
+			}
+			return err
 		},
 	}
 	reviewCmd.Flags().StringVar(&reviewBase, "base", "main", "Base branch/ref")
@@ -417,15 +427,18 @@ func main() {
 					return router.AgentRunnerFor(providers.TierCoding, agentTools).Run(ctx, prompt, ts)
 				}),
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Println(result)
 			}
 
-			fmt.Println(result)
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "diagnose", map[string]string{"service": service}, result, time.Since(start))
 			path, _ := devlog.SaveCommitLog(sha, "diagnose", result, map[string]string{"service": service})
-			fmt.Printf("\nLogged to: %s\n", path)
-			return nil
+			if path != "" {
+				fmt.Printf("\nLogged to: %s\n", path)
+			}
+			return err
 		},
 	}
 	diagnoseCmd.Flags().StringVar(&diagnoseService, "service", "", "Service/component to focus on")
@@ -479,18 +492,21 @@ func main() {
 				}),
 				Parallel: standupParallel,
 			})
-			if err != nil {
-				return err
+			if result != "" {
+				fmt.Println(result)
 			}
 
-			fmt.Println(result)
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "standup", map[string]string{"since": standupSince}, result, time.Since(start))
 			path, _ := devlog.SaveCommitLog(sha, "standup", result, map[string]string{
 				"since": standupSince,
 				"repos": strings.Join(repos, ","),
 			})
-			fmt.Printf("\nLogged to: %s\n", path)
-			return nil
+			if path != "" {
+				fmt.Printf("\nLogged to: %s\n", path)
+			}
+			return err
 		},
 	}
 	standupCmd.Flags().StringVar(&standupSince, "since", "24h", "Time window (Go duration, e.g. 24h, 8h)")

@@ -77,14 +77,11 @@ func newSpecCmd(roleRunner spec.Runner, synthRunner spec.Runner) *cobra.Command 
 			id := devlog.Start("spec", map[string]string{"path": specPath})
 			start := time.Now()
 
-			result, err := spec.Run(cmd.Context(), spec.Config{
+			result, runErr := spec.Run(cmd.Context(), spec.Config{
 				Content: string(content),
 				Path:    specPath,
 				Runner:  rr,
 			})
-			if err != nil {
-				return err
-			}
 
 			roleOrder := []string{"completeness", "ambiguity", "scope", "critic", "creative", "generalist"}
 			var allOutput strings.Builder
@@ -97,22 +94,32 @@ func newSpecCmd(roleRunner spec.Runner, synthRunner spec.Runner) *cobra.Command 
 				allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", key, out))
 			}
 
-			if !noSynth {
-				synthesis, err := spec.Synthesize(cmd.Context(), result.RoleOutputs, specPath, sr)
-				if err != nil {
-					return err
+			var synthErr error
+			if runErr == nil && !noSynth {
+				var synthesis string
+				synthesis, synthErr = spec.Synthesize(cmd.Context(), result.RoleOutputs, specPath, sr)
+				if synthErr == nil {
+					fmt.Fprintf(w, "\n---- SYNTHESIS ----\n%s\n", synthesis)
+					allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", synthesis))
 				}
-				fmt.Fprintf(w, "\n---- SYNTHESIS ----\n%s\n", synthesis)
-				allOutput.WriteString(fmt.Sprintf("## Synthesis\n%s\n", synthesis))
 			}
 
-			score := spec.MetaScore(result.RoleOutputs)
-			fmt.Fprintf(w, "\nMeta Health Score: %.0f%%\n", score*100)
+			if runErr == nil {
+				score := spec.MetaScore(result.RoleOutputs)
+				fmt.Fprintf(w, "\nMeta Health Score: %.0f%%\n", score*100)
+			}
 
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "spec", map[string]string{"path": specPath}, allOutput.String(), time.Since(start))
 			path, _ := devlog.SaveCommitLog(sha, "spec", allOutput.String(), map[string]string{"path": specPath})
-			fmt.Fprintf(w, "\nLogged to: %s\n", path)
-			return nil
+			if path != "" {
+				fmt.Fprintf(w, "\nLogged to: %s\n", path)
+			}
+			if runErr != nil {
+				return runErr
+			}
+			return synthErr
 		},
 	}
 	cmd.Flags().BoolVar(&noSynth, "no-synthesis", false, "Skip synthesis")

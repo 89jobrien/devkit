@@ -79,11 +79,8 @@ func newChainCmd(stageRunners map[string]chain.StageRunner, synthesisRunner chai
 			start := time.Now()
 
 			results, err := chain.RunPipeline(cmd.Context(), slots, synth)
-			if err != nil {
-				return err
-			}
 
-			// Print each non-skipped result.
+			// Print each non-skipped result (even on error, pipeline may have partial output).
 			for _, r := range results {
 				if r.IsSkipped() {
 					continue
@@ -95,10 +92,16 @@ func newChainCmd(stageRunners map[string]chain.StageRunner, synthesisRunner chai
 				fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", r.Stage, r.Output)
 			}
 
-			last := results[len(results)-1]
-			devlog.Complete(id, "chain", map[string]string{"stages": strings.Join(args, ",")}, last.Output, time.Since(start))
-			_, _ = devlog.SaveCommitLog(sha, "chain", last.Output, map[string]string{"stages": strings.Join(args, ",")})
-			return nil
+			var lastOutput string
+			if len(results) > 0 {
+				lastOutput = results[len(results)-1].Output
+			}
+
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
+			devlog.Complete(id, "chain", map[string]string{"stages": strings.Join(args, ",")}, lastOutput, time.Since(start))
+			_, _ = devlog.SaveCommitLog(sha, "chain", lastOutput, map[string]string{"stages": strings.Join(args, ",")})
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&repo, "repo", "", "Repo path (default: cwd)")
