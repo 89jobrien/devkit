@@ -2,6 +2,7 @@ package automate_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -49,6 +50,29 @@ func TestRunUnknownTask(t *testing.T) {
 	}
 	if !strings.Contains(result, "unknown task") {
 		t.Errorf("expected unknown task message in output, got: %s", result)
+	}
+}
+
+func TestRunTaskHandlerError(t *testing.T) {
+	// A runner that always returns an error simulates a registered task failing
+	// (e.g. the LLM call itself fails). Run must surface a non-nil error so
+	// callers are not falsely signalled success.
+	runner := automate.RunnerFunc(func(_ context.Context, _ string, _ []string) (string, error) {
+		return "", fmt.Errorf("llm unavailable")
+	})
+	result, err := automate.Run(context.Background(), automate.Config{
+		Tasks:    []string{"changelog"},
+		RepoPath: t.TempDir(),
+		Runner:   runner,
+	})
+	if err == nil {
+		t.Fatal("expected error when task handler fails, got nil")
+	}
+	if !strings.Contains(err.Error(), "changelog") {
+		t.Errorf("error should name the failing task, got: %v", err)
+	}
+	if !strings.Contains(result, "## Changelog") {
+		t.Errorf("output should include the task heading, got: %s", result)
 	}
 }
 

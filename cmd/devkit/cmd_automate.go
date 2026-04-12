@@ -40,13 +40,12 @@ func newAutomateCmd(runner automate.Runner) *cobra.Command {
 			if result != "" {
 				fmt.Fprintln(cmd.OutOrStdout(), result)
 			}
-			if err != nil {
-				return err
-			}
 
+			// Log completion regardless of error so the dev log reflects the actual
+			// outcome — failed runs previously appeared as hung/incomplete.
 			devlog.Complete(id, "automate", map[string]string{"tasks": tasks}, result, time.Since(start))
 			_, _ = devlog.SaveCommitLog(sha, "automate", result, map[string]string{"tasks": tasks})
-			return nil
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&repo, "repo", "", "Repo path (default: cwd)")
