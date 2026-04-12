@@ -55,6 +55,37 @@ func TestRunJSONFormat(t *testing.T) {
 	}
 }
 
+func TestRunUnknownFormat(t *testing.T) {
+	runner := &stubRunner{response: "score:90"}
+	_, err := health.Run(context.Background(), health.Config{
+		RepoPath: t.TempDir(),
+		Runner:   runner,
+		Format:   "xml",
+	})
+	if err == nil {
+		t.Fatal("expected error for unknown format")
+	}
+	if !strings.Contains(err.Error(), "unknown format") {
+		t.Errorf("expected 'unknown format' in error, got: %v", err)
+	}
+}
+
+func TestRunJSONFormatCaseInsensitive(t *testing.T) {
+	dir := t.TempDir()
+	runner := &stubRunner{response: "score:90"}
+	result, err := health.Run(context.Background(), health.Config{
+		RepoPath: dir,
+		Runner:   runner,
+		Format:   "JSON",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.HasPrefix(result, "{") {
+		t.Errorf("expected JSON output for uppercase format, got: %s", result)
+	}
+}
+
 func TestRunnerFuncAdapter(t *testing.T) {
 	called := false
 	runner := health.RunnerFunc(func(_ context.Context, repoCtx, checks string) (string, error) {

@@ -56,14 +56,18 @@ func Run(ctx context.Context, cfg Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if cfg.Format == "json" {
+	switch strings.ToLower(cfg.Format) {
+	case "json":
 		b, jerr := json.Marshal(map[string]string{"output": output})
 		if jerr != nil {
 			return "", fmt.Errorf("health: json marshal: %w", jerr)
 		}
 		return string(b), nil
+	case "markdown", "":
+		return output, nil
+	default:
+		return "", fmt.Errorf("unknown format %q: must be \"markdown\" or \"json\"", cfg.Format)
 	}
-	return output, nil
 }
 
 func gatherChecks(repoPath string) []CheckResult {
