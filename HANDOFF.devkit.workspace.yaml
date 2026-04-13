@@ -5,10 +5,13 @@ branch: main
 state:
   tests: 291 passing (35 packages)
   build: clean
-  notes: |
-    REPL + chain pipeline fully implemented. council ran; scored 72% (Almost).
+  notes: 'REPL + chain pipeline fully implemented. council ran; scored 72% (Almost).
+
     Auth contract and --repo fallback fixed post-council. CLAUDE.md updated.
+
     Two open items remain: devkit-4 (package ownership), devkit-10 (citriage repo-scoping).
+
+    '
 items:
 - id: devkit-4
   doob_uuid: f320e578-25bd-409a-8058-320ac03c7675
@@ -16,9 +19,12 @@ items:
   priority: P2
   status: done
   title: Clarify package ownership for GatherRepoContext
-  description: |
-    Move GatherRepoContext to a more cohesive package or redefine internal/log as a broader
+  description: 'Move GatherRepoContext to a more cohesive package or redefine internal/log
+    as a broader
+
     runtime/ops utility package. (doob #35)
+
+    '
   files:
   - internal/repocontext/repocontext.go
   extra:
@@ -31,9 +37,12 @@ items:
   priority: P3
   status: done
   title: 'Fix ci-triage repo-scoping: gh run list missing cmd.Dir'
-  description: |
-    'gh run list' runs without cmd.Dir=repoPath; subsequent 'gh run view' has it. In
+  description: '''gh run list'' runs without cmd.Dir=repoPath; subsequent ''gh run
+    view'' has it. In
+
     multi-repo environments this selects the wrong run.
+
+    '
   files:
   - internal/ops/citriage/citriage.go
   extra:
@@ -44,24 +53,32 @@ items:
   doob_uuid: 44f80269-a1ff-42b9-961b-f5fb59033a78
   name: repl-repl-exit-os-exit
   priority: P3
-  status: open
+  status: done
   title: Replace os.Exit(0) in DispatchCommand exit/quit with sentinel error
-  description: |
-    internal/repl/repl.go DispatchCommand calls os.Exit(0) for exit/quit, which prevents
+  description: 'internal/repl/repl.go DispatchCommand calls os.Exit(0) for exit/quit,
+    which prevents
+
     testing and makes the REPL unembeddable. Replace with a sentinel error (e.g. ErrExit)
+
     that the Run loop checks and returns cleanly.
+
+    '
   files:
   - internal/repl/repl.go
   extra: []
+  completed: '2026-04-12'
 - id: devkit-3
   doob_uuid: 16f23daf-3860-4727-8e57-66883b0a4830
   name: provider-fallback-smoke-test
   priority: P2
   status: done
   title: Smoke-test provider fallback routing end-to-end
-  description: |
-    Run devkit council and devkit diagnose against a test repo with a real ANTHROPIC_API_KEY
+  description: 'Run devkit council and devkit diagnose against a test repo with a
+    real ANTHROPIC_API_KEY
+
     to confirm Router wiring works in production. (doob #31)
+
+    '
   files: []
   extra:
   - date: 2026-04-06
@@ -72,26 +89,30 @@ items:
   doob_uuid: de30cbbd-d0e9-4099-b564-7dab2399f03a
   name: automate-failure-semantics
   priority: P3
-  status: open
+  status: done
   title: Harden automate failure semantics
-  description: |
-    Unknown tasks and delegated task failures embedded in output text instead of returning
+  description: 'Unknown tasks and delegated task failures embedded in output text
+    instead of returning
+
     non-zero error. Fixed: print partial result before returning error.
+
+    '
   files:
   - internal/ops/automate/automate.go
   extra:
   - date: 2026-04-06
     type: note
     note: captured in doob — todo id etl0tr13zwbbcuas6wds
-  completed: 2026-04-06
+  completed: '2026-04-12'
 - id: devkit-12
   doob_uuid: b976b730-a380-4aa4-b01f-40241240db34
   name: repo-review-format-flag
   priority: P3
-  status: open
+  status: done
   title: Fix non-functional --format flag on repo-review command
-  description: |
-    Flag exposed but reporeview.Config has no Format field.
+  description: 'Flag exposed but reporeview.Config has no Format field.
+
+    '
   files:
   - cmd/devkit/cmd_reporeview.go
   - internal/dev/reporeview/reporeview.go
@@ -99,15 +120,16 @@ items:
   - date: 2026-04-06
     type: note
     note: captured in doob — todo id 0mvplt1gtjbwkdw721uu
-  completed: 2026-04-06
+  completed: '2026-04-12'
 - id: devkit-13
   doob_uuid: 3f7a14bb-faac-4faa-a0d4-eaf1695d8052
   name: health-format-flag
   priority: P3
-  status: open
+  status: done
   title: Fix non-functional --format flag on health command
-  description: |
-    Flag parsed but never used to vary output shape.
+  description: 'Flag parsed but never used to vary output shape.
+
+    '
   files:
   - cmd/devkit/cmd_health.go
   - internal/ops/health/health.go
@@ -115,15 +137,17 @@ items:
   - date: 2026-04-06
     type: note
     note: captured in doob — todo id w0jodm7zk4l2wyw771to
-  completed: 2026-04-06
+  completed: '2026-04-12'
 - id: devkit-1
   doob_uuid: 3c8ee38f-382d-4268-a221-fc46b044347f
   name: baml-uncommitted-changes
   priority: P1
   status: done
   title: Commit pending BAML schema changes
-  description: |
-    citriage.baml and logpattern.baml schema additions; regenerated BAML client.
+  description: 'citriage.baml and logpattern.baml schema additions; regenerated BAML
+    client.
+
+    '
   files:
   - internal/ai/baml/baml_src/citriage.baml
   - internal/ai/baml/baml_src/logpattern.baml
@@ -135,8 +159,9 @@ items:
   priority: P2
   status: parked
   title: Unimplemented command ideas
-  description: |
-    All idea commands already implemented. Parked.
+  description: 'All idea commands already implemented. Parked.
+
+    '
   files: []
   extra: []
   completed: 2026-04-04
@@ -216,43 +241,55 @@ items:
   priority: P2
   status: open
   title: Missing production smoke test for Router provider fallback chain
-  description: "GH #6: Test the Router provider fallback logic (Anthropic → OpenAI → Gemini) with real API keys in production to confirm no unexpected failures."
+  description: 'GH #6: Test the Router provider fallback logic (Anthropic → OpenAI
+    → Gemini) with real API keys in production to confirm no unexpected failures.'
   files: []
   extra:
   - type: github-issue
     number: 6
-    url: "https://github.com/89jobrien/devkit/issues/6"
+    url: https://github.com/89jobrien/devkit/issues/6
 - id: devkit-19
   name: citriage-gh-run-list-dir
   priority: P1
-  status: open
+  status: done
   title: 'ci-triage: gh run list missing cmd.Dir causes wrong-repo run selection'
-  description: "GH #3: gh run list runs without cmd.Dir=repoPath; subsequent gh run view has it. In multi-repo environments this selects the wrong run."
+  description: 'GH #3: gh run list runs without cmd.Dir=repoPath; subsequent gh run
+    view has it. In multi-repo environments this selects the wrong run.'
   files:
   - internal/ops/citriage/citriage.go
   extra:
   - type: github-issue
     number: 3
-    url: "https://github.com/89jobrien/devkit/issues/3"
+    url: https://github.com/89jobrien/devkit/issues/3
+  completed: '2026-04-12'
 - id: devkit-20
   name: provider-fallback-smoke-test
   priority: P2
   status: open
   title: Missing production smoke test for Router provider fallback chain
-  description: "GH #6: Test the Router provider fallback logic (Anthropic → OpenAI → Gemini) with real API keys in production to confirm no unexpected failures."
+  description: 'GH #6: Test the Router provider fallback logic (Anthropic → OpenAI
+    → Gemini) with real API keys in production to confirm no unexpected failures.'
   files: []
   extra:
   - type: github-issue
     number: 6
-    url: "https://github.com/89jobrien/devkit/issues/6"
+    url: https://github.com/89jobrien/devkit/issues/6
 log:
 - date: 2026-04-10
-  summary: |
-    Implemented REPL + chain pipeline (11 tasks): internal/chain/ (Result envelope, stage
+  summary: 'Implemented REPL + chain pipeline (11 tasks): internal/chain/ (Result
+    envelope, stage
+
     registry, preflight, synthesis gpt-5.4, pipeline runner, stage wiring), internal/repl/
-    (session store, readline loop), devkit chain + repl commands wired into main. Ran council
-    (72% meta-score); fixed auth contract, added cwd fallback, execution-path tests, CLAUDE.md
+
+    (session store, readline loop), devkit chain + repl commands wired into main.
+    Ran council
+
+    (72% meta-score); fixed auth contract, added cwd fallback, execution-path tests,
+    CLAUDE.md
+
     updated. 291 tests, 35 packages.
+
+    '
   commits:
   - 04ec86a
   - 51a69c7
@@ -265,26 +302,38 @@ log:
   - 98f1ada
   - 652daa3
 - date: 2026-04-07
-  summary: |
-    devkit-3 done — smoke-tested council and diagnose with real ANTHROPIC_API_KEY; Router
+  summary: 'devkit-3 done — smoke-tested council and diagnose with real ANTHROPIC_API_KEY;
+    Router
+
     wiring confirmed, Anthropic primary, no fallback needed.
+
+    '
 - date: 2026-04-06
-  summary: |
-    devkit-9/12/13 done — wired --format flag (markdown/json) for repo-review and health;
-    automate now returns non-zero error on unknown task or task failure. 238 tests passing.
+  summary: 'devkit-9/12/13 done — wired --format flag (markdown/json) for repo-review
+    and health;
+
+    automate now returns non-zero error on unknown task or task failure. 238 tests
+    passing.
+
+    '
   commits:
   - 9752b27
   - 4738f38
 - date: 2026-04-04
-  summary: |
-    EOD: devkit-7 done — internal/repocontext extracted; .ctx/ gitignored; CLAUDE.md updated;
+  summary: 'EOD: devkit-7 done — internal/repocontext extracted; .ctx/ gitignored;
+    CLAUDE.md updated;
+
     pushed bb27ab6. All P1s closed. 235 tests.
+
+    '
   commits:
   - 5dd75af
   - bb27ab6
 - date: 2026-04-03
-  summary: |
-    Implemented devkit-14/15: RangeResolver in internal/infra/git; 235 tests passing.
+  summary: 'Implemented devkit-14/15: RangeResolver in internal/infra/git; 235 tests
+    passing.
+
+    '
   commits:
   - 5bc0ecb
   - fc7d297
