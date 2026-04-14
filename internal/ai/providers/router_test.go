@@ -204,21 +204,49 @@ func TestRouterAgentRunnerFallback(t *testing.T) {
 	assert.Equal(t, "from openai agent", result)
 }
 
-// TestRouterSmoke hits real production endpoints using keys from the environment.
-// Skipped automatically when no keys are present — safe to run in CI with secrets set.
+// TestRouterSmoke hits real endpoints using keys from the environment.
+// Supports production APIs and local OpenAI-compatible servers (Ollama, LM Studio, etc.).
+//
+// Env vars:
+//
+//	OPENAI_API_KEY    — real OpenAI key (or any non-empty string for local servers)
+//	OPENAI_BASE_URL   — override base URL (e.g. http://localhost:11434/v1 for Ollama)
+//	ANTHROPIC_API_KEY — Anthropic key
+//
+// Skipped when all three are absent. Local servers that don't require a real key
+// can set OPENAI_BASE_URL alone; a dummy key "local" is injected automatically.
+//
 // Manual: OPENAI_API_KEY=... go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
+// Ollama: OPENAI_BASE_URL=http://localhost:11434/v1 go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
 func TestRouterSmoke(t *testing.T) {
 	oaiKey := os.Getenv("OPENAI_API_KEY")
+	oaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 	antKey := os.Getenv("ANTHROPIC_API_KEY")
 
-	if oaiKey == "" && antKey == "" {
-		t.Skip("smoke: no OPENAI_API_KEY or ANTHROPIC_API_KEY in env")
+	if oaiKey == "" && oaiBaseURL == "" && antKey == "" {
+		t.Skip("smoke: set OPENAI_API_KEY, OPENAI_BASE_URL, or ANTHROPIC_API_KEY to run")
+	}
+
+	// Local servers (Ollama, LM Studio) often don't require a real key.
+	// Inject a dummy so the Router doesn't skip the OpenAI entry in the chain.
+	if oaiBaseURL != "" && oaiKey == "" {
+		oaiKey = "local"
+	}
+
+	// Log which endpoint will be used so the output is self-documenting.
+	switch {
+	case oaiBaseURL != "":
+		t.Logf("smoke: OpenAI-compat endpoint=%s key=%s antKey=%v", oaiBaseURL, oaiKey, antKey != "")
+	case oaiKey != "":
+		t.Logf("smoke: OpenAI production key present, antKey=%v", antKey != "")
+	default:
+		t.Logf("smoke: Anthropic only")
 	}
 
 	r := providers.NewRouter(providers.RouterConfig{
 		OpenAIKey:    oaiKey,
+		OpenAIURL:    oaiBaseURL, // empty string = production; non-empty = local override
 		AnthropicKey: antKey,
-		// No URL overrides — production endpoints.
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
