@@ -5,11 +5,9 @@ branch: main
 state:
   tests: 35 packages passing
   build: clean
-  notes: 'All 6 council-surfaced issues resolved (devkit-3, -4, -9, -10, -12, -13).
-    devlog completion logging now unconditional across all cmd handlers. Format-flag
-    validation added with case normalization. Production router smoke test added.
-    repometa ownership documented. Two GitHub issues remain open (devkit-18, devkit-20
-    — provider fallback smoke test with real API keys).
+  notes: 'All issues closed. Router smoke test supports production OpenAI/Anthropic
+    and local OpenAI-compat endpoints (OPENAI_BASE_URL + OPENAI_MODEL). TierOverrides.OpenAIModel
+    added to RouterConfig. All HANDOFF items done.
     '
 items:
 - id: devkit-4
@@ -238,15 +236,18 @@ items:
 - id: devkit-18
   name: router-provider-fallback-smoke-test
   priority: P2
-  status: open
+  status: done
   title: Missing production smoke test for Router provider fallback chain
   description: 'GH #6: Test the Router provider fallback logic (Anthropic → OpenAI
     → Gemini) with real API keys in production to confirm no unexpected failures.'
-  files: []
+  files:
+  - internal/ai/providers/router_test.go
+  - internal/ai/providers/router.go
   extra:
   - type: github-issue
     number: 6
     url: https://github.com/89jobrien/devkit/issues/6
+  completed: '2026-04-14'
 - id: devkit-19
   name: citriage-gh-run-list-dir
   priority: P1
@@ -264,16 +265,26 @@ items:
 - id: devkit-20
   name: provider-fallback-smoke-test
   priority: P2
-  status: open
+  status: done
   title: Missing production smoke test for Router provider fallback chain
   description: 'GH #6: Test the Router provider fallback logic (Anthropic → OpenAI
     → Gemini) with real API keys in production to confirm no unexpected failures.'
-  files: []
+  files:
+  - internal/ai/providers/router_test.go
   extra:
   - type: github-issue
     number: 6
     url: https://github.com/89jobrien/devkit/issues/6
+  completed: '2026-04-14'
 log:
+- date: 2026-04-14
+  summary: 'devkit-18/20 done — TestRouterSmoke supports production and local OpenAI-compat
+    endpoints (OPENAI_BASE_URL + OPENAI_MODEL). TierOverrides.OpenAIModel added to
+    RouterConfig. gpt-oss verified via Ollama. All HANDOFF items closed.'
+  commits:
+  - 16aa53c
+  - 7108b71
+  - 882561b
 - date: 2026-04-14
   summary: 'Closed all 6 council-surfaced issues: devkit-9 (automate devlog on failure,
     e471690), devkit-10 confirmed already done (41f9e88), devkit-12/13 (format-flag
