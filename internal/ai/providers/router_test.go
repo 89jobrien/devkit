@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/89jobrien/devkit/internal/ai/providers"
 	"github.com/89jobrien/devkit/internal/infra/tools"
@@ -200,6 +202,32 @@ func TestRouterAgentRunnerFallback(t *testing.T) {
 	result, err := r.AgentRunnerFor(providers.TierBalanced, nil).Run(context.Background(), "hello", nil)
 	require.NoError(t, err)
 	assert.Equal(t, "from openai agent", result)
+}
+
+// TestRouterSmoke hits real production endpoints using keys from the environment.
+// Skipped automatically when no keys are present — safe to run in CI with secrets set.
+// Manual: OPENAI_API_KEY=... go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
+func TestRouterSmoke(t *testing.T) {
+	oaiKey := os.Getenv("OPENAI_API_KEY")
+	antKey := os.Getenv("ANTHROPIC_API_KEY")
+
+	if oaiKey == "" && antKey == "" {
+		t.Skip("smoke: no OPENAI_API_KEY or ANTHROPIC_API_KEY in env")
+	}
+
+	r := providers.NewRouter(providers.RouterConfig{
+		OpenAIKey:    oaiKey,
+		AnthropicKey: antKey,
+		// No URL overrides — production endpoints.
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
+
+	result, err := r.For(providers.TierFast).Run(ctx, "Say only the word pong", nil)
+	require.NoError(t, err, "router fallback chain returned an error")
+	assert.NotEmpty(t, result, "expected non-empty response from provider")
+	t.Logf("smoke response: %q", result)
 }
 
 func TestRouterAgentRunnerForSkipsNonAgentProviders(t *testing.T) {
