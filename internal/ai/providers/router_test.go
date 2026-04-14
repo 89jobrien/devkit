@@ -211,16 +211,18 @@ func TestRouterAgentRunnerFallback(t *testing.T) {
 //
 //	OPENAI_API_KEY    — real OpenAI key (or any non-empty string for local servers)
 //	OPENAI_BASE_URL   — override base URL (e.g. http://localhost:11434/v1 for Ollama)
+//	OPENAI_MODEL      — override model used for TierFast (e.g. llama3, gpt-oss)
 //	ANTHROPIC_API_KEY — Anthropic key
 //
-// Skipped when all three are absent. Local servers that don't require a real key
-// can set OPENAI_BASE_URL alone; a dummy key "local" is injected automatically.
+// Skipped when all three keys/URL vars are absent. Local servers that don't require
+// a real key can set OPENAI_BASE_URL alone; a dummy key "local" is injected automatically.
 //
 // Manual: OPENAI_API_KEY=... go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
-// Ollama: OPENAI_BASE_URL=http://localhost:11434/v1 go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
+// Ollama: OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=llama3 go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
 func TestRouterSmoke(t *testing.T) {
 	oaiKey := os.Getenv("OPENAI_API_KEY")
 	oaiBaseURL := os.Getenv("OPENAI_BASE_URL")
+	oaiModel := os.Getenv("OPENAI_MODEL")
 	antKey := os.Getenv("ANTHROPIC_API_KEY")
 
 	if oaiKey == "" && oaiBaseURL == "" && antKey == "" {
@@ -233,20 +235,42 @@ func TestRouterSmoke(t *testing.T) {
 		oaiKey = "local"
 	}
 
+	// NewOpenAIProvider appends "/v1/chat/completions" to baseURL internally.
+	// Strip a trailing "/v1" from OPENAI_BASE_URL to avoid the double-path
+	// that results when users follow the standard SDK convention of including /v1.
+	oaiBaseURL = strings.TrimSuffix(oaiBaseURL, "/v1")
+
 	// Log which endpoint will be used so the output is self-documenting.
+	// Never log the actual key value — use "local" or "<redacted>".
+	logKey := "<redacted>"
+	if oaiBaseURL != "" {
+		logKey = "local"
+	}
 	switch {
 	case oaiBaseURL != "":
-		t.Logf("smoke: OpenAI-compat endpoint=%s key=%s antKey=%v", oaiBaseURL, oaiKey, antKey != "")
+		t.Logf("smoke: OpenAI-compat endpoint=%s key=%s model=%q antKey=%v",
+			oaiBaseURL, logKey, oaiModel, antKey != "")
 	case oaiKey != "":
-		t.Logf("smoke: OpenAI production key present, antKey=%v", antKey != "")
+		t.Logf("smoke: OpenAI production key=%s model=%q antKey=%v",
+			logKey, oaiModel, antKey != "")
 	default:
 		t.Logf("smoke: Anthropic only")
+	}
+
+	// When targeting a local OpenAI-compat server, exclude Anthropic from the chain so
+	// the run goes directly to the local endpoint without cross-contaminating model names.
+	resolvedAntKey := antKey
+	if oaiBaseURL != "" {
+		resolvedAntKey = ""
 	}
 
 	r := providers.NewRouter(providers.RouterConfig{
 		OpenAIKey:    oaiKey,
 		OpenAIURL:    oaiBaseURL, // empty string = production; non-empty = local override
-		AnthropicKey: antKey,
+		AnthropicKey: resolvedAntKey,
+		Overrides: providers.TierOverrides{
+			OpenAIModel: oaiModel, // empty = use production default; set via OPENAI_MODEL
+		},
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)

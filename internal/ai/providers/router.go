@@ -13,10 +13,14 @@ import (
 // TierOverrides allows .devkit.toml to pin specific model IDs per tier.
 type TierOverrides struct {
 	PrimaryProvider   string // "anthropic" | "openai" | "gemini"
-	FastModel         string
+	FastModel         string // Anthropic fast model override
 	BalancedModel     string
 	LargeContextModel string
 	CodingModel       string
+	// OpenAIModel overrides the OpenAI model used across all tiers.
+	// Useful for local OpenAI-compat servers (Ollama, LM Studio) that
+	// serve a different model name than the production default.
+	OpenAIModel string
 }
 
 // RouterConfig holds API keys and optional overrides.
@@ -151,19 +155,19 @@ func (r *Router) modelsForTier(tier Tier) (ant, oai, gem string) {
 	switch tier {
 	case TierFast:
 		ant = orDefault(ov.FastModel, ModelAnthropicFast)
-		oai = ModelOpenAIFast
+		oai = orDefault(ov.OpenAIModel, ModelOpenAIFast)
 		gem = ModelGeminiFast
 	case TierLargeContext:
 		ant = orDefault(ov.LargeContextModel, ModelAnthropicLargeContext)
-		oai = ModelOpenAIBalanced
+		oai = orDefault(ov.OpenAIModel, ModelOpenAIBalanced)
 		gem = ModelGeminiLargeContext
 	case TierCoding:
 		ant = orDefault(ov.CodingModel, ModelAnthropicCoding)
-		oai = ModelOpenAICoding
+		oai = orDefault(ov.OpenAIModel, ModelOpenAICoding)
 		gem = "" // Gemini excluded from coding tier (no tool use)
 	default: // TierBalanced
 		ant = orDefault(ov.BalancedModel, ModelAnthropicBalanced)
-		oai = ModelOpenAIBalanced
+		oai = orDefault(ov.OpenAIModel, ModelOpenAIBalanced)
 		gem = ModelGeminiBalanced
 	}
 	return
