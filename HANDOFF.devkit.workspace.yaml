@@ -1,16 +1,15 @@
 project: devkit
 id: devkit
-updated: 2026-04-10
+updated: 2026-04-14
 branch: main
 state:
-  tests: 291 passing (35 packages)
+  tests: 35 packages passing
   build: clean
-  notes: 'REPL + chain pipeline fully implemented. council ran; scored 72% (Almost).
-
-    Auth contract and --repo fallback fixed post-council. CLAUDE.md updated.
-
-    Two open items remain: devkit-4 (package ownership), devkit-10 (citriage repo-scoping).
-
+  notes: 'All 6 council-surfaced issues resolved (devkit-3, -4, -9, -10, -12, -13).
+    devlog completion logging now unconditional across all cmd handlers. Format-flag
+    validation added with case normalization. Production router smoke test added.
+    repometa ownership documented. Two GitHub issues remain open (devkit-18, devkit-20
+    — provider fallback smoke test with real API keys).
     '
 items:
 - id: devkit-4
@@ -275,6 +274,16 @@ items:
     number: 6
     url: https://github.com/89jobrien/devkit/issues/6
 log:
+- date: 2026-04-14
+  summary: 'Closed all 6 council-surfaced issues: devkit-9 (automate devlog on failure,
+    e471690), devkit-10 confirmed already done (41f9e88), devkit-12/13 (format-flag
+    normalization + validation, b65e596), devkit-3 (production router smoke test,
+    991c15b), devkit-4 (repometa ownership docs, 991c15b). Extended devlog fix to
+    6 additional cmd handlers (e471690). All doob todos marked complete.'
+  commits:
+  - e471690
+  - b65e596
+  - 991c15b
 - date: 2026-04-10
   summary: 'Implemented REPL + chain pipeline (11 tasks): internal/chain/ (Result
     envelope, stage
