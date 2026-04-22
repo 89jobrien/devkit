@@ -76,12 +76,12 @@ All commands log to `~/.dev-agents/<project>/`.
           │
     pre-commit: devkit review --base HEAD
           │
-    ┌─────┴──────┐
+    ┌─────┴────────┐
   issues?        clean
     │              │
-  abort commit  commit succeeds
-                 │
-                 ▼
+  abort commit   commit succeeds
+                  │
+                  ▼
             git push
              │
         pre-push: devkit council --base main (non-blocking)
