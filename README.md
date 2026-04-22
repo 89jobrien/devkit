@@ -82,9 +82,9 @@ All commands log to `~/.dev-agents/<project>/`.
   abort commit  commit succeeds
                  │
                  ▼
-    git push
-          │
-    pre-push: devkit council --base main (non-blocking)
+            git push
+             │
+        pre-push: devkit council --base main (non-blocking)
           │
           ▼
     push to GitHub
