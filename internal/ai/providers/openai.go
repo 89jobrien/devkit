@@ -2,6 +2,7 @@
 package providers
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -199,4 +200,65 @@ func (p *OpenAIProvider) RunAgent(ctx context.Context, prompt string, ts []tools
 			})
 		}
 	}
+}
+
+func (p *OpenAIProvider) ChatStream(ctx context.Context, prompt string, w io.Writer) (string, error) {
+	reqBody := map[string]any{
+		"model":                 p.model,
+		"max_completion_tokens": 8096,
+		"messages":              []openAIMessage{{Role: "user", Content: prompt}},
+		"stream":                true,
+	}
+	b, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		p.baseURL+"/v1/chat/completions", bytes.NewReader(b))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+p.apiKey)
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+		return "", fmt.Errorf("openai HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
+	}
+
+	var sb strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+		var chunk struct {
+			Choices []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			} `json:"choices"`
+		}
+		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+			continue
+		}
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+			sb.WriteString(chunk.Choices[0].Delta.Content)
+			io.WriteString(w, chunk.Choices[0].Delta.Content)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return sb.String(), fmt.Errorf("openai stream: %w", err)
+	}
+	return sb.String(), nil
 }

@@ -3,6 +3,7 @@ package providers
 
 import (
 	"context"
+	"io"
 
 	"github.com/89jobrien/devkit/internal/infra/tools"
 )
@@ -29,6 +30,18 @@ type ChatProvider interface {
 type AgentProvider interface {
 	ChatProvider
 	RunAgent(ctx context.Context, prompt string, ts []tools.Tool) (string, error)
+}
+
+// StreamingChatProvider extends ChatProvider with token-level streaming.
+type StreamingChatProvider interface {
+	ChatProvider
+	ChatStream(ctx context.Context, prompt string, w io.Writer) (string, error)
+}
+
+// StreamingRunner executes a prompt, streaming tokens to w as they arrive,
+// and returns the full accumulated text.
+type StreamingRunner interface {
+	RunStream(ctx context.Context, prompt string, toolNames []string, w io.Writer) (string, error)
 }
 
 // Tier classifies the nature of a task for provider selection.

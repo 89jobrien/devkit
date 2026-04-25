@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/89jobrien/devkit/internal/infra/tools"
@@ -102,4 +103,34 @@ func (p *AnthropicProvider) RunAgent(ctx context.Context, prompt string, ts []to
 		}
 		messages = append(messages, anthropic.NewUserMessage(toolResults...))
 	}
+}
+
+func (p *AnthropicProvider) ChatStream(ctx context.Context, prompt string, w io.Writer) (string, error) {
+	stream := p.client.Messages.NewStreaming(ctx, anthropic.MessageNewParams{
+		Model:     anthropic.Model(p.model),
+		MaxTokens: 8096,
+		Messages: []anthropic.MessageParam{
+			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
+		},
+	})
+	defer stream.Close()
+
+	var sb strings.Builder
+	for stream.Next() {
+		evt := stream.Current()
+		delta := evt.AsContentBlockDelta()
+		if delta.Type != "content_block_delta" {
+			continue
+		}
+		td := delta.Delta.AsTextDelta()
+		if td.Type != "text_delta" {
+			continue
+		}
+		sb.WriteString(td.Text)
+		io.WriteString(w, td.Text)
+	}
+	if err := stream.Err(); err != nil {
+		return sb.String(), fmt.Errorf("anthropic stream: %w", err)
+	}
+	return sb.String(), nil
 }

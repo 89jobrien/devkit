@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/89jobrien/devkit/internal/infra/tools"
@@ -83,6 +84,43 @@ func (r *Router) For(tier Tier) Runner {
 		}
 		return "", fmt.Errorf("all providers failed for tier %s: %s", tier, strings.Join(errs, "; "))
 	})
+}
+
+// StreamingFor returns a StreamingRunner that tries the provider chain for the
+// given tier, using streaming where available.
+func (r *Router) StreamingFor(tier Tier) StreamingRunner {
+	return streamingRunnerFunc(func(ctx context.Context, prompt string, toolNames []string, w io.Writer) (string, error) {
+		chain := r.chainFor(tier)
+		if len(chain) == 0 {
+			return "", errors.New("no provider available for tier " + string(tier))
+		}
+		var errs []string
+		for _, entry := range chain {
+			if sp, ok := entry.provider.(StreamingChatProvider); ok {
+				result, err := sp.ChatStream(ctx, prompt, w)
+				if err != nil {
+					errs = append(errs, fmt.Sprintf("%s: %v", entry.name, err))
+					continue
+				}
+				return result, nil
+			}
+			// Fall back to non-streaming.
+			result, err := entry.provider.Chat(ctx, prompt)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", entry.name, err))
+				continue
+			}
+			io.WriteString(w, result)
+			return result, nil
+		}
+		return "", fmt.Errorf("all providers failed for tier %s: %s", tier, strings.Join(errs, "; "))
+	})
+}
+
+type streamingRunnerFunc func(ctx context.Context, prompt string, toolNames []string, w io.Writer) (string, error)
+
+func (f streamingRunnerFunc) RunStream(ctx context.Context, prompt string, toolNames []string, w io.Writer) (string, error) {
+	return f(ctx, prompt, toolNames, w)
 }
 
 // AgentRunnerFor returns a Runner that passes tools through to the first

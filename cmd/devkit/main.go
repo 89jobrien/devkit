@@ -166,6 +166,7 @@ func main() {
 
 			// Build per-role runners based on semantic tier routing.
 			roleRunners := make(map[string]council.Runner)
+			streamingRunners := make(map[string]council.StreamingRunner)
 			for _, role := range []string{"creative-explorer", "performance-analyst", "general-analyst", "security-reviewer", "strict-critic"} {
 				if cfg.Providers.UseBAML {
 					roleRunners[role] = baml.New(role, os.Stdout)
@@ -174,26 +175,45 @@ func main() {
 					roleRunners[role] = router.For(tier)
 				}
 			}
+			// Stream the general-analyst role to stdout.
+			if !cfg.Providers.UseBAML {
+				tier := providers.TierForRole("general-analyst")
+				streamingRunners["general-analyst"] = router.StreamingFor(tier)
+			}
 
 			councilCfg := council.Config{
-				Base:    councilBase,
-				Mode:    councilMode,
-				Diff:    diff,
-				Commits: commits,
-				Stat:    stat,
-				Runner:  router.For(providers.TierBalanced), // default for unrecognized roles
-				Runners: roleRunners,
+				Base:             councilBase,
+				Mode:             councilMode,
+				Diff:             diff,
+				Commits:          commits,
+				Stat:             stat,
+				Runner:           router.For(providers.TierBalanced), // default for unrecognized roles
+				Runners:          roleRunners,
+				StreamingRunners: streamingRunners,
+				StreamWriter:     cmd.OutOrStdout(),
 			}
 
 			sha := devlog.GitShortSHA()
 			id := devlog.Start("council", map[string]string{"base": councilBase, "mode": councilMode})
 			start := time.Now()
 
+			// Print header for streamed roles before running.
+			for role := range streamingRunners {
+				fmt.Printf("\n---- %s ----\n", role)
+			}
+
 			result, runErr := council.Run(cmd.Context(), councilCfg)
+
+			// Newline after streamed output.
+			if len(streamingRunners) > 0 {
+				fmt.Println()
+			}
 
 			var allOutput strings.Builder
 			for key, out := range result.RoleOutputs {
-				fmt.Printf("\n---- %s ----\n%s\n", key, out)
+				if _, streamed := streamingRunners[key]; !streamed {
+					fmt.Printf("\n---- %s ----\n%s\n", key, out)
+				}
 				allOutput.WriteString(fmt.Sprintf("## %s\n%s\n\n", key, out))
 			}
 

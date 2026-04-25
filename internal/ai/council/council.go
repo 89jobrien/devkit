@@ -4,6 +4,7 @@ package council
 import (
 	"context"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
@@ -25,6 +26,12 @@ func (f RunnerFunc) Run(ctx context.Context, prompt string, tools []string) (str
 	return f(ctx, prompt, tools)
 }
 
+// StreamingRunner executes a prompt, streaming tokens to w as they arrive,
+// and returns the full accumulated text.
+type StreamingRunner interface {
+	RunStream(ctx context.Context, prompt string, tools []string, w io.Writer) (string, error)
+}
+
 // Config holds parameters for a council run.
 type Config struct {
 	Base    string
@@ -36,6 +43,12 @@ type Config struct {
 	// Runners overrides Runner for specific role keys (e.g. "creative-explorer").
 	// Roles not present here fall back to Runner.
 	Runners map[string]Runner
+	// StreamingRunners overrides Runners for specific roles with streaming output.
+	// When a role key is present here, RunStream is used instead of Run, and
+	// tokens are written to StreamWriter as they arrive.
+	StreamingRunners map[string]StreamingRunner
+	// StreamWriter receives streamed tokens for roles in StreamingRunners.
+	StreamWriter io.Writer
 }
 
 // Result holds all role outputs and the synthesis.
@@ -192,6 +205,21 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 		role := roles[key]
 		g.Go(func() error {
 			prompt := fmt.Sprintf("%s\n\nAnalyse this branch.%s\n\n%s", role.persona, ToolUseInstruction, context_)
+
+			// Use streaming runner if available for this role.
+			if cfg.StreamingRunners != nil && cfg.StreamWriter != nil {
+				if sr, ok := cfg.StreamingRunners[key]; ok {
+					out, err := sr.RunStream(gctx, prompt, []string{"Read", "Glob", "Grep"}, cfg.StreamWriter)
+					if err != nil {
+						return fmt.Errorf("role %s: %w", key, err)
+					}
+					mu.Lock()
+					outputs[key] = out
+					mu.Unlock()
+					return nil
+				}
+			}
+
 			r := cfg.Runner
 			if cfg.Runners != nil {
 				if override, ok := cfg.Runners[key]; ok {
