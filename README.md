@@ -1,6 +1,6 @@
 # devkit
 
-AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a reusable scaffold for any Go project.
+AI-powered dev workflow toolkit. Extracts a self-correcting CI/agent loop into a reusable scaffold for any project.
 
 ## What it does
 
