@@ -220,6 +220,10 @@ func TestRouterAgentRunnerFallback(t *testing.T) {
 // Manual: OPENAI_API_KEY=... go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
 // Ollama: OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=llama3 go test ./internal/ai/providers/... -run Smoke -v -timeout 30s
 func TestRouterSmoke(t *testing.T) {
+	if os.Getenv("DEVKIT_LIVE_TESTS") != "1" {
+		t.Skip("set DEVKIT_LIVE_TESTS=1 to run live provider smoke tests")
+	}
+
 	oaiKey := os.Getenv("OPENAI_API_KEY")
 	oaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 	oaiModel := os.Getenv("OPENAI_MODEL")
